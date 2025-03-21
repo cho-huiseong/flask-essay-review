@@ -20,8 +20,9 @@ def review_essay():
         if not essay_text:
             return jsonify({"error": "논술문이 입력되지 않았습니다."}), 400
 
-        # GPT-4 API 호출
-        response = openai.ChatCompletion.create(
+        # 최신 OpenAI API 형식으로 수정
+        client = openai.OpenAI(api_key=OPENAI_API_KEY)
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "You are an AI writing evaluator."},
@@ -29,10 +30,10 @@ def review_essay():
             ]
         )
 
-        feedback = response["choices"][0]["message"]["content"]
+        feedback = response.choices[0].message.content
         return jsonify({"feedback": feedback})
 
-    except openai.error.OpenAIError as e:
+    except openai.APIError as e:
         return jsonify({"error": f"OpenAI API 오류 발생: {str(e)}"}), 500
 
     except Exception as e:
