@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>논술문 첨삭 AI</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; text-align: center; }
+        textarea { width: 100%; height: 200px; padding: 10px; margin: 10px 0; }
+        button { padding: 10px 20px; font-size: 16px; }
+        #result { margin-top: 20px; padding: 10px; border: 1px solid #ccc; background-color: #f9f9f9; text-align: left; }
+    </style>
+</head>
+<body>
+    <h1>논술문 첨삭 AI</h1>
+    <p>학생의 논술문을 입력하고 첨삭 요청을 해보세요!</p>
+
+    <textarea id="essay" placeholder="여기에 논술문을 입력하세요..."></textarea><br>
+    <button onclick="submitEssay()">첨삭 요청</button>
+
+    <div id="result"></div>
+
+    <script>
+        async function submitEssay() {
+            const essayText = document.getElementById("essay").value;
+
+            if (!essayText.trim()) {
+                alert("논술문을 입력하세요.");
+                return;
+            }
+
+            document.getElementById("result").innerHTML = "🔍 GPT-4 Turbo가 첨삭 중입니다...";
+
+            try {
+                // 🔹 Render 배포 URL로 변경해야 함!
+                const response = await fetch("https://your-app.onrender.com/review", { 
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ essay: essayText })
+                });
+
+                const data = await response.json();
+
+                if (data.feedback) {
+                    document.getElementById("result").innerHTML = `
+                        <strong>✅ GPT-4 Turbo 첨삭 결과:</strong><br><br>${data.feedback}
+                    `;
+                } else if (data.error) {
+                    document.getElementById("result").innerHTML = `<strong>❌ 오류 발생:</strong> ${data.error}`;
+                } else {
+                    document.getElementById("result").innerHTML = `<strong>❓ 알 수 없는 오류가 발생했습니다.</strong>`;
+                }
+
+            } catch (error) {
+                console.error("🚨 API 요청 실패:", error);
+                document.getElementById("result").innerHTML = `<strong>❌ 서버 오류 발생:</strong> 자세한 내용은 콘솔을 확인하세요.`;
+            }
+        }
+    </script>
+</body>
+</html>
