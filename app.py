@@ -1,10 +1,13 @@
-from flask import Flask, request, jsonify
-import json
+from flask import Flask, request, jsonify, render_template
 
 app = Flask(__name__)
 
-@app.route("/review", methods=["POST"])
+# 🔹 사용자가 "/review"에 접속하면 HTML을 반환하도록 변경!
+@app.route("/review", methods=["GET", "POST"])
 def review_essay():
+    if request.method == "GET":
+        return render_template("index.html")  # 🔹 review.html을 보여주도록 변경!
+
     data = request.get_json()
     if not data or "essay" not in data:
         return jsonify({"error": "No essay provided"}), 400
@@ -12,11 +15,7 @@ def review_essay():
     essay_text = data["essay"]
     feedback = f"GPT-4 Feedback: {essay_text}"
 
-    return app.response_class(
-        response=json.dumps({"feedback": feedback}, ensure_ascii=False),  # 한글 깨짐 방지
-        status=200,
-        mimetype="application/json"
-    )
+    return jsonify({"feedback": feedback})
 
 if __name__ == "__main__":
     import os
