@@ -1,5 +1,5 @@
-import os
 from flask import Flask, request, jsonify
+import json
 
 app = Flask(__name__)
 
@@ -10,10 +10,15 @@ def review_essay():
         return jsonify({"error": "No essay provided"}), 400
 
     essay_text = data["essay"]
-    feedback = f"GPT-4 Feedback: {essay_text}"  # AI 피드백 로직
+    feedback = f"GPT-4 Feedback: {essay_text}"
 
-    return jsonify({"feedback": feedback})
+    return app.response_class(
+        response=json.dumps({"feedback": feedback}, ensure_ascii=False),  # 한글 깨짐 방지
+        status=200,
+        mimetype="application/json"
+    )
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))  # Render에서 자동 할당된 포트 사용
+    import os
+    port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port, debug=True)
