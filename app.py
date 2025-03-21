@@ -1,47 +1,42 @@
-from flask import Flask, request, jsonify, render_template
 import openai
 import os
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# 🔹 Render 환경변수에서 OPENAI_API_KEY 가져오기
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# 환경 변수에서 API 키 가져오기
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    raise ValueError("🚨 OPENAI_API_KEY가 설정되지 않았습니다. Render 환경 변수를 확인하세요.")
 
-@app.route("/review", methods=["GET", "POST"])
+openai.api_key = OPENAI_API_KEY
+
+@app.route('/review', methods=['POST'])
 def review_essay():
-    if request.method == "GET":
-        return render_template("index.html")  # 🔹 웹 UI 제공
+    try:
+        data = request.get_json()
+        essay_text = data.get("essay")
 
-    data = request.get_json()
-    if not data or "essay" not in data:
-        return jsonify({"error": "No essay provided"}), 400
+        if not essay_text:
+            return jsonify({"error": "논술문이 입력되지 않았습니다."}), 400
 
-    essay_text = data["essay"]
+        # GPT-4 API 호출
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are an AI writing evaluator."},
+                {"role": "user", "content": f"다음 논술문을 평가하고 피드백을 제공해 주세요: {essay_text}"}
+            ]
+        )
 
-    # 🔹 GPT-4 API 호출하여 논술문 평가 및 피드백 제공
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": """
-            You are an expert in academic writing and critical analysis.
-            Evaluate the given essay based on the following criteria:
-            1. **Grammar & Clarity**: Check for grammatical errors and sentence clarity.
-            2. **Logical Flow**: Assess how well the arguments are structured.
-            3. **Critical Thinking**: Determine the level of critical thinking demonstrated.
-            4. **Creativity**: Evaluate originality and innovative perspectives in the essay.
-            5. **Persuasiveness**: Assess how convincing the arguments are.
-            
-            Provide a detailed feedback including strengths and areas of improvement.
-            """},
-            {"role": "user", "content": f"Here is the student's essay:\n\n{essay_text}"}
-        ],
-        max_tokens=700  # 🔹 충분한 답변 길이 설정
-    )
+        feedback = response["choices"][0]["message"]["content"]
+        return jsonify({"feedback": feedback})
 
-    feedback = response["choices"][0]["message"]["content"]
+    except openai.error.OpenAIError as e:
+        return jsonify({"error": f"OpenAI API 오류 발생: {str(e)}"}), 500
 
-    return jsonify({"feedback": feedback})  # 🔹 GPT-4의 첨삭 결과 반환
+    except Exception as e:
+        return jsonify({"error": f"서버 내부 오류: {str(e)}"}), 500
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=10000)
