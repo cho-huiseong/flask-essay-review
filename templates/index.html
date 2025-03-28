@@ -2,29 +2,30 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>논술문 첨삭 AI</title>
+  <title>아카데미창 AI 논술 첨삭기</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f9fafb;
+      background-color: #f1f4fb;
       margin: 0;
       padding: 2rem;
       color: #333;
     }
 
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: 0 auto;
       background: #fff;
-      padding: 2.5rem;
+      padding: 3rem;
       border-radius: 1.5rem;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
     }
 
     h1 {
       text-align: center;
-      color: #1c1c1e;
+      color: #2140b1;
       margin-bottom: 2rem;
     }
 
@@ -42,24 +43,25 @@
       border-radius: 0.8rem;
       resize: vertical;
       font-size: 1rem;
+      font-family: 'Noto Sans KR', sans-serif;
     }
 
     button {
       display: block;
       width: 100%;
       padding: 1rem;
-      background-color: #1c1c1e;
+      background-color: #2140b1;
       color: #fff;
       border: none;
       border-radius: 0.8rem;
       font-size: 1.1rem;
-      margin-top: 2rem;
+      margin-top: 1rem;
       cursor: pointer;
       transition: background-color 0.3s ease;
     }
 
     button:hover {
-      background-color: #2c2c30;
+      background-color: #1a3191;
     }
 
     #feedback {
@@ -86,26 +88,27 @@
 </head>
 <body>
   <div class="container">
-    <h1>논술문 첨삭 AI</h1>
+    <h1>아카데미창 AI 논술 첨삭기</h1>
     <form id="essayForm">
+      <div id="passages">
+        <label>제시문 1</label>
+        <textarea name="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>
+      </div>
+      <button type="button" id="addPassage">제시문 추가하기</button>
+
       <label>질문</label>
       <textarea id="question" rows="3" placeholder="질문 또는 논제를 입력하세요..."></textarea>
 
       <label>학생의 논술문</label>
       <textarea id="essay" rows="6" placeholder="학생의 논술문을 입력하세요..."></textarea>
 
-      <div id="passages">
-        <label>제시문 1</label>
-        <textarea name="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>
-      </div>
-
-      <button type="button" id="addPassage">제시문 추가하기</button>
       <button type="submit">첨삭 요청</button>
     </form>
 
     <div id="loading">GPT가 첨삭 중입니다. 잠시만 기다려주세요...</div>
     <div id="feedback"></div>
     <canvas id="scoreChart" width="400" height="250"></canvas>
+    <button id="downloadPDF">PDF로 저장하기</button>
   </div>
 
   <script>
@@ -119,10 +122,12 @@
       passageCount++;
       const label = document.createElement("label");
       label.textContent = `제시문 ${passageCount}`;
+      label.style.transition = "opacity 0.3s ease";
       const textarea = document.createElement("textarea");
       textarea.name = "passage";
       textarea.rows = 3;
       textarea.placeholder = "제시문을 입력하세요...";
+      textarea.style.transition = "opacity 0.3s ease";
       passagesDiv.appendChild(label);
       passagesDiv.appendChild(textarea);
     });
@@ -162,7 +167,7 @@
             datasets: [{
               label: '점수 (10점 만점)',
               data: scores,
-              backgroundColor: 'rgba(28, 28, 30, 0.7)',
+              backgroundColor: 'rgba(33, 64, 177, 0.7)',
               borderRadius: 8,
             }]
           },
@@ -176,6 +181,17 @@
           }
         });
       }
+    });
+
+    document.getElementById("downloadPDF").addEventListener("click", () => {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const content = document.getElementById("feedback").innerText;
+      doc.setFont("Helvetica");
+      doc.text("아카데미창 AI 논술 첨삭 결과", 20, 20);
+      doc.setFontSize(11);
+      doc.text(content, 20, 30, { maxWidth: 170 });
+      doc.save("첨삭결과.pdf");
     });
   </script>
 </body>
