@@ -1,28 +1,33 @@
 from flask import Flask, request, jsonify, render_template
-import openai
+from openai import OpenAI
+import os
 
 app = Flask(__name__)
 
-openai.api_key = "your-openai-api-key"  # Render에선 환경변수로 설정 추천
+# OpenAI client 설정 (환경변수에서 API 키 불러오는 방식 추천)
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @app.route('/')
 def home():
-    return render_template('index.html')  # HTML 폼 있는 페이지
+    return render_template('index.html')  # 없으면 삭제해도 됨
 
-@app.route('/review', methods=['POST'])  # ✅ 반드시 POST 포함!
+@app.route('/review', methods=['POST', 'GET'])  # GET도 허용
 def review_essay():
+    if request.method == 'GET':
+        return jsonify({"message": "GPT 논술 첨삭 API입니다. POST로 요청해주세요."})
+
     data = request.get_json()
     essay = data.get("essay", "")
 
     prompt = (
-        f"다음 논술문을 GPT-4 Turbo 기준으로 첨삭해주세요. "
-        f"비판적 사고, 창의성, 논리성, 설득력 등을 기준으로 평가해 주세요:\n\n{essay}"
+        "다음 논술문을 GPT-4-Turbo 기준으로 첨삭해주세요.\n"
+        "비판적 사고, 창의성, 논리성, 설득력 등을 기준으로 평가해 주세요:\n\n" + essay
     )
 
-    response = openai.ChatCompletion.create(
+    response = client.chat.completions.create(
         model="gpt-4-turbo",
         messages=[
-            {"role": "system", "content": "당신은 글쓰기 평가 전문가입니다."},
+            {"role": "system", "content": "당신은 글쓰기 평가 전문가입니다. 논술문을 친절하게 첨삭해 주세요."},
             {"role": "user", "content": prompt}
         ]
     )
