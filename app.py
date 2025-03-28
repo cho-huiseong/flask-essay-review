@@ -1,43 +1,34 @@
+from flask import Flask, request, jsonify, render_template
 import openai
-import os
-from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# 환경 변수에서 API 키 가져오기
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-if not OPENAI_API_KEY:
-    raise ValueError("🚨 OPENAI_API_KEY가 설정되지 않았습니다. Render 환경 변수를 확인하세요.")
+openai.api_key = "your-openai-api-key"  # Render에선 환경변수로 설정 추천
 
-openai.api_key = OPENAI_API_KEY
+@app.route('/')
+def home():
+    return render_template('index.html')  # HTML 폼 있는 페이지
 
-@app.route('/review', methods=['POST'])
+@app.route('/review', methods=['POST'])  # ✅ 반드시 POST 포함!
 def review_essay():
-    try:
-        data = request.get_json()
-        essay_text = data.get("essay")
+    data = request.get_json()
+    essay = data.get("essay", "")
 
-        if not essay_text:
-            return jsonify({"error": "논술문이 입력되지 않았습니다."}), 400
+    prompt = (
+        f"다음 논술문을 GPT-4 Turbo 기준으로 첨삭해주세요. "
+        f"비판적 사고, 창의성, 논리성, 설득력 등을 기준으로 평가해 주세요:\n\n{essay}"
+    )
 
-        # 최신 OpenAI API 형식으로 수정
-        client = openai.OpenAI(api_key=OPENAI_API_KEY)
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You are an AI writing evaluator."},
-                {"role": "user", "content": f"다음 논술문을 평가하고 피드백을 제공해 주세요: {essay_text}"}
-            ]
-        )
+    response = openai.ChatCompletion.create(
+        model="gpt-4-turbo",
+        messages=[
+            {"role": "system", "content": "당신은 글쓰기 평가 전문가입니다."},
+            {"role": "user", "content": prompt}
+        ]
+    )
 
-        feedback = response.choices[0].message.content
-        return jsonify({"feedback": feedback})
-
-    except openai.APIError as e:
-        return jsonify({"error": f"OpenAI API 오류 발생: {str(e)}"}), 500
-
-    except Exception as e:
-        return jsonify({"error": f"서버 내부 오류: {str(e)}"}), 500
+    feedback = response.choices[0].message.content.strip()
+    return jsonify({"feedback": feedback})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+    app.run(debug=True)
