@@ -64,9 +64,8 @@
       background-color: #1a3191;
     }
 
-    #feedback {
+    #feedbackArea {
       margin-top: 2.5rem;
-      white-space: pre-wrap;
       background: #f4f6f8;
       padding: 1.5rem;
       border-radius: 1rem;
@@ -106,8 +105,12 @@
     </form>
 
     <div id="loading">GPT가 첨삭 중입니다. 잠시만 기다려주세요...</div>
-    <div id="feedback"></div>
-    <canvas id="scoreChart" width="400" height="250"></canvas>
+
+    <div id="feedbackArea">
+      <div id="feedback"></div>
+      <canvas id="scoreChart" width="400" height="250"></canvas>
+    </div>
+
     <button id="downloadPDF">PDF로 저장하기</button>
   </div>
 
@@ -152,7 +155,7 @@
       document.getElementById("loading").style.display = "none";
       document.getElementById("feedback").innerText = result.feedback;
 
-      const scorePattern = /점수[:\s]*(\d{1,2})점.*?점수[:\s]*(\d{1,2})점.*?점수[:\s]*(\d{1,2})점.*?점수[:\s]*(\d{1,2})점.*?점수[:\s]*(\d{1,2})점/s;
+      const scorePattern = /이해력\*\*.*?(\d{1,2})\/10[\s\S]*?독해력\*\*.*?(\d{1,2})\/10[\s\S]*?맥락 연결\*\*.*?(\d{1,2})\/10[\s\S]*?까닭 제시\*\*.*?(\d{1,2})\/10[\s\S]*?문장 배열\*\*.*?(\d{1,2})\/10[\s\S]*?어휘 사용\*\*.*?(\d{1,2})\/10/;
       const match = result.feedback.match(scorePattern);
 
       if (match) {
@@ -161,7 +164,7 @@
         new Chart(ctx, {
           type: 'bar',
           data: {
-            labels: ['기준1', '기준2', '기준3', '기준4', '기준5'],
+            labels: ['이해력', '독해력', '맥락 연결', '까닭 제시', '문장 배열', '어휘 사용'],
             datasets: [{
               label: '점수 (10점 만점)',
               data: scores,
@@ -182,11 +185,11 @@
     });
 
     document.getElementById("downloadPDF").addEventListener("click", () => {
-      const element = document.getElementById("feedback");
+      const element = document.getElementById("feedbackArea");
       html2pdf().from(element).set({
         margin: 10,
         filename: '첨삭결과.pdf',
-        html2canvas: { scale: 2 },
+        html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       }).save();
     });
