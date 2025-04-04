@@ -1,4 +1,3 @@
-<!-- ✅ 다쓰 리포트 최종 완성형 index.html -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -8,61 +7,36 @@
   <script src="https://unpkg.com/html2pdf.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; padding: 0;
-      font-family: 'Pretendard', sans-serif;
-      background-color: #f1f4fb;
-      color: #1c1c1e;
-    }
+    body { margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; background: #f5f7fb; }
     header {
-      display: flex; align-items: center; gap: 16px;
-      padding: 20px 40px;
-      background-color: white;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      background: white; padding: 20px 40px; display: flex; align-items: center;
+      gap: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
-    header img {
-      height: 40px;
-    }
-    header h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #2140b1;
-    }
-    .container {
-      max-width: 960px;
-      margin: 30px auto;
-      padding: 30px;
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 6px 24px rgba(0,0,0,0.05);
-    }
+    header img { height: 40px; }
+    header h1 { font-size: 1.5rem; color: #2140b1; margin: 0; }
+    .container { max-width: 900px; margin: 30px auto; padding: 30px; background: white; border-radius: 16px; box-shadow: 0 6px 24px rgba(0,0,0,0.05); }
     label { font-weight: 600; margin-top: 1rem; display: block; }
     textarea, input {
-      width: 100%;
-      padding: 14px;
-      margin-top: 8px;
-      border-radius: 12px;
-      border: 1px solid #ccd3e0;
-      background-color: #fdfdfd;
-      font-size: 1rem;
+      width: 100%; padding: 14px; margin-top: 8px;
+      border-radius: 12px; border: 1px solid #ccd3e0;
+      font-size: 1rem; background: #fdfdfd;
+    }
+    .passage-container { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .passage-container textarea { flex: 1; }
+    .delete-btn {
+      background: none; border: none; color: red; font-size: 1.2rem; cursor: pointer;
     }
     button {
-      margin-top: 20px;
-      width: 100%;
-      padding: 14px;
-      background-color: #2140b1;
-      color: white;
-      font-size: 1.1rem;
-      border: none;
-      border-radius: 12px;
+      margin-top: 20px; width: 100%; padding: 14px;
+      background-color: #2140b1; color: white;
+      font-size: 1.1rem; border: none; border-radius: 12px;
       cursor: pointer;
     }
-    .card { margin-top: 2rem; background: #f9fbfd; border-radius: 16px; padding: 20px; }
-    .chart { margin-top: 20px; }
-    #downloadPDF { display: none; }
-    .add-passage { margin-top: 8px; font-size: 0.95rem; color: #2140b1; cursor: pointer; }
-    .add-passage:hover { text-decoration: underline; }
+    .result-card { background: #f9fbfd; border-radius: 16px; padding: 20px; margin-top: 30px; }
+    .eval-box { background: #eef3ff; border-left: 6px solid #2140b1; padding: 16px; margin-bottom: 16px; border-radius: 12px; }
+    .eval-box strong { font-size: 1.1rem; }
+    #loading, #error, #downloadPDF { display: none; margin-top: 20px; text-align: center; color: #2140b1; }
+    #error { color: red; }
   </style>
 </head>
 <body>
@@ -72,121 +46,140 @@
   </header>
   <div class="container">
     <label for="studentName">학생 이름</label>
-    <input id="studentName" type="text" placeholder="예: 김민준" required>
+    <input id="studentName" type="text" placeholder="예: 김민준">
 
     <label>제시문</label>
     <div id="passages">
-      <textarea class="passage" rows="2" placeholder="제시문을 입력하세요..."></textarea>
+      <div class="passage-container">
+        <textarea class="passage" rows="2" placeholder="제시문을 입력하세요..."></textarea>
+        <button class="delete-btn" onclick="deletePassage(this)">🗑</button>
+      </div>
     </div>
-    <div class="add-passage" onclick="addPassage()">➕ 제시문 추가</div>
+    <div style="color:#2140b1; cursor:pointer; margin-top:5px;" onclick="addPassage()">➕ 제시문 추가</div>
 
     <label for="question">질문</label>
-    <textarea id="question" rows="2" placeholder="질문을 입력하세요..."></textarea>
+    <textarea id="question" rows="2"></textarea>
 
     <label for="essay">논술문</label>
-    <textarea id="essay" rows="6" placeholder="학생이 작성한 논술문을 입력하세요..."></textarea>
+    <textarea id="essay" rows="6"></textarea>
 
     <button onclick="submitEssay()">📝 리포트 받기</button>
 
-    <div class="card" id="result" style="display:none">
-      <h3>예시답안</h3>
-      <div id="exampleAnswer"></div>
-      <canvas id="scoreChart" class="chart"></canvas>
+    <div id="loading">⏳ 처리 중입니다. 잠시만 기다려주세요...</div>
+    <div id="error">❗ 오류가 발생했습니다. 다시 시도해 주세요.</div>
+
+    <div class="result-card" id="result" style="display:none">
+      <h3>📋 평가 요약</h3>
+      <div id="evalSummary"></div>
+      <canvas id="scoreChart" style="margin-top:20px;"></canvas>
+      <h3 style="margin-top:30px;">📝 예시답안</h3>
+      <p id="exampleAnswer"></p>
     </div>
 
-    <button id="downloadPDF">📄 PDF 리포트 저장</button>
-  </div>
+    <button id="downloadPDF">📄 PDF 저장</button>
 
-  <div id="pdfArea" style="display:none; padding: 30px;">
-    <img src="/static/아카데미창-문서용.png" alt="로고" style="height:40px;">
-    <h2 style="color:#2140b1">다쓰 리포트</h2>
-    <p><strong>학생 이름:</strong> <span id="pdfName"></span></p>
-    <p><strong>작성일:</strong> <span id="pdfDate"></span></p>
-
-    <div id="pdfPassages"></div>
-
-    <h3>질문</h3>
-    <p id="pdfQuestion"></p>
-
-    <h3>학생 글</h3>
-    <p id="pdfEssay"></p>
-
-    <h3>예시답안</h3>
-    <p id="pdfExample"></p>
-
-    <img id="chartImage" style="margin-top:20px; max-width:500px;">
-
-    <p style="margin-top:30px; font-size: 0.9rem; color: #555;">
-      ※ 본 리포트는 AI 기반 자동 첨삭 결과입니다. 선생님의 설명과 함께 제공됩니다.
-    </p>
+    <!-- PDF 영역 -->
+    <div id="pdfArea" style="display:none; padding: 30px;">
+      <img src="/static/아카데미창-문서용.png" alt="로고" style="height:40px;">
+      <h2 style="color:#2140b1">다쓰 리포트</h2>
+      <p><strong>학생 이름:</strong> <span id="pdfName"></span></p>
+      <p><strong>작성일:</strong> <span id="pdfDate"></span></p>
+      <div id="pdfEval"></div>
+      <img id="chartImage" style="margin: 20px 0; max-width: 500px;">
+      <h3>예시답안</h3>
+      <p id="pdfExample"></p>
+    </div>
   </div>
 
   <script>
-    const today = new Date().toISOString().split("T")[0];
+    const today = new Date().toISOString().split('T')[0];
     document.getElementById("pdfDate").textContent = today;
 
     function addPassage() {
-      const count = document.querySelectorAll('.passage').length;
-      if (count >= 6) return alert("제시문은 최대 6개까지 입력할 수 있어요.");
-      const textarea = document.createElement("textarea");
-      textarea.className = "passage";
-      textarea.rows = 2;
-      textarea.placeholder = "제시문을 입력하세요...";
-      document.getElementById("passages").appendChild(textarea);
+      const div = document.createElement("div");
+      div.className = "passage-container";
+      div.innerHTML = \`
+        <textarea class="passage" rows="2" placeholder="제시문을 입력하세요..."></textarea>
+        <button class="delete-btn" onclick="deletePassage(this)">🗑</button>
+      \`;
+      document.getElementById("passages").appendChild(div);
+    }
+
+    function deletePassage(btn) {
+      btn.parentElement.remove();
     }
 
     async function submitEssay() {
+      document.getElementById("result").style.display = "none";
+      document.getElementById("downloadPDF").style.display = "none";
+      document.getElementById("loading").style.display = "block";
+      document.getElementById("error").style.display = "none";
+
       const name = document.getElementById("studentName").value;
-      const passages = [...document.querySelectorAll('.passage')].map(p => p.value).filter(Boolean);
+      const passages = [...document.querySelectorAll(".passage")].map(p => p.value).filter(p => p.trim());
       const question = document.getElementById("question").value;
       const essay = document.getElementById("essay").value;
 
-      const res = await fetch("/review", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ passages, question, essay })
-      });
+      if (!name || !question || !essay || passages.length === 0) {
+        document.getElementById("loading").style.display = "none";
+        alert("모든 항목을 입력해 주세요.");
+        return;
+      }
 
-      const result = await res.json();
-      const answer = result.answer || "(예시답안 없음)";
-      const chartData = result.chart || [7, 8, 6, 9, 7, 8];
+      try {
+        const res = await fetch("/review", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ passages, question, essay })
+        });
 
-      document.getElementById("exampleAnswer").textContent = answer;
-      document.getElementById("result").style.display = "block";
+        const result = await res.json();
 
-      // PDF 영역 채우기
-      document.getElementById("pdfName").textContent = name;
-      document.getElementById("pdfQuestion").textContent = question;
-      document.getElementById("pdfEssay").textContent = essay;
-      document.getElementById("pdfExample").textContent = answer;
+        if (result.error) throw new Error(result.error);
 
-      let passageBlock = "";
-      const labels = ['가','나','다','라','마','바'];
-      passages.forEach((txt, idx) => {
-        passageBlock += `<h3>제시문 <${labels[idx]}> </h3><p>${txt}</p>`;
-      });
-      document.getElementById("pdfPassages").innerHTML = passageBlock;
+        const scores = result.scores;
+        const reasons = result.reasons;
+        const example = result.example;
 
-      const ctx = document.getElementById("scoreChart").getContext("2d");
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['이해력','독해력','맥락 연결','까닭 제시','문장 배열','어휘 사용'],
-          datasets: [{
-            label: '점수 (10점 만점)',
-            data: chartData,
-            backgroundColor: 'rgba(33, 64, 177, 0.7)',
-            borderRadius: 6
-          }]
-        },
-        options: { scales: { y: { beginAtZero: true, max: 10 } } }
-      });
+        const labels = ['논리력','독해력','구성력','표현력'];
+        const summary = labels.map((label, i) => 
+          `<div class='eval-box'><strong>${label} (${scores[i]}점)</strong><br>${reasons[label]}</div>`).join('');
+        
+        document.getElementById("evalSummary").innerHTML = summary;
+        document.getElementById("exampleAnswer").textContent = example;
+        document.getElementById("result").style.display = "block";
 
-      setTimeout(() => {
-        const canvas = document.getElementById("scoreChart");
-        document.getElementById("chartImage").src = canvas.toDataURL();
-        document.getElementById("downloadPDF").style.display = "block";
-      }, 1000);
+        document.getElementById("pdfName").textContent = name;
+        document.getElementById("pdfExample").textContent = example;
+        document.getElementById("pdfEval").innerHTML = summary;
+
+        const ctx = document.getElementById("scoreChart").getContext("2d");
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: '점수 (10점 만점)',
+              data: scores,
+              backgroundColor: 'rgba(33, 64, 177, 0.7)',
+              borderRadius: 6
+            }]
+          },
+          options: { scales: { y: { beginAtZero: true, max: 10 } } }
+        });
+
+        setTimeout(() => {
+          const canvas = document.getElementById("scoreChart");
+          document.getElementById("chartImage").src = canvas.toDataURL();
+          document.getElementById("downloadPDF").style.display = "block";
+        }, 1000);
+
+      } catch (err) {
+        document.getElementById("error").style.display = "block";
+        console.error(err);
+      } finally {
+        document.getElementById("loading").style.display = "none";
+      }
     }
 
     document.getElementById("downloadPDF").addEventListener("click", () => {
