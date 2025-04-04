@@ -15,6 +15,8 @@ def index():
 @app.route("/review", methods=["POST"])
 def review():
     data = request.get_json()
+    print("✅ 받은 데이터:", data)  # 디버깅 로그
+
     passages = data.get("passages", [])
     question = data.get("question", "")
     essay = data.get("essay", "")
@@ -52,6 +54,7 @@ def review():
 - 반드시 위의 출력 형식을 지켜 주세요 (항목 이름, 점수, 이유, 줄 순서까지).
 - 점수는 숫자만 적어 주세요. "점"이나 다른 말은 붙이지 마세요.
 - 각 섹션은 대괄호로 시작해야 합니다.
+- 전체 응답은 반드시 코드블럭 안에 감싸 주세요. 예: ```텍스트```
 
 --- 입력자료 ---
 
@@ -77,6 +80,7 @@ def review():
         )
 
         content = response.choices[0].message.content
+        print("💬 GPT 응답 원문:\n", content)  # 디버깅 로그
 
         sections = {"논리력": {}, "독해력": {}, "구성력": {}, "표현력": {}, "예시답안": ""}
         current = None
@@ -89,20 +93,26 @@ def review():
             elif line.startswith("[표현력]"): current = "표현력"
             elif line.startswith("[예시답안]"): current = "예시답안"
             elif current and current != "예시답안":
-                if line.startswith("점수:"):
-                    sections[current]["score"] = int(''.join(filter(str.isdigit, line)))
-                elif line.startswith("이유:"):
-                    sections[current]["reason"] = line.replace("이유:", "").strip()
+                if "점수" in line:
+                    try:
+                        score_line = ''.join(filter(str.isdigit, line))
+                        sections[current]["score"] = int(score_line) if score_line else 0
+                    except Exception as e:
+                        print(f"⚠️ 점수 파싱 실패: {line}", e)
+                        sections[current]["score"] = 0
+                elif "이유" in line:
+                    sections[current]["reason"] = line.split(":", 1)[-1].strip()
             elif current == "예시답안":
                 sections[current] += line + "\n"
 
         return jsonify({
-            "scores": [sections[k]["score"] for k in ["논리력", "독해력", "구성력", "표현력"]],
-            "reasons": {k: sections[k]["reason"] for k in ["논리력", "독해력", "구성력", "표현력"]},
+            "scores": [sections[k].get("score", 0) for k in ["논리력", "독해력", "구성력", "표현력"]],
+            "reasons": {k: sections[k].get("reason", "") for k in ["논리력", "독해력", "구성력", "표현력"]},
             "example": sections["예시답안"].strip()
         })
 
     except Exception as e:
+        print("❌ 처리 중 오류 발생:", str(e))
         return jsonify({"error": str(e)})
 
 if __name__ == "__main__":
