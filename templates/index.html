@@ -14,28 +14,71 @@
     }
     header img { height: 40px; }
     header h1 { font-size: 1.5rem; color: #2140b1; margin: 0; }
-    .container { max-width: 900px; margin: 30px auto; padding: 30px; background: white; border-radius: 16px; box-shadow: 0 6px 24px rgba(0,0,0,0.05); }
+    .container {
+      max-width: 900px; margin: 30px auto; padding: 30px;
+      background: white; border-radius: 16px; box-shadow: 0 6px 24px rgba(0,0,0,0.05);
+    }
     label { font-weight: 600; margin-top: 1rem; display: block; }
     textarea, input {
       width: 100%; padding: 14px; margin-top: 8px;
       border-radius: 12px; border: 1px solid #ccd3e0;
       font-size: 1rem; background: #fdfdfd;
     }
-    .passage-container { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-    .passage-container textarea { flex: 1; }
-    .delete-btn {
-      background: none; border: none; color: red; font-size: 1.2rem; cursor: pointer;
+
+    .passage-wrapper {
+      position: relative;
+      margin-bottom: 12px;
     }
+
+    .passage-wrapper textarea {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid #ccd3e0;
+      font-size: 1rem;
+      background: #fdfdfd;
+      resize: vertical;
+    }
+
+    .passage-wrapper .delete-btn {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      background: none;
+      border: none;
+      color: red;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    .add-passage {
+      color: #2140b1; cursor: pointer; margin-top: 5px;
+    }
+
     button {
       margin-top: 20px; width: 100%; padding: 14px;
       background-color: #2140b1; color: white;
       font-size: 1.1rem; border: none; border-radius: 12px;
       cursor: pointer;
     }
-    .result-card { background: #f9fbfd; border-radius: 16px; padding: 20px; margin-top: 30px; }
-    .eval-box { background: #eef3ff; border-left: 6px solid #2140b1; padding: 16px; margin-bottom: 16px; border-radius: 12px; }
+
+    .result-card {
+      background: #f9fbfd; border-radius: 16px;
+      padding: 20px; margin-top: 30px;
+    }
+
+    .eval-box {
+      background: #eef3ff; border-left: 6px solid #2140b1;
+      padding: 16px; margin-bottom: 16px; border-radius: 12px;
+    }
+
     .eval-box strong { font-size: 1.1rem; }
-    #loading, #error, #downloadPDF { display: none; margin-top: 20px; text-align: center; color: #2140b1; }
+
+    #loading, #error, #downloadPDF {
+      display: none; margin-top: 20px;
+      text-align: center; color: #2140b1;
+    }
+
     #error { color: red; }
   </style>
 </head>
@@ -50,12 +93,12 @@
 
     <label>제시문</label>
     <div id="passages">
-      <div class="passage-container">
-        <textarea class="passage" rows="2" placeholder="제시문을 입력하세요..."></textarea>
+      <div class="passage-wrapper">
+        <textarea class="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>
         <button class="delete-btn" onclick="deletePassage(this)">🗑</button>
       </div>
     </div>
-    <div style="color:#2140b1; cursor:pointer; margin-top:5px;" onclick="addPassage()">➕ 제시문 추가</div>
+    <div class="add-passage" onclick="addPassage()">➕ 제시문 추가</div>
 
     <label for="question">질문</label>
     <textarea id="question" rows="2"></textarea>
@@ -97,11 +140,11 @@
 
     function addPassage() {
       const div = document.createElement("div");
-      div.className = "passage-container";
-      div.innerHTML = \`
-        <textarea class="passage" rows="2" placeholder="제시문을 입력하세요..."></textarea>
+      div.className = "passage-wrapper";
+      div.innerHTML = `
+        <textarea class="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>
         <button class="delete-btn" onclick="deletePassage(this)">🗑</button>
-      \`;
+      `;
       document.getElementById("passages").appendChild(div);
     }
 
@@ -142,9 +185,9 @@
         const example = result.example;
 
         const labels = ['논리력','독해력','구성력','표현력'];
-        const summary = labels.map((label, i) => 
+        const summary = labels.map((label, i) =>
           `<div class='eval-box'><strong>${label} (${scores[i]}점)</strong><br>${reasons[label]}</div>`).join('');
-        
+
         document.getElementById("evalSummary").innerHTML = summary;
         document.getElementById("exampleAnswer").textContent = example;
         document.getElementById("result").style.display = "block";
