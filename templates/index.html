@@ -32,26 +32,6 @@
       margin-bottom: 16px;
     }
 
-    .passage-actions {
-      text-align: right;
-      margin-top: 4px;
-    }
-
-    .passage-wrapper .delete-btn {
-      background: none;
-      border: none;
-      color: #d02c2c;
-      font-size: 0.9rem;
-      cursor: pointer;
-      padding: 4px 8px;
-      border-radius: 6px;
-      transition: background 0.2s;
-    }
-
-    .passage-wrapper .delete-btn:hover {
-      background: #ffecec;
-    }
-
     .add-passage {
       color: #2140b1; cursor: pointer; margin-top: 5px;
     }
@@ -96,9 +76,6 @@
     <div id="passages">
       <div class="passage-wrapper">
         <textarea class="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>
-        <div class="passage-actions">
-          <button class="delete-btn" onclick="deletePassage(this)">🗑 제시문 삭제</button>
-        </div>
       </div>
     </div>
     <div class="add-passage" onclick="addPassage()">➕ 제시문 추가</div>
@@ -146,15 +123,8 @@
       div.className = "passage-wrapper";
       div.innerHTML = `
         <textarea class="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>
-        <div class="passage-actions">
-          <button class="delete-btn" onclick="deletePassage(this)">🗑 제시문 삭제</button>
-        </div>
       `;
       document.getElementById("passages").appendChild(div);
-    }
-
-    function deletePassage(btn) {
-      btn.closest(".passage-wrapper").remove();
     }
 
     async function submitEssay() {
