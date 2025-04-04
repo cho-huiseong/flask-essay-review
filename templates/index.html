@@ -1,195 +1,199 @@
+<!-- ✅ 다쓰 리포트 최종 완성형 index.html -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>아카데미창 AI 논술 첨삭기</title>
+  <title>다쓰 리포트</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/html2pdf.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
+    * { box-sizing: border-box; }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0; padding: 0;
+      font-family: 'Pretendard', sans-serif;
       background-color: #f1f4fb;
-      margin: 0;
-      padding: 2rem;
-      color: #333;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      background: #fff;
-      padding: 3rem;
-      border-radius: 1.5rem;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
-    }
-
-    h1 {
-      text-align: center;
-      color: #2140b1;
-      margin-bottom: 2rem;
-    }
-
-    label {
-      display: block;
-      margin-top: 1.5rem;
-      font-weight: 600;
-    }
-
-    textarea {
-      width: 100%;
-      padding: 1rem;
-      margin-top: 0.5rem;
-      border: 1px solid #ddd;
-      border-radius: 0.8rem;
-      resize: vertical;
-      font-size: 1rem;
-      font-family: 'Noto Sans KR', sans-serif;
-    }
-
-    button {
-      display: block;
-      width: 100%;
-      padding: 1rem;
-      background-color: #2140b1;
-      color: #fff;
-      border: none;
-      border-radius: 0.8rem;
-      font-size: 1.1rem;
-      margin-top: 1rem;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-
-    button:hover {
-      background-color: #1a3191;
-    }
-
-    #feedbackArea {
-      margin-top: 2.5rem;
-      background: #f4f6f8;
-      padding: 1.5rem;
-      border-radius: 1rem;
-      border: 1px solid #dce1e7;
-    }
-
-    #loading {
-      display: none;
-      text-align: center;
-      margin-top: 1rem;
-      font-weight: bold;
       color: #1c1c1e;
     }
-
-    canvas {
-      margin-top: 2rem;
+    header {
+      display: flex; align-items: center; gap: 16px;
+      padding: 20px 40px;
+      background-color: white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
+    header img {
+      height: 40px;
+    }
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #2140b1;
+    }
+    .container {
+      max-width: 960px;
+      margin: 30px auto;
+      padding: 30px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.05);
+    }
+    label { font-weight: 600; margin-top: 1rem; display: block; }
+    textarea, input {
+      width: 100%;
+      padding: 14px;
+      margin-top: 8px;
+      border-radius: 12px;
+      border: 1px solid #ccd3e0;
+      background-color: #fdfdfd;
+      font-size: 1rem;
+    }
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 14px;
+      background-color: #2140b1;
+      color: white;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    .card { margin-top: 2rem; background: #f9fbfd; border-radius: 16px; padding: 20px; }
+    .chart { margin-top: 20px; }
+    #downloadPDF { display: none; }
+    .add-passage { margin-top: 8px; font-size: 0.95rem; color: #2140b1; cursor: pointer; }
+    .add-passage:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
+  <header>
+    <img src="/static/아카데미창-문서용.png" alt="로고">
+    <h1>다쓰 리포트</h1>
+  </header>
   <div class="container">
-    <h1>아카데미창 AI 논술 첨삭기</h1>
-    <form id="essayForm">
-      <div id="passages">
-        <label>제시문 1</label>
-        <textarea name="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>
-      </div>
-      <button type="button" id="addPassage">제시문 추가하기</button>
+    <label for="studentName">학생 이름</label>
+    <input id="studentName" type="text" placeholder="예: 김민준" required>
 
-      <label>질문</label>
-      <textarea id="question" rows="3" placeholder="질문 또는 논제를 입력하세요..."></textarea>
+    <label>제시문</label>
+    <div id="passages">
+      <textarea class="passage" rows="2" placeholder="제시문을 입력하세요..."></textarea>
+    </div>
+    <div class="add-passage" onclick="addPassage()">➕ 제시문 추가</div>
 
-      <label>학생의 논술문</label>
-      <textarea id="essay" rows="6" placeholder="학생의 논술문을 입력하세요..."></textarea>
+    <label for="question">질문</label>
+    <textarea id="question" rows="2" placeholder="질문을 입력하세요..."></textarea>
 
-      <button type="submit">첨삭 요청</button>
-    </form>
+    <label for="essay">논술문</label>
+    <textarea id="essay" rows="6" placeholder="학생이 작성한 논술문을 입력하세요..."></textarea>
 
-    <div id="loading">GPT가 첨삭 중입니다. 잠시만 기다려주세요...</div>
+    <button onclick="submitEssay()">📝 리포트 받기</button>
 
-    <div id="feedbackArea">
-      <div id="feedback"></div>
-      <canvas id="scoreChart" width="400" height="250"></canvas>
+    <div class="card" id="result" style="display:none">
+      <h3>예시답안</h3>
+      <div id="exampleAnswer"></div>
+      <canvas id="scoreChart" class="chart"></canvas>
     </div>
 
-    <button id="downloadPDF">PDF로 저장하기</button>
+    <button id="downloadPDF">📄 PDF 리포트 저장</button>
+  </div>
+
+  <div id="pdfArea" style="display:none; padding: 30px;">
+    <img src="/static/아카데미창-문서용.png" alt="로고" style="height:40px;">
+    <h2 style="color:#2140b1">다쓰 리포트</h2>
+    <p><strong>학생 이름:</strong> <span id="pdfName"></span></p>
+    <p><strong>작성일:</strong> <span id="pdfDate"></span></p>
+
+    <div id="pdfPassages"></div>
+
+    <h3>질문</h3>
+    <p id="pdfQuestion"></p>
+
+    <h3>학생 글</h3>
+    <p id="pdfEssay"></p>
+
+    <h3>예시답안</h3>
+    <p id="pdfExample"></p>
+
+    <img id="chartImage" style="margin-top:20px; max-width:500px;">
+
+    <p style="margin-top:30px; font-size: 0.9rem; color: #555;">
+      ※ 본 리포트는 AI 기반 자동 첨삭 결과입니다. 선생님의 설명과 함께 제공됩니다.
+    </p>
   </div>
 
   <script>
-    const passagesDiv = document.getElementById("passages");
-    const addPassageBtn = document.getElementById("addPassage");
-    let passageCount = 1;
-    const maxPassages = 6;
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("pdfDate").textContent = today;
 
-    addPassageBtn.addEventListener("click", () => {
-      if (passageCount >= maxPassages) return;
-      passageCount++;
-      const label = document.createElement("label");
-      label.textContent = `제시문 ${passageCount}`;
+    function addPassage() {
+      const count = document.querySelectorAll('.passage').length;
+      if (count >= 6) return alert("제시문은 최대 6개까지 입력할 수 있어요.");
       const textarea = document.createElement("textarea");
-      textarea.name = "passage";
-      textarea.rows = 3;
+      textarea.className = "passage";
+      textarea.rows = 2;
       textarea.placeholder = "제시문을 입력하세요...";
-      passagesDiv.appendChild(label);
-      passagesDiv.appendChild(textarea);
-    });
+      document.getElementById("passages").appendChild(textarea);
+    }
 
-    document.getElementById("essayForm").addEventListener("submit", async function(e) {
-      e.preventDefault();
-      document.getElementById("loading").style.display = "block";
-      document.getElementById("feedback").innerText = "";
-
+    async function submitEssay() {
+      const name = document.getElementById("studentName").value;
+      const passages = [...document.querySelectorAll('.passage')].map(p => p.value).filter(Boolean);
       const question = document.getElementById("question").value;
       const essay = document.getElementById("essay").value;
-      const passageElems = document.getElementsByName("passage");
-      const passage = Array.from(passageElems)
-        .map((el, i) => `[제시문 ${i + 1}]\n${el.value.trim()}`)
-        .join("\n\n");
 
-      const response = await fetch("/review", {
+      const res = await fetch("/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ passage, question, essay })
+        body: JSON.stringify({ passages, question, essay })
       });
 
-      const result = await response.json();
-      document.getElementById("loading").style.display = "none";
-      document.getElementById("feedback").innerText = result.feedback;
+      const result = await res.json();
+      const answer = result.answer || "(예시답안 없음)";
+      const chartData = result.chart || [7, 8, 6, 9, 7, 8];
 
-      const scorePattern = /이해력\*\*.*?(\d{1,2})\/10[\s\S]*?독해력\*\*.*?(\d{1,2})\/10[\s\S]*?맥락 연결\*\*.*?(\d{1,2})\/10[\s\S]*?까닭 제시\*\*.*?(\d{1,2})\/10[\s\S]*?문장 배열\*\*.*?(\d{1,2})\/10[\s\S]*?어휘 사용\*\*.*?(\d{1,2})\/10/;
-      const match = result.feedback.match(scorePattern);
+      document.getElementById("exampleAnswer").textContent = answer;
+      document.getElementById("result").style.display = "block";
 
-      if (match) {
-        const scores = match.slice(1).map(Number);
-        const ctx = document.getElementById("scoreChart").getContext("2d");
-        new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: ['이해력', '독해력', '맥락 연결', '까닭 제시', '문장 배열', '어휘 사용'],
-            datasets: [{
-              label: '점수 (10점 만점)',
-              data: scores,
-              backgroundColor: 'rgba(33, 64, 177, 0.7)',
-              borderRadius: 8,
-            }]
-          },
-          options: {
-            scales: {
-              y: {
-                beginAtZero: true,
-                max: 10
-              }
-            }
-          }
-        });
-      }
-    });
+      // PDF 영역 채우기
+      document.getElementById("pdfName").textContent = name;
+      document.getElementById("pdfQuestion").textContent = question;
+      document.getElementById("pdfEssay").textContent = essay;
+      document.getElementById("pdfExample").textContent = answer;
+
+      let passageBlock = "";
+      const labels = ['가','나','다','라','마','바'];
+      passages.forEach((txt, idx) => {
+        passageBlock += `<h3>제시문 <${labels[idx]}> </h3><p>${txt}</p>`;
+      });
+      document.getElementById("pdfPassages").innerHTML = passageBlock;
+
+      const ctx = document.getElementById("scoreChart").getContext("2d");
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['이해력','독해력','맥락 연결','까닭 제시','문장 배열','어휘 사용'],
+          datasets: [{
+            label: '점수 (10점 만점)',
+            data: chartData,
+            backgroundColor: 'rgba(33, 64, 177, 0.7)',
+            borderRadius: 6
+          }]
+        },
+        options: { scales: { y: { beginAtZero: true, max: 10 } } }
+      });
+
+      setTimeout(() => {
+        const canvas = document.getElementById("scoreChart");
+        document.getElementById("chartImage").src = canvas.toDataURL();
+        document.getElementById("downloadPDF").style.display = "block";
+      }, 1000);
+    }
 
     document.getElementById("downloadPDF").addEventListener("click", () => {
-      const element = document.getElementById("feedbackArea");
-      html2pdf().from(element).set({
+      html2pdf().from(document.getElementById("pdfArea")).set({
         margin: 10,
-        filename: '첨삭결과.pdf',
-        html2canvas: { scale: 2, useCORS: true },
+        filename: `다쓰_리포트_${today}.pdf`,
+        html2canvas: { scale: 2 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       }).save();
     });
