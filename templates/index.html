@@ -14,37 +14,53 @@
     }
     header img { height: 40px; }
     header h1 { font-size: 1.5rem; color: #2140b1; margin: 0; }
+
     .container {
       max-width: 900px; margin: 30px auto; padding: 30px;
       background: white; border-radius: 16px; box-shadow: 0 6px 24px rgba(0,0,0,0.05);
     }
+
     label { font-weight: 600; margin-top: 1rem; display: block; }
+
     textarea, input {
       width: 100%; padding: 14px; margin-top: 8px;
       border-radius: 12px; border: 1px solid #ccd3e0;
       font-size: 1rem; background: #fdfdfd;
     }
-    .passage-wrapper { margin-bottom: 16px; }
-    .add-passage { color: #2140b1; cursor: pointer; margin-top: 5px; }
+
+    .passage-wrapper {
+      margin-bottom: 16px;
+    }
+
+    .add-passage {
+      color: #2140b1; cursor: pointer; margin-top: 5px;
+    }
+
     button {
       margin-top: 20px; width: 100%; padding: 14px;
       background-color: #2140b1; color: white;
       font-size: 1.1rem; border: none; border-radius: 12px;
       cursor: pointer;
     }
+
     .result-card {
       background: #f9fbfd; border-radius: 16px;
       padding: 20px; margin-top: 30px;
+      color: #000; /* 글자 잘 보이게 */
     }
+
     .eval-box {
       background: #eef3ff; border-left: 6px solid #2140b1;
       padding: 16px; margin-bottom: 16px; border-radius: 12px;
     }
+
     .eval-box strong { font-size: 1.1rem; }
+
     #loading, #error, #downloadPDF {
       display: none; margin-top: 20px;
       text-align: center; color: #2140b1;
     }
+
     #error { color: red; }
   </style>
 </head>
@@ -78,6 +94,8 @@
 
     <div class="result-card" id="result" style="display:none">
       <h3>📋 평가 요약</h3>
+      <p><strong>학생 이름:</strong> <span id="pdfName"></span></p>
+      <p><strong>작성일:</strong> <span id="pdfDate"></span></p>
       <div id="evalSummary"></div>
       <canvas id="scoreChart" style="margin-top:20px;"></canvas>
       <h3 style="margin-top:30px;">📝 예시답안</h3>
@@ -85,17 +103,6 @@
     </div>
 
     <button id="downloadPDF">📄 PDF 저장</button>
-
-    <div id="pdfArea" style="display:none; padding: 30px;">
-      <img src="/static/아카데미창-문서용.png" alt="로고" style="height:40px;">
-      <h2 style="color:#2140b1">다쓰 리포트</h2>
-      <p><strong>학생 이름:</strong> <span id="pdfName"></span></p>
-      <p><strong>작성일:</strong> <span id="pdfDate"></span></p>
-      <div id="pdfEval"></div>
-      <img id="chartImage" style="margin: 20px 0; max-width: 500px;">
-      <h3>예시답안</h3>
-      <p id="pdfExample"></p>
-    </div>
   </div>
 
   <script>
@@ -150,8 +157,7 @@
         document.getElementById("result").style.display = "block";
 
         document.getElementById("pdfName").textContent = name;
-        document.getElementById("pdfExample").textContent = example;
-        document.getElementById("pdfEval").innerHTML = summary;
+        document.getElementById("downloadPDF").style.display = "block";
 
         const ctx = document.getElementById("scoreChart").getContext("2d");
         new Chart(ctx, {
@@ -170,8 +176,11 @@
 
         setTimeout(() => {
           const canvas = document.getElementById("scoreChart");
-          document.getElementById("chartImage").src = canvas.toDataURL();
-          document.getElementById("downloadPDF").style.display = "block";
+          const chartImage = canvas.toDataURL();
+          const imgEl = document.createElement("img");
+          imgEl.src = chartImage;
+          imgEl.style = "margin: 20px 0; max-width: 500px;";
+          document.getElementById("result").appendChild(imgEl);
         }, 1000);
 
       } catch (err) {
@@ -183,7 +192,7 @@
     }
 
     document.getElementById("downloadPDF").addEventListener("click", () => {
-      html2pdf().from(document.getElementById("pdfArea")).set({
+      html2pdf().from(document.getElementById("result")).set({
         margin: 10,
         filename: `다쓰_리포트_${today}.pdf`,
         html2canvas: { scale: 2 },
