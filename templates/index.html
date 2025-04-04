@@ -14,11 +14,14 @@
     }
     header img { height: 40px; }
     header h1 { font-size: 1.5rem; color: #2140b1; margin: 0; }
+
     .container {
       max-width: 900px; margin: 30px auto; padding: 30px;
       background: white; border-radius: 16px; box-shadow: 0 6px 24px rgba(0,0,0,0.05);
     }
+
     label { font-weight: 600; margin-top: 1rem; display: block; }
+
     textarea, input {
       width: 100%; padding: 14px; margin-top: 8px;
       border-radius: 12px; border: 1px solid #ccd3e0;
@@ -26,29 +29,27 @@
     }
 
     .passage-wrapper {
-      position: relative;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
 
-    .passage-wrapper textarea {
-      width: 100%;
-      padding: 14px;
-      border-radius: 12px;
-      border: 1px solid #ccd3e0;
-      font-size: 1rem;
-      background: #fdfdfd;
-      resize: vertical;
+    .passage-actions {
+      text-align: right;
+      margin-top: 4px;
     }
 
     .passage-wrapper .delete-btn {
-      position: absolute;
-      top: 10px;
-      right: 12px;
       background: none;
       border: none;
-      color: red;
-      font-size: 1.2rem;
+      color: #d02c2c;
+      font-size: 0.9rem;
       cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+
+    .passage-wrapper .delete-btn:hover {
+      background: #ffecec;
     }
 
     .add-passage {
@@ -95,7 +96,9 @@
     <div id="passages">
       <div class="passage-wrapper">
         <textarea class="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>
-        <button class="delete-btn" onclick="deletePassage(this)">🗑</button>
+        <div class="passage-actions">
+          <button class="delete-btn" onclick="deletePassage(this)">🗑 제시문 삭제</button>
+        </div>
       </div>
     </div>
     <div class="add-passage" onclick="addPassage()">➕ 제시문 추가</div>
@@ -143,13 +146,15 @@
       div.className = "passage-wrapper";
       div.innerHTML = `
         <textarea class="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>
-        <button class="delete-btn" onclick="deletePassage(this)">🗑</button>
+        <div class="passage-actions">
+          <button class="delete-btn" onclick="deletePassage(this)">🗑 제시문 삭제</button>
+        </div>
       `;
       document.getElementById("passages").appendChild(div);
     }
 
     function deletePassage(btn) {
-      btn.parentElement.remove();
+      btn.closest(".passage-wrapper").remove();
     }
 
     async function submitEssay() {
