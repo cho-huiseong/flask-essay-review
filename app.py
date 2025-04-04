@@ -1,12 +1,12 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-import openai
+from openai import OpenAI
 import os
 
 app = Flask(__name__)
 CORS(app)
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @app.route("/")
 def index():
@@ -15,7 +15,7 @@ def index():
 @app.route("/review", methods=["POST"])
 def review():
     data = request.get_json()
-    print("✅ 받은 데이터:", data)  # 디버깅 로그
+    print("✅ 받은 데이터:", data)
 
     passages = data.get("passages", [])
     question = data.get("question", "")
@@ -69,7 +69,7 @@ def review():
 """
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4-turbo",
             messages=[
                 {"role": "system", "content": "당신은 초등 논술 선생님입니다. 평가와 예시답안을 친절하고 구체적으로 작성합니다."},
@@ -80,7 +80,7 @@ def review():
         )
 
         content = response.choices[0].message.content
-        print("💬 GPT 응답 원문:\n", content)  # 디버깅 로그
+        print("💬 GPT 응답 원문:\n", content)
 
         sections = {"논리력": {}, "독해력": {}, "구성력": {}, "표현력": {}, "예시답안": ""}
         current = None
