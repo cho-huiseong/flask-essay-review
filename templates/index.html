@@ -162,6 +162,9 @@
   </div>
 
   <script>
+    let savedScores = [];
+    let savedReasons = {};
+
     function addPassage() {
       const wrapper = document.createElement("div");
       wrapper.innerHTML = '<textarea class="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>';
@@ -175,8 +178,32 @@
     }
 
     function showExample() {
-      document.getElementById("mainSection").style.display = "none";
       document.getElementById("exampleSection").style.display = "block";
+      document.getElementById("mainSection").style.display = "none";
+
+      const passages = [...document.querySelectorAll(".passage")].map(p => p.value).filter(p => p.trim());
+      const question = document.getElementById("question").value;
+      const essay = document.getElementById("essay").value;
+      const charBase = document.getElementById("charBase").value;
+      const charRange = document.getElementById("charRange").value;
+
+      fetch("/example", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          passages, question, essay,
+          scores: savedScores,
+          reasons: savedReasons,
+          charBase, charRange
+        })
+      })
+        .then(res => res.json())
+        .then(result => {
+          document.getElementById("exampleAnswer").textContent = result.example || "예시답안 생성 실패";
+        })
+        .catch(() => {
+          document.getElementById("exampleAnswer").textContent = "예시답안 생성 중 오류가 발생했습니다.";
+        });
     }
 
     function backToMain() {
@@ -216,11 +243,13 @@
         const reasons = result.reasons;
         const example = result.example;
 
+        savedScores = scores;
+        savedReasons = reasons;
+
         const labels = ['논리력','독해력','구성력','표현력'];
         const summary = labels.map((label, i) =>
           `<div class='score-block'><strong>${label} (${scores[i]}점)</strong>${reasons[label]}</div>`).join('');
         document.getElementById("evalSummary").innerHTML = summary;
-        document.getElementById("exampleAnswer").textContent = example;
 
         const ctx = document.getElementById("scoreChart").getContext("2d");
         new Chart(ctx, {

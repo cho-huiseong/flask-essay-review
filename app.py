@@ -13,7 +13,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 def index():
     return render_template("index.html")
 
-# 1단계 평가 요청
+# 평가 요청
 @app.route("/review", methods=["POST"])
 def review():
     data = request.get_json()
@@ -58,8 +58,31 @@ def review():
 
 ---
 
-위 논술문에 대해 각 평가 항목마다 점수(10점 만점)와 구체적인 이유를 작성해 주세요.  
-※ 지금은 예시답안을 작성하지 마세요.
+❗ 아래 형식을 반드시 그대로 지켜서 작성해 주세요:
+
+[논리력]  
+점수: (0~10 사이의 정수만)  
+이유: (한 문장 이상 구체적으로 작성)  
+
+[독해력]  
+점수: (정수만)  
+이유: ...
+
+[구성력]  
+점수: (정수만)  
+이유: ...
+
+[표현력]  
+점수: (정수만)  
+이유: ...
+
+예시:
+[논리력]  
+점수: 8  
+이유: 논제를 정확히 이해했고 중심 주장이 분명하게 드러남
+
+❗ 다른 형식은 사용하지 말고 위와 같이 **숫자 점수와 이유를 항목별로 분리해서** 반드시 작성하세요.  
+예시답안은 지금 작성하지 마세요.
 """
 
     try:
@@ -86,10 +109,9 @@ def review():
             elif line.startswith("[구성력]"): current = "구성력"
             elif line.startswith("[표현력]"): current = "표현력"
             elif current:
-                if "점수" in line:
-                    score_match = re.search(r"(\\d{1,2})", line)
-                    if score_match:
-                        sections[current]["score"] = int(score_match.group(1))
+                score_match = re.search(r"(\\d{1,2})", line)
+                if score_match and "score" not in sections[current]:
+                    sections[current]["score"] = int(score_match.group(1))
                 elif "이유" in line:
                     sections[current]["reason"] = line.split(":", 1)[-1].strip()
                 elif "score" not in sections[current] and "reason" not in sections[current]:
@@ -107,7 +129,7 @@ def review():
     except Exception as e:
         return jsonify({"error": str(e)})
 
-# 2단계 예시답안 요청
+# 예시답안 요청
 @app.route("/example", methods=["POST"])
 def example():
     data = request.get_json()
@@ -116,6 +138,8 @@ def example():
     essay = data.get("essay", "")
     scores = data.get("scores", [])
     reasons = data.get("reasons", {})
+    char_base = data.get("charBase", "700")
+    char_range = data.get("charRange", "50")
 
     labels = ['가','나','다','라','마','바']
     passage_text = "\n".join([f"제시문 <{labels[i]}>: {p}" for i, p in enumerate(passages)])
@@ -135,7 +159,7 @@ def example():
 
 [조건]
 - 아래 논술문을 참고해서, 평가 결과를 반영해 더 나은 예시답안을 작성할 것
-- 글자 수: 700 ± 50자 (공백 포함 기준)
+- 글자 수: {char_base} ± {char_range}자 (공백 포함 기준)
 - 학생 말투 그대로 유지
 - 절대 요약하지 말고 풍부하게 작성할 것
 
@@ -149,6 +173,8 @@ def example():
 
 논술문:
 {essay}
+
+※ 지금은 예시답안만 작성해주세요.
 """
 
     try:
