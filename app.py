@@ -109,12 +109,13 @@ def review():
             elif line.startswith("[구성력]"): current = "구성력"
             elif line.startswith("[표현력]"): current = "표현력"
             elif current:
-                score_match = re.search(r"(\\d{1,2})", line)
-                if score_match and "score" not in sections[current]:
-                    sections[current]["score"] = int(score_match.group(1))
-                elif "이유" in line:
+                if "score" not in sections[current]:
+                    score_match = re.search(r"(\d{1,2})", line)
+                    if score_match:
+                        sections[current]["score"] = int(score_match.group(1))
+                if "이유" in line:
                     sections[current]["reason"] = line.split(":", 1)[-1].strip()
-                elif "score" not in sections[current] and "reason" not in sections[current]:
+                elif "reason" not in sections[current]:
                     sections[current]["reason"] = line
 
         for k in sections:
