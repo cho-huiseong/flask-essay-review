@@ -61,11 +61,12 @@ def review():
 
 ❗ 다음의 절차를 반드시 지켜서 작업하세요:
 
-1. 위 네 가지 평가 항목에 대해 각각 점수(10점 만점)와 구체적인 이유를 작성합니다.
+1. 위 네 가지 평가 항목에 대해 각각 점수(10점 만점)와 구체적인 이유를 작성합니다.  
    생략하지 말고 각 항목마다 정확하게 작성해 주세요.
 
 2. 예시답안을 작성합니다. 다음 기준을 반드시 지켜 주세요:
-  - 글자 수: 최소 {min_chars}자 이상, 최대 {max_chars}자 이하 (공백 포함 기준)
+  - 글자 수: 최소 {min_chars}자 이상, 최대 {max_chars}자 이하  
+    ✅ 이 글자 수는 **공백 포함 기준**이며, 띄어쓰기도 1자로 계산됩니다.
   - 말투: 학생의 논술문과 동일한 말투, 어투, 문장 스타일, 어휘 수준 유지
   - GPT의 일반적인 말투(공손한 설명체) 사용 금지
   - 절대로 요약하지 말고, 풍부하고 충분하게 작성할 것
@@ -95,6 +96,11 @@ def review():
             max_tokens=2000
         )
 
+        # ✅ GPT 응답 전체 콘솔 출력 (디버깅용)
+        print("\n🔎 GPT 응답 시작 ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓")
+        print(response.choices[0].message.content)
+        print("🔎 GPT 응답 끝 ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑\n")
+
         content = response.choices[0].message.content
 
         sections = {"논리력": {}, "독해력": {}, "구성력": {}, "표현력": {}, "예시답안": ""}
@@ -109,7 +115,7 @@ def review():
             elif line.startswith("[예시답안]"): current = "예시답안"
             elif current and current != "예시답안":
                 if "점수" in line:
-                    score_match = re.search(r"(\\d{1,2})", line)
+                    score_match = re.search(r"(\d{{1,2}})", line)
                     if score_match:
                         sections[current]["score"] = int(score_match.group(1))
                 elif "이유" in line:
