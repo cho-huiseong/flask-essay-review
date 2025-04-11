@@ -96,7 +96,6 @@ def review():
             max_tokens=2000
         )
 
-        # ✅ GPT 응답 전체 콘솔 출력 (디버깅용)
         print("\n🔎 GPT 응답 시작 ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓")
         print(response.choices[0].message.content)
         print("🔎 GPT 응답 끝 ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑\n")
@@ -115,7 +114,7 @@ def review():
             elif line.startswith("[예시답안]"): current = "예시답안"
             elif current and current != "예시답안":
                 if "점수" in line:
-                    score_match = re.search(r"(\d{{1,2}})", line)
+                    score_match = re.search(r"(\d{1,2})", line)  # ✅ 이 부분 수정
                     if score_match:
                         sections[current]["score"] = int(score_match.group(1))
                 elif "이유" in line:
