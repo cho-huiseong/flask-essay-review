@@ -7,60 +7,41 @@
   <script src="https://unpkg.com/html2pdf.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    body { margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; background: #f5f7fb; }
+    body { margin: 0; padding: 0; font-family: 'Pretendard', sans-serif; background: #f9fafc; }
     header {
       background: white; padding: 20px 40px; display: flex; align-items: center;
-      gap: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      gap: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
     header img { height: 40px; }
     header h1 { font-size: 1.5rem; color: #2140b1; margin: 0; }
-
     .container {
       max-width: 900px; margin: 30px auto; padding: 30px;
-      background: white; border-radius: 16px; box-shadow: 0 6px 24px rgba(0,0,0,0.05);
+      background: white; border-radius: 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.06);
     }
-
     label { font-weight: 600; margin-top: 1rem; display: block; }
-
     textarea, input {
-      width: 100%; padding: 14px; margin-top: 8px;
-      border-radius: 12px; border: 1px solid #ccd3e0;
+      width: 100%; padding: 12px; margin-top: 6px;
+      border-radius: 10px; border: 1px solid #ccd3e0;
       font-size: 1rem; background: #fdfdfd;
     }
-
-    .passage-wrapper {
-      margin-bottom: 16px;
-    }
-
-    .add-passage {
-      color: #2140b1; cursor: pointer; margin-top: 5px;
-    }
-
+    .add-passage { color: #2140b1; cursor: pointer; margin-top: 8px; font-size: 0.95rem; }
     button {
       margin-top: 20px; width: 100%; padding: 14px;
-      background-color: #2140b1; color: white;
-      font-size: 1.1rem; border: none; border-radius: 12px;
-      cursor: pointer;
+      background-color: #2140b1; color: white; font-size: 1.1rem; border: none;
+      border-radius: 12px; cursor: pointer;
     }
-
     .result-card {
-      background: #f9fbfd; border-radius: 16px;
+      background: #f4f7fd; border-radius: 16px;
       padding: 20px; margin-top: 30px;
-      color: #000; /* 글자 잘 보이게 */
     }
-
     .eval-box {
-      background: #eef3ff; border-left: 6px solid #2140b1;
+      background: #e9effc; border-left: 6px solid #2140b1;
       padding: 16px; margin-bottom: 16px; border-radius: 12px;
     }
-
-    .eval-box strong { font-size: 1.1rem; }
-
     #loading, #error, #downloadPDF {
-      display: none; margin-top: 20px;
-      text-align: center; color: #2140b1;
+      display: none; margin-top: 20px; text-align: center; color: #2140b1;
     }
-
     #error { color: red; }
   </style>
 </head>
@@ -70,21 +51,19 @@
     <h1>다쓰 리포트</h1>
   </header>
   <div class="container">
-    <label for="studentName">학생 이름</label>
+    <label>학생 이름</label>
     <input id="studentName" type="text" placeholder="예: 김민준">
 
     <label>제시문</label>
     <div id="passages">
-      <div class="passage-wrapper">
-        <textarea class="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>
-      </div>
+      <textarea class="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>
     </div>
     <div class="add-passage" onclick="addPassage()">➕ 제시문 추가</div>
 
-    <label for="question">질문</label>
+    <label>질문</label>
     <textarea id="question" rows="2"></textarea>
 
-    <label for="essay">논술문</label>
+    <label>논술문</label>
     <textarea id="essay" rows="6"></textarea>
 
     <button onclick="submitEssay()">📝 리포트 받기</button>
@@ -94,8 +73,6 @@
 
     <div class="result-card" id="result" style="display:none">
       <h3>📋 평가 요약</h3>
-      <p><strong>학생 이름:</strong> <span id="pdfName"></span></p>
-      <p><strong>작성일:</strong> <span id="pdfDate"></span></p>
       <div id="evalSummary"></div>
       <canvas id="scoreChart" style="margin-top:20px;"></canvas>
       <h3 style="margin-top:30px;">📝 예시답안</h3>
@@ -107,13 +84,11 @@
 
   <script>
     const today = new Date().toISOString().split('T')[0];
-    document.getElementById("pdfDate").textContent = today;
 
     function addPassage() {
-      const div = document.createElement("div");
-      div.className = "passage-wrapper";
-      div.innerHTML = `<textarea class="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>`;
-      document.getElementById("passages").appendChild(div);
+      const wrapper = document.createElement("div");
+      wrapper.innerHTML = '<textarea class="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>';
+      document.getElementById("passages").appendChild(wrapper);
     }
 
     async function submitEssay() {
@@ -141,7 +116,6 @@
         });
 
         const result = await res.json();
-
         if (result.error) throw new Error(result.error);
 
         const scores = result.scores;
@@ -155,9 +129,6 @@
         document.getElementById("evalSummary").innerHTML = summary;
         document.getElementById("exampleAnswer").textContent = example;
         document.getElementById("result").style.display = "block";
-
-        document.getElementById("pdfName").textContent = name;
-        document.getElementById("downloadPDF").style.display = "block";
 
         const ctx = document.getElementById("scoreChart").getContext("2d");
         new Chart(ctx, {
@@ -176,12 +147,8 @@
 
         setTimeout(() => {
           const canvas = document.getElementById("scoreChart");
-          const chartImage = canvas.toDataURL();
-          const imgEl = document.createElement("img");
-          imgEl.src = chartImage;
-          imgEl.style = "margin: 20px 0; max-width: 500px;";
-          document.getElementById("result").appendChild(imgEl);
-        }, 1000);
+          document.getElementById("downloadPDF").style.display = "block";
+        }, 800);
 
       } catch (err) {
         document.getElementById("error").style.display = "block";
