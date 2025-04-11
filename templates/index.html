@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>다쓰 리포트</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
@@ -11,10 +11,8 @@
       --primary: #2140b1;
       --bg: #f9fafc;
       --card: #ffffff;
-      --highlight: #e9effc;
       --border: #e5e7eb;
     }
-    * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: 'Pretendard', sans-serif;
@@ -34,56 +32,77 @@
       font-weight: 700;
     }
     .layout {
-      max-width: 960px;
+      display: flex;
+      max-width: 1200px;
       margin: 40px auto;
-      background: var(--card);
+      gap: 40px;
+    }
+    .left, .right {
+      flex: 1;
+      background: white;
+      padding: 30px;
       border-radius: 16px;
-      padding: 40px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.05);
     }
     label {
       font-weight: 600;
-      margin-top: 1rem;
+      margin-top: 1.2rem;
       display: block;
-      font-size: 0.95rem;
     }
-    input, textarea {
+    textarea, input {
       width: 100%;
       padding: 12px;
       margin-top: 6px;
-      border-radius: 10px;
+      border-radius: 12px;
       border: 1px solid var(--border);
       font-size: 1rem;
-      background: white;
+      background: #fff;
       resize: vertical;
     }
+    .add-passage {
+      color: var(--primary);
+      font-size: 0.9rem;
+      margin-top: 6px;
+      cursor: pointer;
+    }
     button {
-      margin-top: 20px;
+      margin-top: 24px;
       width: 100%;
-      padding: 12px;
+      padding: 14px;
       background-color: var(--primary);
       color: white;
       font-size: 1rem;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       cursor: pointer;
     }
-    .card {
-      background: var(--card);
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-      padding: 20px;
-      margin-bottom: 16px;
+    #loading, #error {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 0.9rem;
+    }
+    #error { color: red; }
+    #resultCard { margin-top: 32px; }
+    .score-block {
+      margin-bottom: 20px;
+    }
+    .score-block strong {
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 600;
     }
     .chart-wrap {
       margin-top: 30px;
-      background: var(--card);
-      border-radius: 12px;
-      padding: 20px;
     }
-    #loading, #error { display: none; text-align: center; margin-top: 16px; }
-    #loading { color: #555; }
-    #error { color: red; font-weight: bold; }
+    #exampleSection {
+      display: none;
+      max-width: 800px;
+      margin: 40px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+    }
   </style>
 </head>
 <body>
@@ -91,51 +110,54 @@
     <h1>아카데미창 · 다쓰 리포트</h1>
   </header>
 
-  <!-- Step 1: 입력 및 결과 요약 -->
-  <div class="layout" id="step1">
-    <label>학생 이름</label>
-    <input id="studentName" type="text" placeholder="예: 김민준">
+  <div class="layout" id="mainSection">
+    <!-- 좌측 입력 -->
+    <div class="left">
+      <label>학생 이름</label>
+      <input id="studentName" type="text" placeholder="예: 김민준" />
 
-    <label>제시문</label>
-    <div id="passages">
-      <textarea class="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>
-    </div>
-    <div style="margin-top: 8px; font-size: 0.9rem; color: var(--primary); cursor: pointer;" onclick="addPassage()">➕ 제시문 추가</div>
-
-    <label>질문</label>
-    <textarea id="question" rows="2"></textarea>
-
-    <label>글자 수 제한</label>
-    <div style="display:flex; gap:10px;">
-      <input id="charBase" type="number" placeholder="기준 글자 수">
-      <input id="charRange" type="number" placeholder="허용 범위">
-    </div>
-
-    <label>논술문</label>
-    <textarea id="essay" rows="6" oninput="updateCharCount()"></textarea>
-    <div id="charCount" style="font-size:0.85rem; color:#555; margin-top:6px;"></div>
-
-    <button onclick="submitEssay()">📝 리포트 받기</button>
-    <div id="loading">⏳ 처리 중입니다. 잠시만 기다려주세요...</div>
-    <div id="error">❗ 오류가 발생했습니다. 다시 시도해 주세요.</div>
-
-    <div class="card" id="resultCard" style="display:none">
-      <h3>📋 평가 요약</h3>
-      <div id="evalSummary"></div>
-      <div class="chart-wrap">
-        <canvas id="scoreChart"></canvas>
+      <label>제시문</label>
+      <div id="passages">
+        <textarea class="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>
       </div>
-      <button onclick="goToStep2()">예시답안 보기</button>
+      <div class="add-passage" onclick="addPassage()">➕ 제시문 추가</div>
+
+      <label>질문</label>
+      <textarea id="question" rows="2"></textarea>
+
+      <label>글자 수 제한</label>
+      <div style="display:flex; gap:10px;">
+        <input id="charBase" type="number" placeholder="기준 글자 수 (예: 700)" />
+        <input id="charRange" type="number" placeholder="허용 범위 (예: 50)" />
+      </div>
+
+      <label>논술문</label>
+      <textarea id="essay" rows="6" oninput="updateCharCount()"></textarea>
+      <div id="charCount" style="margin-top:6px; font-size:0.85rem; color:#555;"></div>
+
+      <button onclick="submitEssay()">📝 리포트 받기</button>
+      <div id="loading">⏳ 처리 중입니다. 잠시만 기다려주세요...</div>
+      <div id="error">❗ 오류가 발생했습니다. 다시 시도해 주세요.</div>
+    </div>
+
+    <!-- 우측 결과 -->
+    <div class="right">
+      <div id="resultCard" style="display:none">
+        <h3>📋 평가 요약</h3>
+        <div id="evalSummary"></div>
+        <div class="chart-wrap">
+          <canvas id="scoreChart"></canvas>
+        </div>
+        <button onclick="showExample()">예시답안 보기</button>
+      </div>
     </div>
   </div>
 
-  <!-- Step 2: 예시답안 보기 -->
-  <div class="layout" id="step2" style="display:none">
-    <div class="card">
-      <h3>📝 예시답안</h3>
-      <p id="exampleAnswer"></p>
-    </div>
-    <button onclick="goToStep1()">⬅ 돌아가기</button>
+  <!-- 예시답안 섹션 -->
+  <div id="exampleSection">
+    <h3>📝 예시답안</h3>
+    <p id="exampleAnswer"></p>
+    <button onclick="backToMain()">⬅ 돌아가기</button>
   </div>
 
   <script>
@@ -144,35 +166,23 @@
       wrapper.innerHTML = '<textarea class="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>';
       document.getElementById("passages").appendChild(wrapper);
     }
+
     function updateCharCount() {
-      const base = parseInt(document.getElementById("charBase").value);
-      const range = parseInt(document.getElementById("charRange").value);
       const text = document.getElementById("essay").value;
-      const count = text.replace(/\s/g, '').length;
-      const display = document.getElementById("charCount");
-      let limitText = `현재 글자 수: ${count}자`;
-      if (!isNaN(base) && !isNaN(range)) {
-        const min = base - range;
-        const max = base + range;
-        if (count < min || count > max) {
-          limitText += ` ❗ ${min}~${max}자 범위를 벗어났어요`;
-          display.style.color = 'red';
-        } else {
-          display.style.color = '#2140b1';
-        }
-      } else {
-        display.style.color = '#555';
-      }
-      display.textContent = limitText;
+      const count = text.replace(/\\s/g, '').length;
+      document.getElementById("charCount").textContent = `현재 글자 수: ${count}자`;
     }
-    function goToStep2() {
-      document.getElementById("step1").style.display = "none";
-      document.getElementById("step2").style.display = "block";
+
+    function showExample() {
+      document.getElementById("mainSection").style.display = "none";
+      document.getElementById("exampleSection").style.display = "block";
     }
-    function goToStep1() {
-      document.getElementById("step2").style.display = "none";
-      document.getElementById("step1").style.display = "block";
+
+    function backToMain() {
+      document.getElementById("exampleSection").style.display = "none";
+      document.getElementById("mainSection").style.display = "flex";
     }
+
     async function submitEssay() {
       document.getElementById("resultCard").style.display = "none";
       document.getElementById("loading").style.display = "block";
@@ -196,6 +206,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ passages, question, essay, charBase, charRange })
         });
+
         const result = await res.json();
         if (result.error) throw new Error(result.error);
 
@@ -205,11 +216,9 @@
 
         const labels = ['논리력','독해력','구성력','표현력'];
         const summary = labels.map((label, i) =>
-          `<div style='margin-bottom:14px'><strong>${label} (${scores[i]}점)</strong><br>${reasons[label]}</div>`).join('');
-
+          `<div class='score-block'><strong>${label} (${scores[i]}점)</strong>${reasons[label]}</div>`).join('');
         document.getElementById("evalSummary").innerHTML = summary;
         document.getElementById("exampleAnswer").textContent = example;
-        document.getElementById("resultCard").style.display = "block";
 
         const ctx = document.getElementById("scoreChart").getContext("2d");
         new Chart(ctx, {
@@ -225,9 +234,12 @@
           },
           options: { scales: { y: { beginAtZero: true, max: 10 } } }
         });
+
+        document.getElementById("resultCard").style.display = "block";
+
       } catch (err) {
-        document.getElementById("error").style.display = "block";
         console.error(err);
+        document.getElementById("error").style.display = "block";
       } finally {
         document.getElementById("loading").style.display = "none";
       }
