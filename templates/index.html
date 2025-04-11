@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>다쓰 리포트</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/html2pdf.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -112,7 +113,6 @@
   </header>
 
   <div class="layout" id="mainSection">
-    <!-- 좌측 입력 -->
     <div class="left">
       <label>학생 이름</label>
       <input id="studentName" type="text" placeholder="예: 김민준" />
@@ -141,7 +141,6 @@
       <div id="error">❗ 오류가 발생했습니다. 다시 시도해 주세요.</div>
     </div>
 
-    <!-- 우측 결과 -->
     <div class="right">
       <div id="resultCard" style="display:none">
         <h3>📋 평가 요약</h3>
@@ -149,12 +148,13 @@
         <div class="chart-wrap">
           <canvas id="scoreChart"></canvas>
         </div>
+
         <button onclick="showExample()">예시답안 보기</button>
+        <button id="downloadPDF" style="display:none; margin-top:10px;" onclick="downloadPDF()">📄 PDF 저장</button>
       </div>
     </div>
   </div>
 
-  <!-- 예시답안 섹션 -->
   <div id="exampleSection">
     <h3>📝 예시답안</h3>
     <p id="exampleAnswer"></p>
@@ -162,8 +162,8 @@
   </div>
 
   <script>
-    let savedScores = [];
-    let savedReasons = {};
+    let savedScores = [], savedReasons = {};
+    const today = new Date().toISOString().split('T')[0];
 
     function addPassage() {
       const wrapper = document.createElement("div");
@@ -241,7 +241,6 @@
 
         const scores = result.scores;
         const reasons = result.reasons;
-        const example = result.example;
 
         savedScores = scores;
         savedReasons = reasons;
@@ -269,6 +268,7 @@
         document.getElementById("loading").style.display = "none";
         document.getElementById("error").style.display = "none";
         document.getElementById("resultCard").style.display = "block";
+        document.getElementById("downloadPDF").style.display = "block";
 
       } catch (err) {
         console.error(err);
@@ -277,6 +277,15 @@
         document.getElementById("exampleSection").style.display = "none";
         document.getElementById("error").style.display = "block";
       }
+    }
+
+    function downloadPDF() {
+      html2pdf().from(document.getElementById("resultCard")).set({
+        margin: 10,
+        filename: `다쓰_리포트_${today}.pdf`,
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      }).save();
     }
   </script>
 </body>
