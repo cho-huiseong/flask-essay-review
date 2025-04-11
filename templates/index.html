@@ -1,253 +1,77 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>다쓰 리포트</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://unpkg.com/html2pdf.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
-    :root {
-      --primary: #2140b1;
-      --bg-light: #f9fafc;
-      --card-bg: #ffffff;
-      --border: #e0e6ed;
-      --highlight: #e9effc;
-    }
-    * { box-sizing: border-box; }
     body {
-      margin: 0;
-      font-family: 'Pretendard', sans-serif;
-      background: var(--bg-light);
-      color: #1a1a1a;
+      font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
     }
-    header {
-      background: white;
-      padding: 20px 40px;
-      display: flex;
-      align-items: center;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    .report-card {
+      border-radius: 1rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
-    header img { height: 36px; margin-right: 10px; }
-    header h1 { font-size: 1.4rem; color: var(--primary); margin: 0; font-weight: 600; }
-    .container {
-      max-width: 960px;
-      margin: 40px auto;
-      background: var(--card-bg);
-      border-radius: 16px;
-      padding: 40px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-    }
-    label {
-      font-weight: 600;
-      margin-top: 1.6rem;
-      display: block;
-    }
-    textarea, input {
-      width: 100%;
-      padding: 14px;
-      margin-top: 6px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      font-size: 1rem;
-      background: #fefefe;
-      resize: vertical;
-    }
-    .row {
-      display: flex;
-      gap: 16px;
-    }
-    .row input {
-      flex: 1;
-    }
-    .add-passage {
-      color: var(--primary);
-      cursor: pointer;
-      margin-top: 10px;
-      font-size: 0.95rem;
-    }
-    button {
-      margin-top: 28px;
-      width: 100%;
-      padding: 14px;
-      background-color: var(--primary);
-      color: white;
-      font-size: 1.05rem;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    button:hover {
-      background-color: #1a3194;
-    }
-    .result-card {
-      background: var(--highlight);
-      border-radius: 14px;
-      padding: 28px;
-      margin-top: 40px;
-    }
-    .eval-box {
-      background: white;
-      border-left: 6px solid var(--primary);
-      padding: 16px;
-      margin-bottom: 16px;
-      border-radius: 10px;
-    }
-    #loading, #error, #downloadPDF {
-      display: none;
-      margin-top: 20px;
-      text-align: center;
-    }
-    #loading { color: #555; }
-    #error { color: red; font-weight: bold; }
   </style>
 </head>
-<body>
-  <header>
-    <img src="/static/아카데미창-문서용.png" alt="로고">
-    <h1>다쓰 리포트</h1>
+<body class="bg-gray-50 text-gray-800 p-6">
+  <!-- 상단 로고 -->
+  <header class="flex justify-between items-center mb-8">
+    <h1 class="text-2xl font-bold">아카데미창</h1>
+    <span class="text-sm text-gray-500">Powered by 다쓰</span>
   </header>
-  <div class="container">
-    <label>학생 이름</label>
-    <input id="studentName" type="text" placeholder="예: 김민준">
 
-    <label>제시문</label>
-    <div id="passages">
-      <textarea class="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>
-    </div>
-    <div class="add-passage" onclick="addPassage()">➕ 제시문 추가</div>
-
-    <label>질문</label>
-    <textarea id="question" rows="2"></textarea>
-
-    <label>글자 수 제한</label>
-    <div class="row">
-      <input id="charBase" type="number" placeholder="기준 글자 수 (예: 700)">
-      <input id="charRange" type="number" placeholder="허용 범위 (예: 50)">
-    </div>
-
-    <label>논술문</label>
-    <textarea id="essay" rows="6" oninput="updateCharCount()"></textarea>
-    <div id="charCount" style="margin-top:8px; font-size:0.9rem; color: #555;"></div>
-
-    <button onclick="submitEssay()">📝 리포트 받기</button>
-
-    <div id="loading">⏳ 처리 중입니다. 잠시만 기다려주세요...</div>
-    <div id="error">❗ 오류가 발생했습니다. 다시 시도해 주세요.</div>
-
-    <div class="result-card" id="result" style="display:none">
-      <h3>📋 평가 요약</h3>
-      <div id="evalSummary"></div>
-      <canvas id="scoreChart" style="margin-top:20px;"></canvas>
-      <h3 style="margin-top:30px;">📝 예시답안</h3>
-      <p id="exampleAnswer"></p>
+  <!-- 1단 평가 카드 + 그래프 -->
+  <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+    <!-- 평가 카드 -->
+    <div class="space-y-4">
+      <div class="report-card bg-white p-6">
+        <h2 class="text-lg font-semibold mb-2">논리력</h2>
+        <p class="text-sm">논제가 물어본 것에 정확히 답했는가? 주장을 밝혔는가?</p>
+        <p class="text-blue-600 font-bold mt-2">점수: 4점</p>
+      </div>
+      <div class="report-card bg-white p-6">
+        <h2 class="text-lg font-semibold mb-2">독해력</h2>
+        <p class="text-sm">제시문에 근거한 구성인가? 제시문 분석이 정확한가?</p>
+        <p class="text-blue-600 font-bold mt-2">점수: 3점</p>
+      </div>
+      <div class="report-card bg-white p-6">
+        <h2 class="text-lg font-semibold mb-2">구성력</h2>
+        <p class="text-sm">문단이 잘 나뉘고 논리적 흐름이 자연스러운가?</p>
+        <p class="text-blue-600 font-bold mt-2">점수: 4점</p>
+      </div>
+      <div class="report-card bg-white p-6">
+        <h2 class="text-lg font-semibold mb-2">표현력</h2>
+        <p class="text-sm">문법에 맞는 문장과 적절한 어휘를 사용했는가?</p>
+        <p class="text-blue-600 font-bold mt-2">점수: 5점</p>
+      </div>
     </div>
 
-    <button id="downloadPDF">📄 PDF 저장</button>
+    <!-- 점수 그래프 placeholder -->
+    <div class="bg-white rounded-2xl shadow-md p-6 flex items-center justify-center">
+      <p class="text-gray-400">[점수 그래프 차트 자리]</p>
+    </div>
+  </section>
+
+  <!-- 2단 예시답안 영역 -->
+  <section class="bg-white rounded-2xl shadow-md p-6 space-y-4">
+    <div class="flex justify-between items-center">
+      <h2 class="text-xl font-semibold">예시답안</h2>
+      <button class="text-red-500 hover:underline text-sm">제시문 삭제</button>
+    </div>
+    <p class="text-sm leading-relaxed">
+      저는 제시문에서 ○○가 강조한 '△△'라는 관점을 바탕으로 ... (예시답안 내용이 여기에 들어갑니다)
+    </p>
+    <!-- 에러 메시지 -->
+    <p class="text-red-500 text-sm hidden" id="error-message">에러가 발생했습니다. 다시 시도해주세요.</p>
+    <!-- 로딩 상태 -->
+    <p class="text-gray-400 text-sm hidden" id="loading-message">로딩 중입니다...</p>
+  </section>
+
+  <!-- PDF 저장 버튼 (추후 기능 연결 예정) -->
+  <div class="flex justify-end mt-6">
+    <button class="bg-blue-600 text-white px-6 py-2 rounded-xl shadow-md hover:bg-blue-700 transition">PDF 저장</button>
   </div>
-  <script>
-    const today = new Date().toISOString().split('T')[0];
-    function addPassage() {
-      const wrapper = document.createElement("div");
-      wrapper.innerHTML = '<textarea class="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>';
-      document.getElementById("passages").appendChild(wrapper);
-    }
-    function updateCharCount() {
-      const base = parseInt(document.getElementById("charBase").value);
-      const range = parseInt(document.getElementById("charRange").value);
-      const text = document.getElementById("essay").value;
-      const count = text.replace(/\s/g, '').length;
-      const display = document.getElementById("charCount");
-      let limitText = `현재 글자 수: ${count}자`;
-      if (!isNaN(base) && !isNaN(range)) {
-        const min = base - range;
-        const max = base + range;
-        if (count < min || count > max) {
-          limitText += ` ❗ ${min}~${max}자 범위를 벗어났어요`;
-          display.style.color = 'red';
-        } else {
-          display.style.color = '#2140b1';
-        }
-      } else {
-        display.style.color = '#555';
-      }
-      display.textContent = limitText;
-    }
-    async function submitEssay() {
-      document.getElementById("result").style.display = "none";
-      document.getElementById("downloadPDF").style.display = "none";
-      document.getElementById("loading").style.display = "block";
-      document.getElementById("error").style.display = "none";
-
-      const name = document.getElementById("studentName").value;
-      const passages = [...document.querySelectorAll(".passage")].map(p => p.value).filter(p => p.trim());
-      const question = document.getElementById("question").value;
-      const essay = document.getElementById("essay").value;
-      const charBase = document.getElementById("charBase").value;
-      const charRange = document.getElementById("charRange").value;
-
-      if (!name || !question || !essay || passages.length === 0) {
-        document.getElementById("loading").style.display = "none";
-        alert("모든 항목을 입력해 주세요.");
-        return;
-      }
-
-      try {
-        const res = await fetch("/review", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ passages, question, essay, charBase, charRange })
-        });
-        const result = await res.json();
-        if (result.error) throw new Error(result.error);
-
-        const scores = result.scores;
-        const reasons = result.reasons;
-        const example = result.example;
-
-        const labels = ['논리력','독해력','구성력','표현력'];
-        const summary = labels.map((label, i) =>
-          `<div class='eval-box'><strong>${label} (${scores[i]}점)</strong><br>${reasons[label]}</div>`).join('');
-
-        document.getElementById("evalSummary").innerHTML = summary;
-        document.getElementById("exampleAnswer").textContent = example;
-        document.getElementById("result").style.display = "block";
-
-        const ctx = document.getElementById("scoreChart").getContext("2d");
-        new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: '점수 (10점 만점)',
-              data: scores,
-              backgroundColor: 'rgba(33, 64, 177, 0.7)',
-              borderRadius: 6
-            }]
-          },
-          options: { scales: { y: { beginAtZero: true, max: 10 } } }
-        });
-
-        setTimeout(() => {
-          document.getElementById("downloadPDF").style.display = "block";
-        }, 800);
-
-      } catch (err) {
-        document.getElementById("error").style.display = "block";
-        console.error(err);
-      } finally {
-        document.getElementById("loading").style.display = "none";
-      }
-    }
-    document.getElementById("downloadPDF").addEventListener("click", () => {
-      html2pdf().from(document.getElementById("result")).set({
-        margin: 10,
-        filename: `다쓰_리포트_${today}.pdf`,
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      }).save();
-    });
-  </script>
 </body>
 </html>
