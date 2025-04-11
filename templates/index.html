@@ -22,29 +22,36 @@
     <span class="text-sm text-gray-500">Powered by 다쓰</span>
   </header>
 
+  <!-- 제시문 입력 -->
+  <section class="mb-6">
+    <label for="prompt" class="block text-sm font-medium text-gray-700 mb-2">제시문을 입력하세요</label>
+    <textarea id="prompt" rows="4" class="w-full p-3 border rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="예: 제시문을 여기에 붙여 넣으세요..."></textarea>
+    <button onclick="analyzeEssay()" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded-xl shadow-md hover:bg-blue-700 transition">분석 요청</button>
+  </section>
+
   <!-- 1단 평가 카드 + 그래프 -->
   <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
     <!-- 평가 카드 -->
     <div class="space-y-4">
-      <div class="report-card bg-white p-6">
+      <div class="report-card bg-white p-6" id="logic-card">
         <h2 class="text-lg font-semibold mb-2">논리력</h2>
-        <p class="text-sm">논제가 물어본 것에 정확히 답했는가? 주장을 밝혔는가?</p>
-        <p class="text-blue-600 font-bold mt-2">점수: 4점</p>
+        <p class="text-sm" id="logic-reason">논제가 물어본 것에 정확히 답했는가? 주장을 밝혔는가?</p>
+        <p class="text-blue-600 font-bold mt-2" id="logic-score">점수: -</p>
       </div>
-      <div class="report-card bg-white p-6">
+      <div class="report-card bg-white p-6" id="reading-card">
         <h2 class="text-lg font-semibold mb-2">독해력</h2>
-        <p class="text-sm">제시문에 근거한 구성인가? 제시문 분석이 정확한가?</p>
-        <p class="text-blue-600 font-bold mt-2">점수: 3점</p>
+        <p class="text-sm" id="reading-reason">제시문에 근거한 구성인가? 제시문 분석이 정확한가?</p>
+        <p class="text-blue-600 font-bold mt-2" id="reading-score">점수: -</p>
       </div>
-      <div class="report-card bg-white p-6">
+      <div class="report-card bg-white p-6" id="structure-card">
         <h2 class="text-lg font-semibold mb-2">구성력</h2>
-        <p class="text-sm">문단이 잘 나뉘고 논리적 흐름이 자연스러운가?</p>
-        <p class="text-blue-600 font-bold mt-2">점수: 4점</p>
+        <p class="text-sm" id="structure-reason">문단이 잘 나뉘고 논리적 흐름이 자연스러운가?</p>
+        <p class="text-blue-600 font-bold mt-2" id="structure-score">점수: -</p>
       </div>
-      <div class="report-card bg-white p-6">
+      <div class="report-card bg-white p-6" id="expression-card">
         <h2 class="text-lg font-semibold mb-2">표현력</h2>
-        <p class="text-sm">문법에 맞는 문장과 적절한 어휘를 사용했는가?</p>
-        <p class="text-blue-600 font-bold mt-2">점수: 5점</p>
+        <p class="text-sm" id="expression-reason">문법에 맞는 문장과 적절한 어휘를 사용했는가?</p>
+        <p class="text-blue-600 font-bold mt-2" id="expression-score">점수: -</p>
       </div>
     </div>
 
@@ -58,20 +65,59 @@
   <section class="bg-white rounded-2xl shadow-md p-6 space-y-4">
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">예시답안</h2>
-      <button class="text-red-500 hover:underline text-sm">제시문 삭제</button>
+      <button class="text-red-500 hover:underline text-sm" onclick="document.getElementById('prompt').value = ''">제시문 삭제</button>
     </div>
-    <p class="text-sm leading-relaxed">
-      저는 제시문에서 ○○가 강조한 '△△'라는 관점을 바탕으로 ... (예시답안 내용이 여기에 들어갑니다)
+    <p class="text-sm leading-relaxed" id="sample-answer">
+      (예시답안 내용이 여기에 표시됩니다)
     </p>
-    <!-- 에러 메시지 -->
     <p class="text-red-500 text-sm hidden" id="error-message">에러가 발생했습니다. 다시 시도해주세요.</p>
-    <!-- 로딩 상태 -->
     <p class="text-gray-400 text-sm hidden" id="loading-message">로딩 중입니다...</p>
   </section>
 
-  <!-- PDF 저장 버튼 (추후 기능 연결 예정) -->
+  <!-- PDF 저장 버튼 자리 -->
   <div class="flex justify-end mt-6">
     <button class="bg-blue-600 text-white px-6 py-2 rounded-xl shadow-md hover:bg-blue-700 transition">PDF 저장</button>
   </div>
+
+  <script>
+    async function analyzeEssay() {
+      const prompt = document.getElementById("prompt").value.trim();
+      const error = document.getElementById("error-message");
+      const loading = document.getElementById("loading-message");
+
+      if (!prompt) return;
+
+      error.classList.add("hidden");
+      loading.classList.remove("hidden");
+
+      try {
+        const response = await fetch("/review", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt }),
+        });
+
+        const data = await response.json();
+
+        document.getElementById("logic-score").innerText = `점수: ${data.논리력?.점수 ?? '-'}`;
+        document.getElementById("logic-reason").innerText = data.논리력?.이유 ?? '';
+
+        document.getElementById("reading-score").innerText = `점수: ${data.독해력?.점수 ?? '-'}`;
+        document.getElementById("reading-reason").innerText = data.독해력?.이유 ?? '';
+
+        document.getElementById("structure-score").innerText = `점수: ${data.구성력?.점수 ?? '-'}`;
+        document.getElementById("structure-reason").innerText = data.구성력?.이유 ?? '';
+
+        document.getElementById("expression-score").innerText = `점수: ${data.표현력?.점수 ?? '-'}`;
+        document.getElementById("expression-reason").innerText = data.표현력?.이유 ?? '';
+
+        document.getElementById("sample-answer").innerText = data.예시답안 ?? '';
+      } catch (e) {
+        error.classList.remove("hidden");
+      } finally {
+        loading.classList.add("hidden");
+      }
+    }
+  </script>
 </body>
 </html>
