@@ -185,8 +185,9 @@
 
     async function submitEssay() {
       document.getElementById("resultCard").style.display = "none";
-      document.getElementById("loading").style.display = "block";
+      document.getElementById("exampleSection").style.display = "none";
       document.getElementById("error").style.display = "none";
+      document.getElementById("loading").style.display = "block";
 
       const passages = [...document.querySelectorAll(".passage")].map(p => p.value).filter(p => p.trim());
       const question = document.getElementById("question").value;
@@ -235,13 +236,15 @@
           options: { scales: { y: { beginAtZero: true, max: 10 } } }
         });
 
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("error").style.display = "none";
         document.getElementById("resultCard").style.display = "block";
 
       } catch (err) {
         console.error(err);
-        document.getElementById("error").style.display = "block";
-      } finally {
         document.getElementById("loading").style.display = "none";
+        document.getElementById("resultCard").style.display = "none";
+        document.getElementById("error").style.display = "block";
       }
     }
   </script>

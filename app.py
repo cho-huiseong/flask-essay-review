@@ -114,17 +114,26 @@ def review():
             elif line.startswith("[예시답안]"): current = "예시답안"
             elif current and current != "예시답안":
                 if "점수" in line:
-                    score_match = re.search(r"(\d{1,2})", line)  # ✅ 이 부분 수정
+                    score_match = re.search(r"(\d{1,2})", line)
                     if score_match:
                         sections[current]["score"] = int(score_match.group(1))
                 elif "이유" in line:
-                    sections[current]["reason"] = line.split(":", 1)[-1].strip() if ":" in line else "이유 없음"
+                    reason_text = line.split(":", 1)[-1].strip() if ":" in line else line
+                    sections[current]["reason"] = reason_text
+                elif "score" not in sections[current] and "reason" not in sections[current]:
+                    # 점수도 아니고 이유도 없지만 설명 줄일 경우 → 이유로 저장
+                    sections[current]["reason"] = line
             elif current == "예시답안":
                 sections[current] += line + "\n"
 
+        # 모든 항목에 기본값 설정
+        for key in ["논리력", "독해력", "구성력", "표현력"]:
+            sections[key].setdefault("score", 0)
+            sections[key].setdefault("reason", "이유 없음")
+
         return jsonify({
-            "scores": [sections[k].get("score", 0) for k in ["논리력", "독해력", "구성력", "표현력"]],
-            "reasons": {k: sections[k].get("reason", "") for k in ["논리력", "독해력", "구성력", "표현력"]},
+            "scores": [sections[k]["score"] for k in ["논리력", "독해력", "구성력", "표현력"]],
+            "reasons": {k: sections[k]["reason"] for k in ["논리력", "독해력", "구성력", "표현력"]},
             "example": sections["예시답안"].strip()
         })
 
