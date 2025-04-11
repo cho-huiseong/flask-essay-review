@@ -1,2 +1,2 @@
-#!/bin/bash
-gunicorn app:app
+#!/bin/sh
+exec gunicorn app:app --timeout 120
