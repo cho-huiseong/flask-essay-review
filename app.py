@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from openai import OpenAI
 import os
+import re
 
 app = Flask(__name__)
 CORS(app)
@@ -49,7 +50,7 @@ def review():
 [구성력]
 - 문단 구분이 명확하게 되어 있는지,
 - 논리적인 흐름이 자연스럽게 이어졌는지,
-- 글자 수 제한({min_chars}~{max_chars}자)를 지켰는지도 평가에 포함됩니다.
+- 글자 수 제한({min_chars}~{max_chars}자, 공백 포함 기준)를 지켰는지도 평가에 포함됩니다.
 
 [표현력]
 - 문법에 맞는 문장을 사용했는지,
@@ -58,15 +59,18 @@ def review():
 
 ---
 
-다음 학생의 논술문을 위 기준에 따라 평가해 주세요.
-각 항목에 대해 점수(10점 만점)와 구체적인 이유를 작성해 주세요.
+❗ 다음의 절차를 반드시 지켜서 작업하세요:
 
-[예시답안 작성 지침]
-- 반드시 학생이 작성한 논술문과 말투, 어투, 문장 길이, 어휘 수준을 동일하게 반영해 주세요.
-- GPT의 일반적인 공손한 설명체 말투를 사용하지 마세요.
-- 예시답안은 반드시 최소 {min_chars}자 이상, 최대 {max_chars}자 이내여야 하며,
-  이 범위를 벗어나면 감점됩니다.
-- 절대로 요약하지 말고, 충분히 풍부하고 자세하게 작성해 주세요.
+1. 위 네 가지 평가 항목에 대해 각각 점수(10점 만점)와 구체적인 이유를 작성합니다.
+   생략하지 말고 각 항목마다 정확하게 작성해 주세요.
+
+2. 예시답안을 작성합니다. 다음 기준을 반드시 지켜 주세요:
+  - 글자 수: 최소 {min_chars}자 이상, 최대 {max_chars}자 이하 (공백 포함 기준)
+  - 말투: 학생의 논술문과 동일한 말투, 어투, 문장 스타일, 어휘 수준 유지
+  - GPT의 일반적인 말투(공손한 설명체) 사용 금지
+  - 절대로 요약하지 말고, 풍부하고 충분하게 작성할 것
+
+※ 평가와 예시답안은 모두 리포트에 포함되어야 하며, 하나라도 생략되면 부적절한 결과입니다.
 
 ---
 
@@ -88,7 +92,7 @@ def review():
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
-            max_tokens=1800
+            max_tokens=2000
         )
 
         content = response.choices[0].message.content
@@ -105,11 +109,9 @@ def review():
             elif line.startswith("[예시답안]"): current = "예시답안"
             elif current and current != "예시답안":
                 if "점수" in line:
-                    try:
-                        score_line = ''.join(filter(str.isdigit, line))
-                        sections[current]["score"] = int(score_line) if score_line else 0
-                    except:
-                        sections[current]["score"] = 0
+                    score_match = re.search(r"(\\d{1,2})", line)
+                    if score_match:
+                        sections[current]["score"] = int(score_match.group(1))
                 elif "이유" in line:
                     sections[current]["reason"] = line.split(":", 1)[-1].strip() if ":" in line else "이유 없음"
             elif current == "예시답안":
