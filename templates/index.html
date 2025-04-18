@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>다쓰 리포트</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- ✅ 올바른 html2pdf.js 버전 -->
+  <!-- ✅ html2pdf.js 올바른 경로 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -161,33 +161,32 @@
     <p id="exampleAnswer"></p>
     <button onclick="backToMain()">⬅ 돌아가기</button>
   </div>
-
   <script>
     let savedScores = [], savedReasons = {};
     const today = new Date().toISOString().split('T')[0];
-
+  
     function addPassage() {
       const wrapper = document.createElement("div");
       wrapper.innerHTML = '<textarea class="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>';
       document.getElementById("passages").appendChild(wrapper);
     }
-
+  
     function updateCharCount() {
       const text = document.getElementById("essay").value;
-      const count = text.replace(/\s/g, '').length;
-      document.getElementById("charCount").textContent = `현재 글자 수: ${count}자`;
+      const count = text.length;  // ✅ 공백 포함 기준
+      document.getElementById("charCount").textContent = `현재 글자 수: ${count}자 (공백 포함)`;
     }
-
+  
     function showExample() {
       document.getElementById("exampleSection").style.display = "block";
       document.getElementById("mainSection").style.display = "none";
-
+  
       const passages = [...document.querySelectorAll(".passage")].map(p => p.value).filter(p => p.trim());
       const question = document.getElementById("question").value;
       const essay = document.getElementById("essay").value;
       const charBase = document.getElementById("charBase").value;
       const charRange = document.getElementById("charRange").value;
-
+  
       fetch("/example", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -206,51 +205,51 @@
           document.getElementById("exampleAnswer").textContent = "예시답안 생성 중 오류가 발생했습니다.";
         });
     }
-
+  
     function backToMain() {
       document.getElementById("exampleSection").style.display = "none";
       document.getElementById("mainSection").style.display = "flex";
     }
-
+  
     async function submitEssay() {
       document.getElementById("resultCard").style.display = "none";
       document.getElementById("exampleSection").style.display = "none";
       document.getElementById("error").style.display = "none";
       document.getElementById("loading").style.display = "block";
-
+  
       const passages = [...document.querySelectorAll(".passage")].map(p => p.value).filter(p => p.trim());
       const question = document.getElementById("question").value;
       const essay = document.getElementById("essay").value;
       const charBase = document.getElementById("charBase").value;
       const charRange = document.getElementById("charRange").value;
-
+  
       if (!question || !essay || passages.length === 0) {
         document.getElementById("loading").style.display = "none";
         alert("모든 항목을 입력해 주세요.");
         return;
       }
-
+  
       try {
         const res = await fetch("/review", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ passages, question, essay, charBase, charRange })
         });
-
+  
         const result = await res.json();
         if (result.error) throw new Error(result.error);
-
+  
         const scores = result.scores;
         const reasons = result.reasons;
-
+  
         savedScores = scores;
         savedReasons = reasons;
-
+  
         const labels = ['논리력','독해력','구성력','표현력'];
         const summary = labels.map((label, i) =>
           `<div class='score-block'><strong>${label} (${scores[i]}점)</strong>${reasons[label]}</div>`).join('');
         document.getElementById("evalSummary").innerHTML = summary;
-
+  
         const ctx = document.getElementById("scoreChart").getContext("2d");
         new Chart(ctx, {
           type: 'bar',
@@ -265,12 +264,12 @@
           },
           options: { scales: { y: { beginAtZero: true, max: 10 } } }
         });
-
+  
         document.getElementById("loading").style.display = "none";
         document.getElementById("error").style.display = "none";
         document.getElementById("resultCard").style.display = "block";
         document.getElementById("downloadPDF").style.display = "block";
-
+  
       } catch (err) {
         console.error(err);
         document.getElementById("loading").style.display = "none";
@@ -279,32 +278,75 @@
         document.getElementById("error").style.display = "block";
       }
     }
-
+  
     function downloadPDF() {
-      const resultEl = document.getElementById("resultCard");
-      const cloned = resultEl.cloneNode(true);
-    
-      const logo = document.createElement("img");
-      logo.src = "/static/아카데미창-문서용.png";
-      logo.style.height = "36px";
-      logo.style.marginBottom = "12px";
-    
+      const name = document.getElementById("studentName").value;
+      const essay = document.getElementById("essay").value;
+      const date = new Date().toISOString().split('T')[0];
+      const charCount = essay.length;
+  
+      const scores = savedScores;
+      const reasons = savedReasons;
+      const labels = ['논리력','독해력','구성력','표현력'];
+  
+      const chartCanvas = document.getElementById("scoreChart");
+      const clonedChart = chartCanvas.cloneNode(true);
+      const chartImg = document.createElement("img");
+      chartImg.src = chartCanvas.toDataURL();
+      chartImg.style.marginTop = "20px";
+      chartImg.style.maxWidth = "100%";
+  
       const wrapper = document.createElement("div");
-      wrapper.style.padding = "10px";
+      wrapper.style.padding = "20px";
       wrapper.style.backgroundColor = "#fff";
       wrapper.style.color = "#000";
-      wrapper.appendChild(logo);
-      wrapper.appendChild(cloned);
-    
+      wrapper.style.fontFamily = "Pretendard, sans-serif";
+  
+      const title = document.createElement("h2");
+      title.textContent = "📄 다쓰 리포트";
+      wrapper.appendChild(title);
+  
+      const meta = document.createElement("p");
+      meta.textContent = `학생: ${name} | 작성일: ${date}`;
+      wrapper.appendChild(meta);
+  
+      const length = document.createElement("p");
+      length.textContent = `공백 포함 글자 수: ${charCount}자`;
+      wrapper.appendChild(length);
+  
+      const essayBox = document.createElement("div");
+      essayBox.style.margin = "20px 0";
+      const essayTitle = document.createElement("h4");
+      essayTitle.textContent = "🖊 작성한 논술문";
+      const essayText = document.createElement("p");
+      essayText.textContent = essay;
+      essayBox.appendChild(essayTitle);
+      essayBox.appendChild(essayText);
+      wrapper.appendChild(essayBox);
+  
+      const evalTitle = document.createElement("h4");
+      evalTitle.textContent = "📊 평가 요약";
+      wrapper.appendChild(evalTitle);
+  
+      labels.forEach((label, i) => {
+        const block = document.createElement("div");
+        block.style.marginBottom = "10px";
+        block.innerHTML = `<strong>${label} (${scores[i]}점)</strong><br>${reasons[label]}`;
+        wrapper.appendChild(block);
+      });
+  
+      wrapper.appendChild(chartImg);
+  
       setTimeout(() => {
         html2pdf().from(wrapper).set({
           margin: 10,
-          filename: `다쓰_리포트_${today}.pdf`,
+          filename: `다쓰_리포트_${date}.pdf`,
           html2canvas: { scale: 2, useCORS: true },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         }).save();
       }, 300);
     }
   </script>
-</body>
-</html>
+  </body>
+  </html>
+  
