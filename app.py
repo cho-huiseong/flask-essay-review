@@ -130,9 +130,10 @@ def review():
     except Exception as e:
         return jsonify({"error": str(e)})
 
-# 예시답안 요청
+## 예시답안 요청
 @app.route('/example', methods=['POST'])
 def example():
+    import json
     data = request.json
     passages = data.get('passages', [])
     question = data.get('question', '')
@@ -158,12 +159,16 @@ def example():
    - (3) 수정 후 어떻게 개선되었는가
    - 비교 설명은 반드시 300자 이상, 1000자 이하로 작성하십시오.
 
-3. 다음 JSON 형식에 맞추어 정확하게 응답하십시오. key 이름과 구조를 절대로 바꾸지 마십시오. 설명 문구를 추가하지 마시고 JSON만 출력하십시오.
+3. 반드시 아래 JSON 형식에 맞추어 정확하게 응답하십시오.  
+- ❗다른 문장, 해설, 주석, 안내 문구를 절대 포함하지 마십시오.  
+- JSON 바깥에 글자가 있거나 key 이름이 바뀌면 시스템이 오류를 발생시킵니다.  
+- 아래 예시는 형식 참고용입니다. 실제 내용으로 대체하여 출력하세요.
 
-{
+정확한 JSON 응답 형식:
+{{
   "example": "예시답안을 여기에 작성하십시오. 반드시 실제 예시 내용을 작성해 주십시오.",
-  "comparison": "비교 설명을 여기에 작성하십시오. 300~1000자 분량의 실제 분석 내용을 입력하십시오."
-}
+  "comparison": "비교 설명을 여기에 작성하십시오. 반드시 300~1000자 분량의 실제 분석 내용을 입력하십시오."
+}}
 
 제시문:
 {chr(10).join(passages)}
@@ -182,6 +187,8 @@ def example():
             temperature=0.7
         )
         raw = response.choices[0].message.content
+        print("\n📥 GPT 예시답안 응답 원문:\n", raw)
+
         parsed = json.loads(raw)
 
         return jsonify({
@@ -190,4 +197,5 @@ def example():
         })
 
     except Exception as e:
+        print("❗ JSON 파싱 오류 또는 기타 문제:", e)
         return jsonify({ "error": str(e) }), 500

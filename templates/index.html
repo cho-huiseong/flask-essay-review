@@ -208,12 +208,17 @@
     function showExample() {
       document.getElementById("mainSection").style.display = "none";
       document.getElementById("exampleSection").style.display = "block";
+    
+      // 🔔 로딩 메시지 표시용
+      document.getElementById("exampleAnswer").textContent = "⏳ 예시답안을 생성 중입니다...";
+      document.getElementById("comparisonBox").textContent = "";
+    
       const passages = [...document.querySelectorAll(".passage")].map(p => p.value);
       const question = document.getElementById("question").value;
       const essay = document.getElementById("essay").value;
       const charBase = document.getElementById("charBase").value;
       const charRange = document.getElementById("charRange").value;
-
+    
       fetch("/example", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -221,12 +226,19 @@
       })
       .then(res => res.json())
       .then(result => {
+        if (result.error) throw new Error(result.error);
         savedExample = result.example || "예시답안 없음";
         savedComparison = result.comparison || "비교 설명 없음";
         document.getElementById("exampleAnswer").textContent = savedExample;
         document.getElementById("comparisonBox").textContent = savedComparison;
+      })
+      .catch(err => {
+        document.getElementById("exampleAnswer").textContent = "❗ 예시답안 생성 중 오류가 발생했습니다.";
+        document.getElementById("comparisonBox").textContent = "";
+        console.error("예시답안 오류:", err);
       });
     }
+    
 
     function backToMain() {
       document.getElementById("exampleSection").style.display = "none";
