@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>다쓰 리포트</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://unpkg.com/html2pdf.js@0.9.3/dist/html2pdf.bundle.min.js"></script>
+  <script src="https://unpkg.com/html2pdf.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --primary: #2140b1;
@@ -14,134 +14,151 @@
       --card: #ffffff;
       --border: #e5e7eb;
     }
-    * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: 'Pretendard', sans-serif;
       background: var(--bg);
-      color: #1a1a1a;
+      color: #1f2937;
     }
     header {
-      background: white;
+      background: var(--card);
       padding: 20px 40px;
       display: flex;
       align-items: center;
       box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
-    header img {
-      height: 36px;
-      margin-right: 12px;
-    }
     header h1 {
-      font-size: 1.4rem;
+      font-size: 1.5rem;
       color: var(--primary);
-      margin: 0;
-      font-weight: 600;
+      font-weight: 700;
     }
-    .container {
-      max-width: 960px;
+    .layout {
+      display: flex;
+      max-width: 1200px;
       margin: 40px auto;
-      background: var(--card);
+      gap: 40px;
+    }
+    .left, .right {
+      flex: 1;
+      background: white;
+      padding: 30px;
       border-radius: 16px;
-      padding: 40px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.05);
     }
     label {
       font-weight: 600;
-      margin-top: 1.6rem;
+      margin-top: 1.2rem;
       display: block;
     }
     textarea, input {
       width: 100%;
-      padding: 14px;
+      padding: 12px;
       margin-top: 6px;
       border-radius: 12px;
       border: 1px solid var(--border);
       font-size: 1rem;
-      background: #fefefe;
+      background: #fff;
       resize: vertical;
     }
     .add-passage {
       color: var(--primary);
+      font-size: 0.9rem;
+      margin-top: 6px;
       cursor: pointer;
-      margin-top: 10px;
-      font-size: 0.95rem;
     }
     button {
-      margin-top: 28px;
+      margin-top: 24px;
       width: 100%;
       padding: 14px;
       background-color: var(--primary);
       color: white;
-      font-size: 1.05rem;
+      font-size: 1rem;
       border: none;
       border-radius: 12px;
       cursor: pointer;
-      transition: background 0.2s;
     }
-    button:hover {
-      background-color: #1a3194;
-    }
-    .score-block {
-      background: #e9effc;
-      border-radius: 10px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-    #loading, #error, #downloadPDF {
+    #loading, #error {
       display: none;
-      margin-top: 20px;
       text-align: center;
+      margin-top: 16px;
+      font-size: 0.9rem;
     }
-    #error { color: red; font-weight: bold; }
+    #error { color: red; }
+    #resultCard { margin-top: 32px; }
+    .score-block {
+      margin-bottom: 20px;
+    }
+    .score-block strong {
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    .chart-wrap {
+      margin-top: 30px;
+    }
+    #exampleSection {
+      display: none;
+      max-width: 800px;
+      margin: 40px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+    }
   </style>
 </head>
 <body>
   <header>
-    <img src="/static/아카데미창-문서용.png" alt="로고">
-    <h1>다쓰 리포트</h1>
+    <h1>아카데미창 · 다쓰 리포트</h1>
   </header>
-  <div class="container">
-    <label>학생 이름</label>
-    <input id="studentName" type="text" placeholder="예: 김민준">
 
-    <label>제시문</label>
-    <div id="passages">
-      <textarea class="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>
-    </div>
-    <div class="add-passage" onclick="addPassage()">➕ 제시문 추가</div>
+  <div class="layout" id="mainSection">
+    <div class="left">
+      <label>학생 이름</label>
+      <input id="studentName" type="text" placeholder="예: 김민준" />
 
-    <label>질문</label>
-    <textarea id="question" rows="2"></textarea>
+      <label>제시문</label>
+      <div id="passages">
+        <textarea class="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>
+      </div>
+      <div class="add-passage" onclick="addPassage()">➕ 제시문 추가</div>
 
-    <label>글자 수 제한</label>
-    <div style="display:flex; gap:10px;">
-      <input id="charBase" type="number" placeholder="기준 글자 수 (예: 700)">
-      <input id="charRange" type="number" placeholder="허용 범위 (예: 50)">
-    </div>
+      <label>질문</label>
+      <textarea id="question" rows="2"></textarea>
 
-    <label>논술문</label>
-    <textarea id="essay" rows="6" oninput="updateCharCount()"></textarea>
-    <div id="charCount" style="margin-top:8px; font-size:0.9rem; color: #555;"></div>
+      <label>글자 수 제한</label>
+      <div style="display:flex; gap:10px;">
+        <input id="charBase" type="number" placeholder="기준 글자 수 (예: 700)" />
+        <input id="charRange" type="number" placeholder="허용 범위 (예: 50)" />
+      </div>
 
-    <button onclick="submitEssay()">📝 리포트 받기</button>
+      <label>논술문</label>
+      <textarea id="essay" rows="6" oninput="updateCharCount()"></textarea>
+      <div id="charCount" style="margin-top:6px; font-size:0.85rem; color:#555;"></div>
 
-    <div id="loading">⏳ 처리 중입니다. 잠시만 기다려주세요...</div>
-    <div id="error">❗ 오류가 발생했습니다. 다시 시도해 주세요.</div>
-
-    <div id="resultCard" style="display:none">
-      <h3>📋 평가 요약</h3>
-      <div id="evalSummary"></div>
-      <canvas id="scoreChart" style="margin-top:20px;"></canvas>
-      <button onclick="showExample()">예시답안 보기</button>
-      <button id="downloadPDF">📄 PDF 저장</button>
+      <button onclick="submitEssay()">📝 리포트 받기</button>
+      <div id="loading">⏳ 처리 중입니다. 잠시만 기다려주세요...</div>
+      <div id="error">❗ 오류가 발생했습니다. 다시 시도해 주세요.</div>
     </div>
 
-    <div id="exampleSection" style="display:none;">
-      <h3>📝 예시답안</h3>
-      <p id="exampleAnswer"></p>
-      <button onclick="backToMain()">⬅ 돌아가기</button>
+    <div class="right">
+      <div id="resultCard" style="display:none">
+        <h3>📋 평가 요약</h3>
+        <div id="evalSummary"></div>
+        <div class="chart-wrap">
+          <canvas id="scoreChart"></canvas>
+        </div>
+
+        <button onclick="showExample()">예시답안 보기</button>
+        <button id="downloadPDF" style="display:none; margin-top:10px;" onclick="downloadPDF()">📄 PDF 저장</button>
+      </div>
     </div>
+  </div>
+
+  <div id="exampleSection">
+    <h3>📝 예시답안</h3>
+    <p id="exampleAnswer"></p>
+    <button onclick="backToMain()">⬅ 돌아가기</button>
   </div>
 
   <script>
@@ -156,25 +173,57 @@
 
     function updateCharCount() {
       const text = document.getElementById("essay").value;
-      const count = text.replace(/\s/g, '').length;
+      const count = text.replace(/\\s/g, '').length;
       document.getElementById("charCount").textContent = `현재 글자 수: ${count}자`;
     }
 
-    async function submitEssay() {
-      document.getElementById("resultCard").style.display = "none";
-      document.getElementById("exampleSection").style.display = "none";
-      document.getElementById("downloadPDF").style.display = "none";
-      document.getElementById("loading").style.display = "block";
-      document.getElementById("error").style.display = "none";
+    function showExample() {
+      document.getElementById("exampleSection").style.display = "block";
+      document.getElementById("mainSection").style.display = "none";
 
-      const name = document.getElementById("studentName").value;
       const passages = [...document.querySelectorAll(".passage")].map(p => p.value).filter(p => p.trim());
       const question = document.getElementById("question").value;
       const essay = document.getElementById("essay").value;
       const charBase = document.getElementById("charBase").value;
       const charRange = document.getElementById("charRange").value;
 
-      if (!name || !question || !essay || passages.length === 0) {
+      fetch("/example", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          passages, question, essay,
+          scores: savedScores,
+          reasons: savedReasons,
+          charBase, charRange
+        })
+      })
+        .then(res => res.json())
+        .then(result => {
+          document.getElementById("exampleAnswer").textContent = result.example || "예시답안 생성 실패";
+        })
+        .catch(() => {
+          document.getElementById("exampleAnswer").textContent = "예시답안 생성 중 오류가 발생했습니다.";
+        });
+    }
+
+    function backToMain() {
+      document.getElementById("exampleSection").style.display = "none";
+      document.getElementById("mainSection").style.display = "flex";
+    }
+
+    async function submitEssay() {
+      document.getElementById("resultCard").style.display = "none";
+      document.getElementById("exampleSection").style.display = "none";
+      document.getElementById("error").style.display = "none";
+      document.getElementById("loading").style.display = "block";
+
+      const passages = [...document.querySelectorAll(".passage")].map(p => p.value).filter(p => p.trim());
+      const question = document.getElementById("question").value;
+      const essay = document.getElementById("essay").value;
+      const charBase = document.getElementById("charBase").value;
+      const charRange = document.getElementById("charRange").value;
+
+      if (!question || !essay || passages.length === 0) {
         document.getElementById("loading").style.display = "none";
         alert("모든 항목을 입력해 주세요.");
         return;
@@ -186,18 +235,19 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ passages, question, essay, charBase, charRange })
         });
+
         const result = await res.json();
         if (result.error) throw new Error(result.error);
 
         const scores = result.scores;
         const reasons = result.reasons;
+
         savedScores = scores;
         savedReasons = reasons;
 
         const labels = ['논리력','독해력','구성력','표현력'];
         const summary = labels.map((label, i) =>
-          `<div class='score-block'><strong>${label} (${scores[i]}점)</strong><br>${reasons[label]}</div>`).join('');
-
+          `<div class='score-block'><strong>${label} (${scores[i]}점)</strong>${reasons[label]}</div>`).join('');
         document.getElementById("evalSummary").innerHTML = summary;
 
         const ctx = document.getElementById("scoreChart").getContext("2d");
@@ -216,65 +266,46 @@
         });
 
         document.getElementById("loading").style.display = "none";
+        document.getElementById("error").style.display = "none";
         document.getElementById("resultCard").style.display = "block";
         document.getElementById("downloadPDF").style.display = "block";
 
       } catch (err) {
-        document.getElementById("loading").style.display = "none";
-        document.getElementById("error").style.display = "block";
         console.error(err);
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("resultCard").style.display = "none";
+        document.getElementById("exampleSection").style.display = "none";
+        document.getElementById("error").style.display = "block";
       }
-    }
-
-    function showExample() {
-      document.getElementById("exampleSection").style.display = "block";
-      document.getElementById("resultCard").style.display = "none";
-      const passages = [...document.querySelectorAll(".passage")].map(p => p.value).filter(p => p.trim());
-      const question = document.getElementById("question").value;
-      const essay = document.getElementById("essay").value;
-      const charBase = document.getElementById("charBase").value;
-      const charRange = document.getElementById("charRange").value;
-
-      fetch("/example", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ passages, question, essay, scores: savedScores, reasons: savedReasons, charBase, charRange })
-      })
-        .then(res => res.json())
-        .then(result => {
-          document.getElementById("exampleAnswer").textContent = result.example || "예시답안 생성 실패";
-        })
-        .catch(() => {
-          document.getElementById("exampleAnswer").textContent = "예시답안 생성 중 오류가 발생했습니다.";
-        });
-    }
-
-    function backToMain() {
-      document.getElementById("exampleSection").style.display = "none";
-      document.getElementById("resultCard").style.display = "block";
     }
 
     function downloadPDF() {
       const resultEl = document.getElementById("resultCard");
       const cloned = resultEl.cloneNode(true);
-
+    
       const logo = document.createElement("img");
       logo.src = "/static/아카데미창-문서용.png";
       logo.style.height = "36px";
       logo.style.marginBottom = "12px";
-
+    
       const wrapper = document.createElement("div");
       wrapper.style.padding = "10px";
+      wrapper.style.backgroundColor = "#fff";  // 배경 흰색
+      wrapper.style.color = "#000";            // 글자 검정
       wrapper.appendChild(logo);
       wrapper.appendChild(cloned);
-
-      html2pdf().from(wrapper).set({
-        margin: 10,
-        filename: `다쓰_리포트_${today}.pdf`,
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      }).save();
+    
+      // PDF 생성은 DOM 업데이트 이후에 하도록 timeout 추가
+      setTimeout(() => {
+        html2pdf().from(wrapper).set({
+          margin: 10,
+          filename: `다쓰_리포트_${today}.pdf`,
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        }).save();
+      }, 300);  // 약간의 딜레이를 줘서 렌더 완료 후 캡처
     }
+    
   </script>
 </body>
 </html>
