@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>다쓰 리포트</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://unpkg.com/html2pdf.js"></script>
+  <!-- ✅ 올바른 html2pdf.js 버전 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -173,7 +174,7 @@
 
     function updateCharCount() {
       const text = document.getElementById("essay").value;
-      const count = text.replace(/\\s/g, '').length;
+      const count = text.replace(/\s/g, '').length;
       document.getElementById("charCount").textContent = `현재 글자 수: ${count}자`;
     }
 
@@ -290,12 +291,11 @@
     
       const wrapper = document.createElement("div");
       wrapper.style.padding = "10px";
-      wrapper.style.backgroundColor = "#fff";  // 배경 흰색
-      wrapper.style.color = "#000";            // 글자 검정
+      wrapper.style.backgroundColor = "#fff";
+      wrapper.style.color = "#000";
       wrapper.appendChild(logo);
       wrapper.appendChild(cloned);
     
-      // PDF 생성은 DOM 업데이트 이후에 하도록 timeout 추가
       setTimeout(() => {
         html2pdf().from(wrapper).set({
           margin: 10,
@@ -303,9 +303,8 @@
           html2canvas: { scale: 2, useCORS: true },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         }).save();
-      }, 300);  // 약간의 딜레이를 줘서 렌더 완료 후 캡처
+      }, 300);
     }
-    
   </script>
 </body>
 </html>
