@@ -138,7 +138,6 @@ def example():
     question = data.get('question', '')
     essay = data.get('essay', '')
 
-    # ✅ char_base, char_range 정확한 int 변환
     try:
         char_base = int(data.get('charBase')) if data.get('charBase') else 600
         char_range = int(data.get('charRange')) if data.get('charRange') else 100
@@ -195,7 +194,6 @@ def example():
 {essay}
 """
 
-    # ✅ GPT에게 반복 요청하며 예시답안 글자 수 검사
     for attempt in range(5):
         response = client.chat.completions.create(
             model="gpt-4",
@@ -203,17 +201,20 @@ def example():
             temperature=0.7
         )
         content = response.choices[0].message.content
+        print("🧾 GPT 응답 원문:\n", content)
 
         try:
             parsed = json.loads(content)
             example_text = parsed.get("example", "")
-            print("✅ 예시답안 글자 수:", len(example_text))  # 디버깅 로그
+            print("✅ 예시답안 글자 수:", len(example_text))
 
             if len(example_text) >= min_chars:
                 break
             else:
                 prompt += "\n❗예시답안이 너무 짧습니다. 근거와 분석을 더 풍부하게 작성해 주세요."
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
+            print("❌ JSON 파싱 실패. 원문 응답:\n", content)
+            print("❌ 파싱 에러:", e)
             continue
     else:
         return jsonify({ "error": "예시답안이 글자 수 조건을 충족하지 못했습니다." }), 500
@@ -222,5 +223,7 @@ def example():
         "example": parsed.get("example", ""),
         "comparison": parsed.get("comparison", "")
     })
+
+# ✅ 반드시 포함해야 하는 실행 코드
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
