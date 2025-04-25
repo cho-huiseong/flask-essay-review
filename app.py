@@ -213,7 +213,7 @@ def example():
             if len(example_text) >= min_chars:
                 break
             else:
-                prompt += "\n❗예시답안이 너무 짧습니다. **기존의 글보다 100토큰 늘려서** 더 많은 논리적 설득을 포함하여 작성해 주세요."
+                prompt += "\n❗예시답안이 너무 짧습니다. **기존의 글보다 150토큰 늘려서** 더 많은 논리적 설득을 포함하여 작성해 주세요."
 
         except json.JSONDecodeError as e:
             print("❌ JSON 파싱 실패. 원문 응답:\n", content)
