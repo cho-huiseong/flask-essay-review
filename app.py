@@ -133,6 +133,7 @@ def review():
         return jsonify({"error": str(e)})
 
 # 예시답안 요청
+# 예시답안 요청
 @app.route("/example", methods=["POST"])
 def example():
     data = request.json
@@ -148,7 +149,7 @@ def example():
         char_range = 100
 
     min_chars = char_base - char_range
-    print(f"✅ 최소 글자 수 기준: {min_chars}")  # 디버깅 로그
+    print(f"✅ 최소 글자 수 기준: {min_chars}")
 
     prompt = f"""
 아래는 학생이 작성한 논술문입니다. 이 글을 바탕으로 다음 작업을 수행해 주십시오.
@@ -196,10 +197,14 @@ def example():
 {essay}
 """
 
+    # ⇨ 추가 시작 ⇨
+    # 1) 이전 예시답안을 담을 변수 초기화
+    example_text = ""
+
     for attempt in range(5):
         response = client.chat.completions.create(
             model="gpt-4",
-            messages=[{ "role": "user", "content": prompt }],
+            messages=[{"role": "user", "content": prompt}],
             temperature=0.7
         )
         content = response.choices[0].message.content
@@ -207,25 +212,36 @@ def example():
 
         try:
             parsed = json.loads(content)
-            example_text = parsed.get("example", "")
-            print("✅ 예시답안 글자 수:", len(example_text))
+            # 2) 새로 받은 예시답안
+            new_example_text = parsed.get("example", "")
+            print("✅ 예시답안 글자 수:", len(new_example_text))
 
-            if len(example_text) >= min_chars:
+            # 3) 기준 충족 시 저장하고 탈출
+            if len(new_example_text) >= min_chars:
+                example_text = new_example_text
                 break
-            else:
-                prompt += "\n❗ 예시답안의 길이가 아직도 기준에 미달합니다. 이전 답안보다 반드시 150토큰(약 150자)을 더 추가해 주십시오.구체적인 사례, 근거를 더 포함하고 논리적 설명을 더욱 풍부하게 제시하여 확장하십시오."
+
+            # 4) 부족 시: 이전 답안 포함 + 정확히 100자(≈100토큰) 더 요청
+            prompt += (
+                f'\n❗ 다음은 이전에 작성한 예시답안입니다:\n"{new_example_text}"\n'
+                '위 예시답안을 유지하되, 정확히 100자(약 100토큰) 이상 더 길게 '
+                '구체적인 주장과 근거를 추가하여 작성해주세요.'
+            )
+            example_text = new_example_text
+
         except json.JSONDecodeError as e:
             print("❌ JSON 파싱 실패. 원문 응답:\n", content)
-            print("❌ 파싱 에러:", e)
             continue
     else:
-        return jsonify({ "error": "예시답안이 글자 수 조건을 충족하지 못했습니다." }), 500
+        return jsonify({"error": "예시답안이 글자 수 조건을 충족하지 못했습니다."}), 500
+    # ⇦ 추가 끝 ⇦
 
+    # 최종 반환—절대 삭제하지 마세요!
     return jsonify({
-        "example": parsed.get("example", ""),
+        "example": example_text,
         "comparison": parsed.get("comparison", "")
     })
 
-# ✅ 반드시 포함해야 하는 실행 코드
+# 반드시 포함할 실행 코드 (맨 밑에!)
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
