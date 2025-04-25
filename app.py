@@ -138,14 +138,16 @@ def example():
     question = data.get('question', '')
     essay = data.get('essay', '')
 
+    # ✅ char_base, char_range 정확한 int 변환
     try:
-        char_base = int(data.get('charBase', 600))
-        char_range = int(data.get('charRange', 100))
+        char_base = int(data.get('charBase')) if data.get('charBase') else 600
+        char_range = int(data.get('charRange')) if data.get('charRange') else 100
     except (TypeError, ValueError):
         char_base = 600
         char_range = 100
 
     min_chars = char_base - char_range
+    print(f"✅ 최소 글자 수 기준: {min_chars}")  # 디버깅 로그
 
     prompt = f"""
 아래는 학생이 작성한 논술문입니다. 이 글을 바탕으로 다음 작업을 수행해 주십시오.
@@ -204,7 +206,10 @@ def example():
 
         try:
             parsed = json.loads(content)
-            if len(parsed.get("example", "")) >= min_chars:
+            example_text = parsed.get("example", "")
+            print("✅ 예시답안 글자 수:", len(example_text))  # 디버깅 로그
+
+            if len(example_text) >= min_chars:
                 break
             else:
                 prompt += "\n❗예시답안이 너무 짧습니다. 근거와 분석을 더 풍부하게 작성해 주세요."
@@ -217,3 +222,5 @@ def example():
         "example": parsed.get("example", ""),
         "comparison": parsed.get("comparison", "")
     })
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
