@@ -130,8 +130,8 @@ def review():
     except Exception as e:
         return jsonify({"error": str(e)})
 
-## 예시답안 요청
-@app.route('/example', methods=['POST'])
+# 예시답안 요청
+@app.route("/example", methods=["POST"])
 def example():
     import json
     data = request.json
@@ -180,28 +180,26 @@ def example():
 {essay}
 """
 
-try:
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{ "role": "user", "content": prompt }],
-        temperature=0.7
-    )
-    raw = response.choices[0].message.content
-
-    print(f"\n🔥 받은 raw 응답:\n{repr(raw)}")
-
     try:
-        parsed = json.loads(raw)
-    except json.JSONDecodeError as e:
-        print("❗ JSON 파싱 실패:\n", raw)
-        return jsonify({ "error": "GPT 응답 JSON 형식 오류." }), 500
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[{ "role": "user", "content": prompt }],
+            temperature=0.7
+        )
+        raw = response.choices[0].message.content
+        print(f"\n🔥 받은 raw 응답:\n{repr(raw)}")
 
-    return jsonify({
-        "example": parsed.get("example", ""),
-        "comparison": parsed.get("comparison", "")
-    })
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError as e:
+            print("❗ JSON 파싱 실패:\n", raw)
+            return jsonify({ "error": "GPT 응답 JSON 형식 오류." }), 500
 
-except Exception as e:
-    print("❗ 기타 오류:", str(e))
-    return jsonify({ "error": str(e) }), 500
+        return jsonify({
+            "example": parsed.get("example", ""),
+            "comparison": parsed.get("comparison", "")
+        })
 
+    except Exception as e:
+        print("❗ 기타 오류:", str(e))
+        return jsonify({ "error": str(e) }), 500
