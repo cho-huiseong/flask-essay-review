@@ -180,7 +180,7 @@ def example():
 {essay}
 """
 
-   try:
+try:
     response = client.chat.completions.create(
         model="gpt-4",
         messages=[{ "role": "user", "content": prompt }],
@@ -204,3 +204,4 @@ def example():
 except Exception as e:
     print("❗ 기타 오류:", str(e))
     return jsonify({ "error": str(e) }), 500
+
