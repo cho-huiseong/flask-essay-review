@@ -77,7 +77,7 @@
       border-radius: 12px;
       cursor: pointer;
     }
-    #loading, #error {
+    #loading, #error, #exampleLoading {
       display: none;
       text-align: center;
       margin-top: 16px;
@@ -106,31 +106,25 @@
     <div class="left">
       <label>학생 이름</label>
       <input id="studentName" type="text" placeholder="예: 김민준" />
-
       <label>제시문</label>
       <div id="passages">
         <textarea class="passage" rows="3" placeholder="제시문을 입력하세요..."></textarea>
       </div>
       <div class="add-passage" onclick="addPassage()">➕ 제시문 추가</div>
-
       <label>질문</label>
       <textarea id="question" rows="2"></textarea>
-
       <label>글자 수 제한</label>
       <div style="display:flex; gap:10px;">
         <input id="charBase" type="number" placeholder="기준 글자 수 (예: 700)" />
         <input id="charRange" type="number" placeholder="허용 범위 (예: 50)" />
       </div>
-
       <label>논술문</label>
       <textarea id="essay" rows="6" oninput="updateCharCount()"></textarea>
       <div id="charCount" style="margin-top:6px; font-size:0.85rem; color:#555;"></div>
-
       <button onclick="submitEssay()">📝 리포트 받기</button>
       <div id="loading">⏳ 처리 중입니다. 잠시만 기다려주세요...</div>
       <div id="error">❗ 오류가 발생했습니다. 다시 시도해 주세요.</div>
     </div>
-
     <div class="right">
       <div id="resultCard" style="display:none">
         <h3>📋 평가 요약</h3>
@@ -144,12 +138,15 @@
   </div>
 
   <div id="exampleSection">
-    <h3>📝 예시답안</h3>
-    <p id="exampleAnswer"></p>
-    <h3>🧐 예시와 비교한 분석</h3>
-    <p id="comparisonBox"></p>
-    <button onclick="downloadPDF()">📄 PDF 저장</button>
-    <button onclick="backToMain()">⬅ 돌아가기</button>
+    <div id="exampleLoading">⏳ 예시답안과 분석을 불러오는 중입니다...</div>
+    <div id="exampleResult" style="display:none">
+      <h3>📝 예시답안</h3>
+      <p id="exampleAnswer"></p>
+      <h3>🧐 예시와 비교한 분석</h3>
+      <p id="comparisonBox"></p>
+      <button onclick="downloadPDF()">📄 PDF 저장</button>
+      <button onclick="backToMain()">⬅ 돌아가기</button>
+    </div>
   </div>
 
   <script>
@@ -174,12 +171,10 @@
       const essay = document.getElementById("essay").value;
       const charBase = document.getElementById("charBase").value;
       const charRange = document.getElementById("charRange").value;
-
       if (!name || !question || !essay || passages.length === 0) {
         alert("모든 항목을 입력해 주세요.");
         return;
       }
-
       document.getElementById("loading").style.display = "block";
       const res = await fetch("/review", {
         method: "POST",
@@ -188,12 +183,10 @@
       });
       const result = await res.json();
       document.getElementById("loading").style.display = "none";
-
       savedScores = result.scores;
       savedReasons = result.reasons;
       const labels = ['논리력','독해력','구성력','표현력'];
-      const summary = labels.map((label, i) => `<div class='score-block'><strong>${label} (${savedScores[i]}점)</strong>${savedReasons[label]}</div>`).join('');
-      document.getElementById("evalSummary").innerHTML = summary;
+      document.getElementById("evalSummary").innerHTML = labels.map((label, i) => `<div class='score-block'><strong>${label} (${savedScores[i]}점)</strong>${savedReasons[label]}</div>`).join('');
       new Chart(document.getElementById("scoreChart").getContext("2d"), {
         type: 'bar',
         data: {
@@ -208,17 +201,15 @@
     function showExample() {
       document.getElementById("mainSection").style.display = "none";
       document.getElementById("exampleSection").style.display = "block";
-    
-      // 🔔 로딩 메시지 표시용
-      document.getElementById("exampleAnswer").textContent = "⏳ 예시답안을 생성 중입니다...";
-      document.getElementById("comparisonBox").textContent = "";
-    
+      document.getElementById("exampleLoading").style.display = "block";
+      document.getElementById("exampleResult").style.display = "none";
+
       const passages = [...document.querySelectorAll(".passage")].map(p => p.value);
       const question = document.getElementById("question").value;
       const essay = document.getElementById("essay").value;
       const charBase = document.getElementById("charBase").value;
       const charRange = document.getElementById("charRange").value;
-    
+
       fetch("/example", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -231,14 +222,17 @@
         savedComparison = result.comparison || "비교 설명 없음";
         document.getElementById("exampleAnswer").textContent = savedExample;
         document.getElementById("comparisonBox").textContent = savedComparison;
+        document.getElementById("exampleLoading").style.display = "none";
+        document.getElementById("exampleResult").style.display = "block";
       })
       .catch(err => {
         document.getElementById("exampleAnswer").textContent = "❗ 예시답안 생성 중 오류가 발생했습니다.";
         document.getElementById("comparisonBox").textContent = "";
+        document.getElementById("exampleLoading").style.display = "none";
+        document.getElementById("exampleResult").style.display = "block";
         console.error("예시답안 오류:", err);
       });
     }
-    
 
     function backToMain() {
       document.getElementById("exampleSection").style.display = "none";
