@@ -133,7 +133,9 @@ def review():
         return jsonify({"error": str(e)})
 
 # 예시답안 요청
-# 예시답안 요청
+# …위의 review 라우트 등 기존 코드 그대로…
+
+# ⇨ 수정된 /example 시작
 @app.route("/example", methods=["POST"])
 def example():
     data = request.json
@@ -151,7 +153,8 @@ def example():
     min_chars = char_base - char_range
     print(f"✅ 최소 글자 수 기준: {min_chars}")
 
-    prompt = f"""
+    # 1) 원본 프롬프트를 그대로 담은 변수 (절대 수정 금지)
+    initial_user_prompt = f"""
 아래는 학생이 작성한 논술문입니다. 이 글을 바탕으로 다음 작업을 수행해 주십시오.
 
 1. 학생의 논술문을 기반으로, 평가 기준을 고려하여 예시답안을 작성하십시오.
@@ -197,50 +200,57 @@ def example():
 {essay}
 """
 
-    # ⇨ 추가 시작 ⇨
-    # 1) 이전 예시답안을 담을 변수 초기화
-    example_text = ""
+    # 2) 메시지 리스트 초기화: system + original user prompt
+    messages = [
+        {"role": "system", "content": "너는 고등학생 논술 답안을 만드는 선생님이야. 위 지침에 따라 예시답안을 작성해."},
+        {"role": "user",   "content": initial_user_prompt}
+    ]
 
-    for attempt in range(5):
-        response = client.chat.completions.create(
+    example_text = ""
+    # 3) 반복 요청: 최대 3회
+    for attempt in range(3):
+        res = client.chat.completions.create(
             model="gpt-4",
-            messages=[{"role": "user", "content": prompt}],
+            messages=messages,
             temperature=0.7
         )
-        content = response.choices[0].message.content
+        content = res.choices[0].message.content
         print("🧾 GPT 응답 원문:\n", content)
 
         try:
             parsed = json.loads(content)
-            # 2) 새로 받은 예시답안
-            new_example_text = parsed.get("example", "")
-            print("✅ 예시답안 글자 수:", len(new_example_text))
+            new_example = parsed.get("example", "")
+            print("✅ 예시답안 글자 수:", len(new_example))
 
-            # 3) 기준 충족 시 저장하고 탈출
-            if len(new_example_text) >= min_chars:
-                example_text = new_example_text
+            # 기준 만족 시 완료
+            if len(new_example) >= min_chars:
+                example_text = new_example
                 break
 
-            # 4) 부족 시: 이전 답안 포함 + 정확히 100자(≈100토큰) 더 요청
-            prompt += (
-                f'\n❗ 다음은 이전에 작성한 예시답안입니다:\n"{new_example_text}"\n'
-                '위 예시답안을 유지하되, 정확히 100자(약 100토큰) 이상 더 길게 '
-                '구체적인 주장과 근거를 추가하여 작성해주세요.'
-            )
-            example_text = new_example_text
+            # 기준 미달 시: assistant → 이전 답안, user → 강력한 확장 요청
+            messages.append({"role": "assistant", "content": new_example})
+            messages.append({
+                "role": "user",
+                "content": (
+                    "❗❗❗ **반드시 이전 예시답안을 그대로 유지**하고, 이전 답안보다 "
+                    "**정확히 100토큰(≈100자)** 이상 더 길게 **추가 작성**해 주세요.\n"
+                    "• 반드시 구체적인 주장과 근거를 포함할 것\n"
+                    "• 논리 전개를 방해하지 않도록 자연스럽게 확장할 것\n"
+                    "• 이 지시사항을 **반드시** 따르지 않으면 안 됩니다"
+                )
+            })
 
         except json.JSONDecodeError as e:
-            print("❌ JSON 파싱 실패. 원문 응답:\n", content)
+            print("❌ JSON 파싱 실패:\n", content)
             continue
     else:
         return jsonify({"error": "예시답안이 글자 수 조건을 충족하지 못했습니다."}), 500
-    # ⇦ 추가 끝 ⇦
 
-    # 최종 반환—절대 삭제하지 마세요!
     return jsonify({
         "example": example_text,
         "comparison": parsed.get("comparison", "")
     })
+# ⇦ 수정된 /example 끝
 
 # 반드시 포함할 실행 코드 (맨 밑에!)
 if __name__ == "__main__":
