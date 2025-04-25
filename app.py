@@ -211,7 +211,6 @@ def example():
             model="gpt-4-turbo",
             messages=messages,
             temperature=0.7,
-            max_tokens=1800
         )
         content = res.choices[0].message.content
         print("🧾 GPT 응답 원문:\n", content)
