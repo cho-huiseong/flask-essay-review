@@ -153,7 +153,7 @@ def example():
     min_chars = char_base - char_range
     print(f"✅ 최소 글자 수 기준: {min_chars}")
 
-    # 1) 원본 프롬프트를 그대로 담은 변수 (절대 수정 금지)
+    # 절대 수정하지 말라고 한 프롬프트 — 그대로 유지
     initial_user_prompt = f"""
 아래는 학생이 작성한 논술문입니다. 이 글을 바탕으로 다음 작업을 수행해 주십시오.
 
@@ -200,19 +200,18 @@ def example():
 {essay}
 """
 
-    # 2) 메시지 리스트 초기화: system + original user prompt
     messages = [
         {"role": "system", "content": "너는 고등학생 논술 답안을 만드는 선생님이야. 위 지침에 따라 예시답안을 작성해."},
         {"role": "user",   "content": initial_user_prompt}
     ]
 
     example_text = ""
-    # 3) 반복 요청: 최대 3회
     for attempt in range(3):
         res = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4-turbo",
             messages=messages,
-            temperature=0.7
+            temperature=0.7,
+            max_tokens=1800
         )
         content = res.choices[0].message.content
         print("🧾 GPT 응답 원문:\n", content)
@@ -222,21 +221,24 @@ def example():
             new_example = parsed.get("example", "")
             print("✅ 예시답안 글자 수:", len(new_example))
 
-            # 기준 만족 시 완료
             if len(new_example) >= min_chars:
                 example_text = new_example
                 break
 
-            # 기준 미달 시: assistant → 이전 답안, user → 강력한 확장 요청
+            # 여기만 변경된 핵심 부분
             messages.append({"role": "assistant", "content": new_example})
             messages.append({
                 "role": "user",
                 "content": (
-                    "❗❗❗ **반드시 이전 예시답안을 그대로 유지**하고, 이전 답안보다 "
-                    "**정확히 100토큰(≈100자)** 이상 더 길게 **추가 작성**해 주세요.\n"
-                    "• 반드시 구체적인 주장과 근거를 포함할 것\n"
-                    "• 논리 전개를 방해하지 않도록 자연스럽게 확장할 것\n"
-                    "• 이 지시사항을 **반드시** 따르지 않으면 안 됩니다"
+                    f"""❗다시 작성하십시오. 아래 조건을 반드시 지켜야 합니다.
+
+(1) 이전 예시답안의 글자 수: {len(new_example)}자
+(2) 새로운 예시답안은 반드시 이전보다 **100자 이상 길어야** 합니다.
+(3) 내용을 반복하지 말고 새로운 주장, 근거, 예시를 추가해 주세요.
+(4) 문체와 논리 흐름은 유지하되 반드시 전체 분량을 확장하십시오.
+
+✅ 조건을 지키지 않으면 이 응답은 무효입니다.  
+👉 목표 글자 수: {len(new_example) + 100}자 이상"""
                 )
             })
 
@@ -250,7 +252,7 @@ def example():
         "example": example_text,
         "comparison": parsed.get("comparison", "")
     })
-# ⇦ 수정된 /example 끝
+
 
 # 반드시 포함할 실행 코드 (맨 밑에!)
 if __name__ == "__main__":
