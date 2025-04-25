@@ -130,7 +130,8 @@ def review():
         })
 
     except Exception as e:
-        return jsonify({"error": str(e)})
+     print("❗예외 발생 (전체 try):", str(e), flush=True)
+     return jsonify({"error": str(e)}), 500
 
 # 예시답안 요청
 # …위의 review 라우트 등 기존 코드 그대로…
