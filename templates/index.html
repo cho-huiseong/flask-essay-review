@@ -144,16 +144,18 @@
       <p id="exampleAnswer"></p>
       <h3>🧐 예시와 비교한 분석</h3>
       <p id="comparisonBox"></p>
+
+      <!-- ✅ 추가된 경고 메시지 및 재요청 버튼 -->
       <p id="lengthWarning" style="color: red; font-size: 0.9rem; display: none;"></p>
       <div id="retryButtonBox" style="display: none; margin-top: 10px;">
         <button onclick="handleRetryResponse(true)">예</button>
         <button onclick="handleRetryResponse(false)">아니요</button>
       </div>
+
       <button onclick="downloadPDF()">📄 PDF 저장</button>
       <button onclick="backToMain()">⬅ 돌아가기</button>
     </div>
   </div>
-
   <script>
     let savedScores = [], savedReasons = {}, savedExample = '', savedComparison = '';
     const today = new Date().toISOString().split('T')[0];
@@ -231,9 +233,11 @@
         document.getElementById("exampleAnswer").textContent = savedExample;
         document.getElementById("comparisonBox").textContent = savedComparison;
 
+        // ✅ 여기서 글자 수 기준 미달 경고 후, 재생성 여부 묻기
         if (!result.length_valid && !retry) {
           document.getElementById("lengthWarning").style.display = "block";
-          document.getElementById("lengthWarning").textContent = `이 예시답안은 ${result.length_actual}자로, 기준에 부족합니다. 다시 생성할까요?`;
+          document.getElementById("lengthWarning").textContent =
+            `이 예시답안은 ${result.length_actual}자로, 기준에 부족합니다. 다시 생성할까요?`;
           document.getElementById("retryButtonBox").style.display = "flex";
         }
 
@@ -249,9 +253,9 @@
       });
     }
 
+    // ✅ 재시도 응답 처리 함수
     function handleRetryResponse(yes) {
       if (yes) {
-        retryConfirmed = true;
         showExample(true);
       } else {
         document.getElementById("lengthWarning").style.display = "none";
