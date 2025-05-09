@@ -144,6 +144,11 @@
       <p id="exampleAnswer"></p>
       <h3>🧐 예시와 비교한 분석</h3>
       <p id="comparisonBox"></p>
+      <p id="lengthWarning" style="color: red; font-size: 0.9rem; display: none;"></p>
+      <div id="retryButtonBox" style="display: none; margin-top: 10px;">
+        <button onclick="handleRetryResponse(true)">예</button>
+        <button onclick="handleRetryResponse(false)">아니요</button>
+      </div>
       <button onclick="downloadPDF()">📄 PDF 저장</button>
       <button onclick="backToMain()">⬅ 돌아가기</button>
     </div>
@@ -152,6 +157,7 @@
   <script>
     let savedScores = [], savedReasons = {}, savedExample = '', savedComparison = '';
     const today = new Date().toISOString().split('T')[0];
+    let retryConfirmed = false;
 
     function addPassage() {
       const wrapper = document.createElement("div");
@@ -198,11 +204,13 @@
       document.getElementById("resultCard").style.display = "block";
     }
 
-    function showExample() {
+    function showExample(retry = false) {
       document.getElementById("mainSection").style.display = "none";
       document.getElementById("exampleSection").style.display = "block";
       document.getElementById("exampleLoading").style.display = "block";
       document.getElementById("exampleResult").style.display = "none";
+      document.getElementById("lengthWarning").style.display = "none";
+      document.getElementById("retryButtonBox").style.display = "none";
 
       const passages = [...document.querySelectorAll(".passage")].map(p => p.value);
       const question = document.getElementById("question").value;
@@ -213,7 +221,7 @@
       fetch("/example", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ passages, question, essay, scores: savedScores, reasons: savedReasons, charBase, charRange })
+        body: JSON.stringify({ passages, question, essay, scores: savedScores, reasons: savedReasons, charBase, charRange, retryConfirmed: retry })
       })
       .then(res => res.json())
       .then(result => {
@@ -222,6 +230,13 @@
         savedComparison = result.comparison || "비교 설명 없음";
         document.getElementById("exampleAnswer").textContent = savedExample;
         document.getElementById("comparisonBox").textContent = savedComparison;
+
+        if (!result.length_valid && !retry) {
+          document.getElementById("lengthWarning").style.display = "block";
+          document.getElementById("lengthWarning").textContent = `이 예시답안은 ${result.length_actual}자로, 기준에 부족합니다. 다시 생성할까요?`;
+          document.getElementById("retryButtonBox").style.display = "flex";
+        }
+
         document.getElementById("exampleLoading").style.display = "none";
         document.getElementById("exampleResult").style.display = "block";
       })
@@ -232,6 +247,16 @@
         document.getElementById("exampleResult").style.display = "block";
         console.error("예시답안 오류:", err);
       });
+    }
+
+    function handleRetryResponse(yes) {
+      if (yes) {
+        retryConfirmed = true;
+        showExample(true);
+      } else {
+        document.getElementById("lengthWarning").style.display = "none";
+        document.getElementById("retryButtonBox").style.display = "none";
+      }
     }
 
     function backToMain() {
