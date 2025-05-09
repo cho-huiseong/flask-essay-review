@@ -160,9 +160,9 @@ def example():
 - 글자 수는 학생이 작성한 논술문 기준({char_base} ± {char_range}자) 내에서 작성하십시오.
 
 2. 예시답안과 학생의 논술문을 비교하여 분석하십시오. 각 항목별로 다음을 포함하십시오:
-(1) 학생의 미흡한 문장 (직접 인용)
-(2) 어떤 평가 기준에서 부족했는가
-(3) 예시답안에서 어떻게 개선되었는가
+- 학생의 미흡한 문장 (직접 인용)
+- 어떤 평가 기준에서 부족했는가
+- 예시답안에서 어떻게 개선되었는가
 
 3. 반드시 아래 JSON 형식으로만 출력하십시오. 설명 문구를 붙이지 마십시오.
 
@@ -188,7 +188,7 @@ def example():
 
     parsed = {}
     example_text = ""
-    max_attempts = 1
+    max_attempts = 2
 
     for attempt in range(max_attempts):
         res = client.chat.completions.create(
