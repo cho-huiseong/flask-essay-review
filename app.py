@@ -5,7 +5,7 @@ import os
 import re
 import json
 
-app = Flask(__name__, template_folder=".")
+app = Flask(__name__)
 CORS(app)
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
