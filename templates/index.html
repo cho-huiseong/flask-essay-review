@@ -12,18 +12,16 @@
 
 <style>
 :root{
-  /* Design Tokens */
-  --brand:#2140B1; --brand-700:#1a2f91; --brand-300:#4060d9;
+  --brand:#2140B1; --brand-700:#1a2f91;
   --ink:#111827; --muted:#6B7280; --line:rgba(17,24,39,.10);
-  --bg:#f7f9ff; --white:#fff;
-  --glass:rgba(255,255,255,.55);
+  --bg:#f7f9ff; --white:#fff; --glass:rgba(255,255,255,.55);
 }
-*{ font-family:'SUIT',system-ui,sans-serif; letter-spacing:-.2px }
+*{ box-sizing:border-box; font-family:'SUIT',system-ui,sans-serif; letter-spacing:-.2px }
 html,body{ margin:0; color:var(--ink); background:var(--bg) }
 a{ color:inherit; text-decoration:none }
 .container{ max-width:1180px; margin:0 auto; padding:0 24px }
 
-/* Header (Toss-like glass) */
+/* Header */
 header{
   position:sticky; top:0; z-index:20; background:rgba(255,255,255,.75);
   backdrop-filter:blur(10px); border-bottom:1px solid var(--line);
@@ -35,7 +33,7 @@ header{
 .nav-link:hover{ color:var(--ink) }
 
 /* Buttons */
-.btn{ border:none; height:46px; padding:0 18px; border-radius:14px; font-weight:800; cursor:pointer; transition:all .2s }
+.btn{ border:none; height:46px; padding:0 18px; border-radius:14px; font-weight:800; cursor:pointer; transition:.2s }
 .btn-primary{ background:var(--brand); color:#fff; box-shadow:0 8px 20px rgba(33,64,177,.18) }
 .btn-primary:hover{ transform:translateY(-1px); box-shadow:0 12px 28px rgba(33,64,177,.22) }
 .btn-ghost{ background:#fff; border:1px solid #e5e7eb }
@@ -45,7 +43,7 @@ header{
 .section{ padding:56px 0 }
 .section-tight{ padding:36px 0 }
 .muted{ color:var(--muted) }
-.card{ background:var(--white); border:1px solid #eef2ff; border-radius:18px; padding:18px; box-shadow:0 12px 30px rgba(17,24,39,.06) }
+.card{ background:var(--white); border:1px solid #eef2ff; border-radius:18px; padding:18px; box-shadow:0 12px 30px rgba(17,24,39,.06); overflow:hidden }
 .badge{ font-weight:900; color:var(--brand-700); background:#EEF2FF; border:1px solid #e6ebff; padding:6px 10px; border-radius:999px; display:inline-flex; align-items:center; gap:6px }
 
 /* HERO */
@@ -60,31 +58,20 @@ header{
 .hero h1{ margin:0 0 12px; font-size:clamp(36px,6vw,64px); line-height:1.08; font-weight:900 }
 .hero p{ margin:0 0 24px; font-size:18px; color:#4b5563 }
 
-/* Feature Row (Process) */
+/* Feature rows */
 .process{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px }
 .process .item{ display:flex; flex-direction:column; gap:6px; align-items:center; text-align:center; padding:18px; border-radius:18px;
   background:rgba(255,255,255,.75); backdrop-filter:blur(8px); border:1px solid #eef2ff; box-shadow:0 12px 30px rgba(17,24,39,.06) }
-.process .item .icon{ font-size:22px }
-.process .item b{ font-size:16px }
-@media (max-width:960px){ .process{ grid-template-columns:1fr 1fr } }
-
-/* Triple feature (why us) */
+.process .icon{ font-size:22px }
 .grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px }
-@media (max-width:960px){ .grid-3{ grid-template-columns:1fr } }
 .grid-4{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px }
+@media (max-width:960px){ .process{ grid-template-columns:1fr 1fr } .grid-3{ grid-template-columns:1fr } }
 @media (max-width:1100px){ .grid-4{ grid-template-columns:1fr 1fr } }
 @media (max-width:640px){ .grid-4{ grid-template-columns:1fr } }
 
-/* Comparison */
-.compare{ display:grid; grid-template-columns:1fr 1fr; gap:16px }
-@media (max-width:960px){ .compare{ grid-template-columns:1fr } }
-.compare .col h3{ margin:0; font-size:18px }
-.ul{ margin:10px 0 0 0; padding-left:18px; color:#374151 }
-.ul li{ margin:6px 0 }
-
-/* Editor (AI 첨삭 섹션) */
+/* Editor */
 .panel{ background:var(--glass); backdrop-filter:blur(14px); border:1px solid rgba(255,255,255,.5);
-  border-radius:22px; padding:22px; box-shadow:0 10px 30px rgba(17,24,39,.1) }
+  border-radius:22px; padding:22px; box-shadow:0 10px 30px rgba(17,24,39,.1); overflow:hidden }
 .form-label{ font-weight:900; margin:12px 0 6px; display:block }
 .input,.textarea{ width:100%; padding:14px 16px; border:1px solid #e5e7eb; border-radius:12px; font-size:16px; line-height:1.6; resize:none }
 .input:focus,.textarea:focus{ outline:none; border-color:var(--brand); box-shadow:0 0 0 3px rgba(33,64,177,.18) }
@@ -101,7 +88,6 @@ header{
 </head>
 
 <body>
-<!-- Header -->
 <header>
   <div class="container nav">
     <div class="nav-left" style="gap:10px">
@@ -112,167 +98,79 @@ header{
       <a href="#services" class="nav-link" onclick="scrollToId('services')">서비스</a>
       <a href="#guide" class="nav-link" onclick="scrollToId('guide')">이용안내</a>
       <a href="#pricing" class="nav-link" onclick="scrollToId('pricing')">가격</a>
-      <button class="btn btn-primary" onclick="go('editor')">AI 첨삭하기</button>
+      <button class="btn btn-primary" onclick="goToEditor()">AI 첨삭하기</button>
     </div>
   </div>
 </header>
 
 <main>
-  <!-- ===================== HOME (랜딩) ===================== -->
+  <!-- ===================== HOME ===================== -->
   <section id="homeSection" class="hero">
     <div class="container">
       <div class="badge">✨ 논술 AI 첨삭 · 상담용 리포트</div>
       <h1>글 평가와 예시 작성,<br/>더 쉽고 간편하게</h1>
       <p>학생 글 입력 → AI 평가/그래프 → 제시문 기반 예시답안 → PDF 저장까지, 한 번에.</p>
       <div style="display:flex; gap:12px; flex-wrap:wrap">
-        <button class="btn btn-primary" style="height:52px" onclick="go('editor')">시작하기</button>
+        <button class="btn btn-primary" style="height:52px" onclick="goToEditor()">시작하기</button>
         <button class="btn btn-ghost" style="height:52px" onclick="scrollToId('services')">예시 미리보기</button>
       </div>
 
-      <!-- Process row -->
       <div class="section-tight"></div>
       <div class="process">
-        <div class="item">
-          <div class="icon">✍️</div><b>논술 입력</b>
-          <div class="muted">질문·제시문·논술문</div>
-        </div>
-        <div class="item">
-          <div class="icon">📊</div><b>평가 카드/그래프</b>
-          <div class="muted">점수와 근거</div>
-        </div>
-        <div class="item">
-          <div class="icon">💡</div><b>예시답안</b>
-          <div class="muted">제시문만 활용</div>
-        </div>
-        <div class="item">
-          <div class="icon">📄</div><b>PDF 저장</b>
-          <div class="muted">기록 보관</div>
-        </div>
+        <div class="item"><div class="icon">✍️</div><b>논술 입력</b><div class="muted">질문·제시문·논술문</div></div>
+        <div class="item"><div class="icon">📊</div><b>평가 카드/그래프</b><div class="muted">점수와 근거</div></div>
+        <div class="item"><div class="icon">💡</div><b>예시답안</b><div class="muted">제시문만 활용</div></div>
+        <div class="item"><div class="icon">📄</div><b>PDF 저장</b><div class="muted">기록 보관</div></div>
       </div>
     </div>
   </section>
 
-  <!-- Why Us -->
   <section id="services" class="section">
     <div class="container">
       <h2 style="margin:0 0 8px; font-size:28px; font-weight:900">다쓰 리포트, 왜 좋아요?</h2>
       <p class="muted" style="margin:0 0 18px">상담 현장에서 바로 설득 가능한 결과물 중심 설계</p>
       <div class="grid-4">
-        <div class="card">
-          <h3 style="margin:0 0 6px">✅ 제시문 기반 평가</h3>
-          <p class="muted">외부 지식 없이 제시문만 근거로 채점과 이유를 제공합니다.</p>
-        </div>
-        <div class="card">
-          <h3 style="margin:0 0 6px">📈 토스 감성 차트</h3>
-          <p class="muted">둥근 막대·값 라벨·부드러운 이징으로 한눈에 이해되는 그래프.</p>
-        </div>
-        <div class="card">
-          <h3 style="margin:0 0 6px">🎯 총점·판정 표시</h3>
-          <p class="muted">40점 만점, 30/36 기준선, 😅/🙂/🥳 이모지로 기분 나쁘지 않은 피드백.</p>
-        </div>
-        <div class="card">
-          <h3 style="margin:0 0 6px">📦 PDF 리포트</h3>
-          <p class="muted">이름·날짜·논술문·평가요약·예시답안·비교분석까지 한 번에 저장.</p>
-        </div>
+        <div class="card"><h3 style="margin:0 0 6px">✅ 제시문 기반 평가</h3><p class="muted">외부 지식 없이 제시문만 근거로 채점과 이유 제공.</p></div>
+        <div class="card"><h3 style="margin:0 0 6px">📈 한눈에 이해되는 리포트</h3><p class="muted">총점·판정·게이지·막대그래프까지 즉시 이해.</p></div>
+        <div class="card"><h3 style="margin:0 0 6px">🎯 기준선 명시</h3><p class="muted">40점 만점, 30/36 기준으로 결과 해석이 쉬워요.</p></div>
+        <div class="card"><h3 style="margin:0 0 6px">📦 PDF 리포트</h3><p class="muted">이름·날짜·평가·예시답안·비교분석을 한 파일로.</p></div>
       </div>
     </div>
   </section>
 
-  <!-- How it Works / Guide -->
   <section id="guide" class="section" style="background:#fff">
-    <div class="container compare">
-      <div class="col">
-        <span class="badge">이용안내</span>
-        <h2 style="margin:8px 0 12px; font-size:28px; font-weight:900">1분이면 시작 가능</h2>
-        <ul class="ul">
-          <li><b>학생·질문·제시문·논술문</b>을 입력하고 <b>리포트 생성</b>을 눌러요.</li>
-          <li>AI가 <b>논리·독해·구성·표현</b>을 점수화하고 이유를 제공해요.</li>
-          <li><b>예시답안·비교분석</b>으로 설득력 있는 코칭이 가능해요.</li>
-          <li>결과는 <b>PDF</b>로 저장·공유할 수 있어요.</li>
-        </ul>
-        <div style="margin-top:14px">
-          <button class="btn btn-chip" onclick="go('editor')">동의하고 시작하기</button>
-        </div>
-      </div>
-      <div class="col">
-        <div class="card">
-          <h3 style="margin:0">판정 기준</h3>
-          <p class="muted" style="margin:6px 0 12px">총점 40점 / 30·36 기준선</p>
-          <div class="grid-3">
-            <div class="card"><b>😅 다시 쓰기</b><br/><span class="muted">&lt; 30점</span></div>
-            <div class="card"><b>🙂 예비</b><br/><span class="muted">30 ~ 35점</span></div>
-            <div class="card"><b>🥳 합격</b><br/><span class="muted">≥ 36점</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Value props (4 icons like Toss credit page) -->
-  <section class="section">
     <div class="container">
-      <h2 style="margin:0 0 8px; font-size:28px; font-weight:900">성장을 위한 디테일</h2>
-      <p class="muted" style="margin:0 0 18px">“검열”이 아니라 “동행”의 어조로, 더 멀리 날게</p>
-      <div class="grid-4">
-        <div class="card">
-          <div style="font-size:26px">🧭</div>
-          <h3 style="margin:8px 0 4px">정확한 가이드</h3>
-          <p class="muted">이유가 곁들여진 피드백으로 다음 한 걸음이 명확합니다.</p>
-        </div>
-        <div class="card">
-          <div style="font-size:26px">🧩</div>
-          <h3 style="margin:8px 0 4px">구성력 보강</h3>
-          <p class="muted">논지 전개·문단 구성·근거 배치를 자연스럽게 안내합니다.</p>
-        </div>
-        <div class="card">
-          <div style="font-size:26px">🗣️</div>
-          <h3 style="margin:8px 0 4px">표현력 개선</h3>
-          <p class="muted">중복·모호 표현을 줄이고 핵심이 살아나는 문장으로.</p>
-        </div>
-        <div class="card">
-          <div style="font-size:26px">📚</div>
-          <h3 style="margin:8px 0 4px">상담 최적화</h3>
-          <p class="muted">학부모·학생에게 바로 보여주는 리포트 중심 UI.</p>
-        </div>
-      </div>
+      <span class="badge">이용안내</span>
+      <h2 style="margin:8px 0 12px; font-size:28px; font-weight:900">1분이면 시작 가능</h2>
+      <ul style="margin:10px 0 0 0; padding-left:18px; color:#374151">
+        <li><b>학생·질문·제시문·논술문</b>을 입력하고 <b>리포트 생성</b>을 눌러요.</li>
+        <li>AI가 <b>논리·독해·구성·표현</b>을 점수화하고 이유를 제공해요.</li>
+        <li><b>예시답안·비교분석</b>으로 설득력 있는 코칭이 가능해요.</li>
+        <li>결과는 <b>PDF</b>로 저장·공유할 수 있어요.</li>
+      </ul>
+      <div style="margin-top:14px"><button class="btn btn-chip" onclick="goToEditor()">동의하고 시작하기</button></div>
     </div>
   </section>
 
-  <!-- Pricing -->
   <section id="pricing" class="section-tight">
     <div class="container grid-3">
-      <div class="card">
-        <h3 style="margin:0 0 6px">베이직</h3>
-        <p class="muted">필수 기능 · 기본 PDF</p>
-        <button class="btn btn-primary" style="margin-top:8px" onclick="go('editor')">시작하기</button>
-      </div>
-      <div class="card">
-        <h3 style="margin:0 0 6px">프로</h3>
-        <p class="muted">무제한 · 로고/브랜드 PDF</p>
-        <button class="btn btn-primary" style="margin-top:8px" onclick="go('editor')">시작하기</button>
-      </div>
-      <div class="card">
-        <h3 style="margin:0 0 6px">팀/학원</h3>
-        <p class="muted">여러 계정 · 대시보드</p>
-        <button class="btn btn-primary" style="margin-top:8px" onclick="go('editor')">시작하기</button>
-      </div>
+      <div class="card"><h3 style="margin:0 0 6px">베이직</h3><p class="muted">필수 기능 · 기본 PDF</p><button class="btn btn-primary" style="margin-top:8px" onclick="goToEditor()">시작하기</button></div>
+      <div class="card"><h3 style="margin:0 0 6px">프로</h3><p class="muted">무제한 · 로고/브랜드 PDF</p><button class="btn btn-primary" style="margin-top:8px" onclick="goToEditor()">시작하기</button></div>
+      <div class="card"><h3 style="margin:0 0 6px">팀/학원</h3><p class="muted">여러 계정 · 대시보드</p><button class="btn btn-primary" style="margin-top:8px" onclick="goToEditor()">시작하기</button></div>
     </div>
   </section>
 
-  <!-- Final CTA -->
   <section class="section" style="padding:46px 0 64px">
     <div class="container card" style="text-align:center">
       <h2 style="margin:0 0 10px; font-weight:900">지금, 학생의 글에 날개를</h2>
       <p class="muted" style="margin:0 0 16px">오늘의 작은 수정이, 내일의 큰 도약을 만듭니다.</p>
-      <button class="btn btn-primary" style="height:52px" onclick="go('editor')">AI 첨삭하기</button>
+      <button class="btn btn-primary" style="height:52px" onclick="goToEditor()">AI 첨삭하기</button>
     </div>
   </section>
 
-  <!-- ===================== EDITOR (AI 첨삭) ===================== -->
+  <!-- ===================== EDITOR ===================== -->
   <section id="editorSection" class="section hidden">
     <div class="container">
-
-      <!-- 입력 패널 -->
       <div class="panel fade">
         <h2 style="margin:0 0 12px; font-weight:900">✨ 너의 글, 오늘 더 멀리 날아가게.</h2>
         <p class="muted" style="margin-top:0">정성껏 쓴 문장 위에 필요한 피드백만 얹어, 목표에 닿도록 부드럽게 이끌어 드릴게요.</p>
@@ -310,7 +208,7 @@ header{
 
       <!-- 결과 -->
       <div id="resultCard" class="panel fade hidden" style="margin-top:18px">
-        <h3 style="margin-top:0">📋 결과</h3>
+        <h3 style="margin-top:0">📊 한눈에 이해되는 리포트</h3>
         <div id="evalSummary"></div>
       </div>
 
@@ -322,13 +220,12 @@ header{
         <button class="btn btn-primary" style="margin-top:14px" onclick="downloadPDF()">📥 PDF 저장</button>
         <button class="btn btn-ghost" style="margin-top:14px" onclick="resetReport()">🔄 새 리포트 시작</button>
       </div>
-
     </div>
   </section>
 </main>
 
 <script>
-/* ============ Router (Home <-> Editor) ============ */
+/* ===== Router & CTA ===== */
 function show(section){
   document.getElementById('homeSection').classList.toggle('hidden', section!=='home');
   document.getElementById('editorSection').classList.toggle('hidden', section!=='editor');
@@ -338,7 +235,6 @@ function go(section){
   location.hash = (section==='editor' ? '#editor' : '#home');
   show(section);
 }
-function scrollToId(id){ document.getElementById(id)?.scrollIntoView({behavior:'smooth'}); }
 function routeFromHash(){
   const h=(location.hash||'').toLowerCase();
   if(h==='#editor') show('editor'); else show('home');
@@ -346,18 +242,42 @@ function routeFromHash(){
 window.addEventListener('hashchange', routeFromHash);
 window.addEventListener('DOMContentLoaded', routeFromHash);
 
-/* ============ Editor Logic ============ */
+// CTA: 부드러운 이동 + 포커스
+function goToEditor(){
+  location.hash = '#editor';
+  show('editor');
+  setTimeout(() => {
+    const target = document.getElementById('studentName');
+    target?.focus({ preventScroll: true });
+    const y = document.getElementById('editorSection').getBoundingClientRect().top + window.scrollY - 72;
+    window.scrollTo({ top: y, behavior: 'smooth' });
+  }, 0);
+}
+function scrollToId(id){ document.getElementById(id)?.scrollIntoView({behavior:'smooth'}); }
+
+/* ===== Editor Logic ===== */
 let scoreChart, savedScores=[], savedReasons={}, savedExample="", savedComparison="";
+
+// textarea 자동 리사이즈
+function autoResize(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight, 1200)+'px'; }
+function bindAutoResize(){
+  document.querySelectorAll('textarea').forEach(t=>{
+    t.addEventListener('input', ()=>autoResize(t)); autoResize(t);
+  });
+}
+window.addEventListener('DOMContentLoaded', bindAutoResize);
 
 function addPassage(){
   const t=document.createElement('textarea');
   t.className='passage textarea'; t.rows=3; t.placeholder='제시문을 그대로 적어 주세요.';
   document.getElementById('passages').appendChild(t);
+  t.addEventListener('input', ()=>autoResize(t)); autoResize(t);
 }
 function updateCharCount(){
   const essay=document.getElementById('essay').value;
   document.getElementById('charCount').innerText=`현재 글자 수: ${essay.length}`;
 }
+
 function getTotalAndStatus(scores){
   const total=(scores||[]).reduce((a,b)=>a+(parseInt(b)||0),0);
   let status={label:"예비",desc:"조금만 다듬으면 더 좋아져요.",emoji:"🙂",tone:"#f59e0b"};
@@ -395,6 +315,7 @@ async function submitEssay(){
         </div>
       </div>`;
 
+    // 시각 리포트 블록
     document.getElementById('evalSummary').innerHTML=`
       <div class="card" style="display:flex;align-items:center;gap:14px">
         <div style="font-size:30px">${status.emoji}</div>
@@ -423,25 +344,33 @@ async function submitEssay(){
         `).join('')}
       </div>
 
-      <div style="margin-top:22px"><canvas id="scoreChart" height="280"></canvas></div>
+      <div style="margin-top:18px"><canvas id="scoreChart" height="140"></canvas></div>
     `;
 
-    // Chart
+    // Chart (height=140, barThickness=28, categoryPercentage=0.65)
     const ctx=document.getElementById('scoreChart').getContext('2d');
-    const grad=ctx.createLinearGradient(0,0,0,280);
-    grad.addColorStop(0,"rgba(33,64,177,.95)"); grad.addColorStop(1,"rgba(33,64,177,.55)");
     if(scoreChart) scoreChart.destroy();
     scoreChart=new Chart(ctx,{
       type:'bar',
-      data:{ labels:['논리력','독해력','구성력','표현력'], datasets:[{ data:savedScores, backgroundColor:grad, borderRadius:12, barThickness:42 }]},
-      options:{
-        animation:{ duration:900, easing:'easeOutQuart' },
-        scales:{ x:{ grid:{ display:false }, ticks:{ color:'#6B7280' } },
-                 y:{ beginAtZero:true, max:10, ticks:{ stepSize:1, color:'#9CA3AF' }, grid:{ color:'rgba(17,24,39,.06)' } } },
-        plugins:{ legend:{ display:false }, tooltip:{ backgroundColor:'#111827', titleColor:'#fff', bodyColor:'#E5E7EB', cornerRadius:10, displayColors:false } }
+      data:{
+        labels:['논리력','독해력','구성력','표현력'],
+        datasets:[{
+          data:savedScores,
+          backgroundColor:"rgba(33,64,177,.75)",
+          borderRadius:8,
+          barThickness:28,
+          categoryPercentage:0.65
+        }]
       },
-      plugins:[{ afterDatasetsDraw(chart){ const {ctx,data}=chart; ctx.save(); ctx.font='600 12px SUIT'; ctx.fillStyle='#1F2937'; ctx.textAlign='center';
-        chart.getDatasetMeta(0).data.forEach((b,i)=>{ const v=data.datasets[0].data[i]; const {x,y}=b.tooltipPosition(); ctx.fillText(v,x,y-12); }); ctx.restore(); } }]
+      options:{
+        animation:{duration:600,easing:'easeOutQuart'},
+        scales:{
+          x:{grid:{display:false},ticks:{color:'#6B7280',font:{size:12}}},
+          y:{beginAtZero:true,max:10,ticks:{stepSize:1,color:'#9CA3AF',font:{size:11}},
+             grid:{color:'rgba(17,24,39,.06)'}}
+        },
+        plugins:{legend:{display:false},tooltip:{enabled:true}}
+      }
     });
 
     document.getElementById('loading').style.display='none';
@@ -463,34 +392,89 @@ async function submitEssay(){
   }
 }
 
+/* ===== PDF (화면 구성 그대로) ===== */
 function downloadPDF(){
-  const name=document.getElementById('studentName').value;
-  const essay=document.getElementById('essay').value;
+  const name=document.getElementById('studentName').value || '이름 미입력';
+  const essay=document.getElementById('essay').value || '';
   const today=new Date().toISOString().split('T')[0];
   const { total, status } = getTotalAndStatus(savedScores);
-  const wrap=document.createElement('div');
-  wrap.innerHTML=`
-    <h2>다쓰 리포트</h2><p>학생:${name} | 날짜:${today}</p>
-    <div style="border:1px solid #e5e7eb;border-radius:12px;padding:12px;margin:12px 0;">
-      <b>총점:</b> <span style="color:${status.tone}">${total}</span>/40 · <b style="color:${status.tone}">${status.label}</b>
-      <div style="margin-top:6px;height:8px;background:#eef2ff;border-radius:999px;overflow:hidden">
-        <div style="width:${(total/40)*100}%;height:100%;background:${status.tone}"></div>
-      </div>
-      <div style="color:#6b7280;font-size:12px;margin-top:4px">${status.desc}</div>
+
+  // 차트 이미지로 변환
+  let chartImg=''; try{
+    const canvas=document.getElementById('scoreChart');
+    if(canvas) chartImg=canvas.toDataURL('image/png',1.0);
+  }catch(e){ console.warn('chart to image fail',e); }
+
+  const html=`
+  <div style="font-family:'SUIT',system-ui,-apple-system,sans-serif; color:#111827;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h2 style="margin:0">다쓰 리포트</h2>
+      <div style="color:#6b7280;font-size:12px">학생: ${name} · 날짜: ${today}</div>
     </div>
-    <h3>작성한 논술문</h3><p>${essay.replace(/\n/g,'<br>')}</p>
-    <h3>평가 요약</h3>
-    ${['논리력','독해력','구성력','표현력'].map((k,i)=>`<p><b>${k} (${savedScores[i]}점)</b><br>${savedReasons[k]}</p>`).join('')}
-    <h3>예시답안</h3><p>${savedExample.replace(/\n/g,'<br>')}</p>
-    <h3>비교 분석</h3><p>${savedComparison.replace(/\n/g,'<br>')}</p>
-    <footer style="margin-top:24px;color:#6b7280;font-size:13px;">오늘의 작은 수정이, 내일의 큰 도약을 만들어요.</footer>
-  `;
-  html2pdf().from(wrap).set({margin:10, filename:`다쓰_리포트_${today}.pdf`,
-    html2canvas:{scale:2}, jsPDF:{unit:'mm', format:'a4', orientation:'portrait'} }).save();
+
+    <div style="display:flex;gap:12px;align-items:center;border:1px solid #e5e7eb;border-radius:12px;padding:12px;">
+      <div style="font-size:26px">${status.emoji}</div>
+      <div style="flex:1">
+        <div style="font-weight:900">총점 <span style="color:${status.tone}">${total}</span> / 40 ·
+          <span style="color:${status.tone}">${status.label}</span></div>
+        <div style="color:#6b7280;font-size:13px;margin-top:4px">${status.desc}</div>
+        <div style="margin-top:8px;position:relative;height:8px;background:#eef2ff;border-radius:999px;overflow:hidden">
+          <div style="width:${(total/40)*100}%;height:100%;background:${status.tone}"></div>
+          <div style="position:absolute;left:${(30/40)*100}%;top:0;bottom:0;width:2px;background:rgba(17,24,39,.18)"></div>
+          <div style="position:absolute;left:${(36/40)*100}%;top:0;bottom:0;width:2px;background:rgba(17,24,39,.28)"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;color:#9ca3af;font-size:11px;margin-top:4px">
+          <span>0</span><span>30(예비)</span><span>36(합격)</span><span>40</span>
+        </div>
+      </div>
+      <div style="position:relative;width:110px;height:110px">
+        <svg width="110" height="110">
+          <circle r="52" cx="55" cy="55" fill="transparent" stroke="#eef2ff" stroke-width="10"></circle>
+          <circle r="52" cx="55" cy="55" fill="transparent" stroke="${status.tone}" stroke-width="10"
+            stroke-dasharray="327" stroke-dashoffset="${327-(327*(total/40))}"></circle>
+        </svg>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-weight:900">${total}</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+      ${['논리력','독해력','구성력','표현력'].map((k,i)=>`
+        <div style="border:1px solid #e5e7eb;border-radius:12px;padding:12px">
+          <div style="font-weight:800">${k} (${savedScores[i]}점)</div>
+          <div style="color:#6b7280;font-size:13px;margin-top:6px">${savedReasons[k]}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    ${chartImg ? `<div style="margin-top:12px;border:1px solid #e5e7eb;border-radius:12px;padding:12px">
+      <img src="${chartImg}" style="width:100%;height:auto;display:block;"/></div>` : ''}
+
+    <h3 style="margin:16px 0 6px">작성한 논술문</h3>
+    <div style="border:1px solid #e5e7eb;border-radius:12px;padding:12px;font-size:13px;color:#374151">
+      ${essay.replace(/\n/g,'<br>')}
+    </div>
+
+    <h3 style="margin:16px 0 6px">예시답안</h3>
+    <div style="border:1px solid #e5e7eb;border-radius:12px;padding:12px;font-size:13px;color:#374151">
+      ${savedExample.replace(/\n/g,'<br>')}
+    </div>
+
+    <h3 style="margin:16px 0 6px">비교 분석</h3>
+    <div style="border:1px solid #e5e7eb;border-radius:12px;padding:12px;font-size:13px;color:#374151">
+      ${savedComparison.replace(/\n/g,'<br>')}
+    </div>
+  </div>`;
+
+  const wrap=document.createElement('div');
+  wrap.innerHTML=html;
+  html2pdf().from(wrap).set({
+    margin:10, filename:`다쓰_리포트_${today}.pdf`,
+    html2canvas:{ scale:2, useCORS:true },
+    jsPDF:{ unit:'mm', format:'a4', orientation:'portrait' }
+  }).save();
 }
 
 function resetReport(){ location.hash='#home'; routeFromHash(); }
 </script>
-
 </body>
 </html>
