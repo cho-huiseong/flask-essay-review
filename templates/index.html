@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>아카데미창 · 다쓰 리포트</title>
 
-<!-- Fonts & Libs -->
 <link href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
@@ -20,35 +19,26 @@
 html,body{ margin:0; color:var(--ink); background:var(--bg) }
 a{ color:inherit; text-decoration:none }
 .container{ max-width:1180px; margin:0 auto; padding:0 24px }
+.hidden{ display:none }
+.muted{ color:var(--muted) }
+.badge{ font-weight:900; color:var(--brand-700); background:#EEF2FF; border:1px solid #e6ebff; padding:6px 10px; border-radius:999px; display:inline-flex; align-items:center; gap:6px }
+.card{ background:var(--white); border:1px solid #eef2ff; border-radius:18px; padding:18px; box-shadow:0 12px 30px rgba(17,24,39,.06); overflow:hidden }
 
-/* Header */
 header{
   position:sticky; top:0; z-index:20; background:rgba(255,255,255,.75);
   backdrop-filter:blur(10px); border-bottom:1px solid var(--line);
 }
 .nav{ height:66px; display:flex; align-items:center; justify-content:space-between }
 .nav-left{ display:flex; align-items:center; gap:10px; font-weight:900 }
-.nav-right{ display:flex; gap:16px; align-items:center }
-.nav-link{ color:#374151; font-weight:700 }
-.nav-link:hover{ color:var(--ink) }
-
-/* Buttons */
-.btn{ border:none; height:46px; padding:0 18px; border-radius:14px; font-weight:800; cursor:pointer; transition:.2s }
+.nav-right{ display:flex; gap:12px; align-items:center }
+.btn{ border:none; height:44px; padding:0 18px; border-radius:14px; font-weight:800; cursor:pointer; transition:.2s }
 .btn-primary{ background:var(--brand); color:#fff; box-shadow:0 8px 20px rgba(33,64,177,.18) }
 .btn-primary:hover{ transform:translateY(-1px); box-shadow:0 12px 28px rgba(33,64,177,.22) }
 .btn-ghost{ background:#fff; border:1px solid #e5e7eb }
-.btn-chip{ height:40px; background:#EEF2FF; color:var(--brand-700); border-radius:999px; font-weight:900 }
+.btn-link{ background:transparent; border:none; color:#374151; font-weight:800; cursor:pointer }
 
-/* Sections */
-.section{ padding:56px 0 }
-.section-tight{ padding:36px 0 }
-.muted{ color:var(--muted) }
-.card{ background:var(--white); border:1px solid #eef2ff; border-radius:18px; padding:18px; box-shadow:0 12px 30px rgba(17,24,39,.06); overflow:hidden }
-.badge{ font-weight:900; color:var(--brand-700); background:#EEF2FF; border:1px solid #e6ebff; padding:6px 10px; border-radius:999px; display:inline-flex; align-items:center; gap:6px }
-
-/* HERO */
 .hero{
-  padding:96px 0 62px;
+  padding:96px 0 50px;
   background:
     radial-gradient(1200px 600px at 80% -30%, rgba(33,64,177,.22), transparent),
     radial-gradient(900px 500px at -10% 20%, rgba(33,64,177,.12), transparent),
@@ -58,20 +48,54 @@ header{
 .hero h1{ margin:0 0 12px; font-size:clamp(36px,6vw,64px); line-height:1.08; font-weight:900 }
 .hero p{ margin:0 0 24px; font-size:18px; color:#4b5563 }
 
-/* Feature rows */
-.process{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px }
-.process .item{ display:flex; flex-direction:column; gap:6px; align-items:center; text-align:center; padding:18px; border-radius:18px;
-  background:rgba(255,255,255,.75); backdrop-filter:blur(8px); border:1px solid #eef2ff; box-shadow:0 12px 30px rgba(17,24,39,.06) }
-.process .icon{ font-size:22px }
-.grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px }
-.grid-4{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px }
-@media (max-width:960px){ .process{ grid-template-columns:1fr 1fr } .grid-3{ grid-template-columns:1fr } }
-@media (max-width:1100px){ .grid-4{ grid-template-columns:1fr 1fr } }
-@media (max-width:640px){ .grid-4{ grid-template-columns:1fr } }
+/* Showcase (Two Monitors) */
+.showcase{ padding:32px 0 20px; border-bottom:1px solid var(--line);
+  background:
+    radial-gradient(900px 400px at 10% -10%, rgba(33,64,177,.08), transparent),
+    radial-gradient(800px 300px at 110% 10%, rgba(33,64,177,.06), transparent);
+}
+.monitor-grid{ display:grid; grid-template-columns:1fr 1fr; gap:22px }
+@media(max-width:980px){ .monitor-grid{ grid-template-columns:1fr; } }
+
+.monitor{
+  border-radius:22px; padding:16px; background:rgba(255,255,255,.7);
+  backdrop-filter: blur(10px);
+  border:1px solid rgba(255,255,255,.6);
+  box-shadow:0 30px 60px rgba(33,64,177,.14), inset 0 0 0 1px #eef2ff;
+}
+.monitor .bar{
+  height:22px; display:flex; align-items:center; gap:8px; padding:0 10px;
+}
+.dot{ width:10px; height:10px; border-radius:50% }
+.dot.red{ background:#ff5f57 } .dot.yellow{ background:#ffbd2e } .dot.green{ background:#28c840 }
+.monitor .screen{
+  border-radius:16px; background:#fff; border:1px solid #eef2ff; overflow:hidden;
+  height: 420px; position:relative
+}
+@media(max-width:980px){ .monitor .screen{ height: 360px } }
+
+/* Screen inner: fixed width then scaled down for sharpness */
+.viewport{
+  position:absolute; inset:0; display:flex; align-items:stretch; justify-content:center; overflow:hidden;
+}
+.viewport > .stage{
+  width: 980px; /* base layout width to clone into */
+  transform-origin: top left;
+  /* scale is calculated in JS to fit into .screen */
+  padding: 16px;
+}
+
+/* Placeholder slide style */
+.placeholder{ padding:18px }
+.placeholder h4{ margin:0 0 8px; font-weight:900 }
+.placeholder .line{ height:12px; background:#eef2ff; border-radius:8px; margin:8px 0; }
+.placeholder .chip{ display:inline-block; padding:6px 10px; border-radius:999px; background:#f3f4f6; border:1px solid #e5e7eb; margin-right:6px; font-weight:800; color:#475569; font-size:12px }
+.fade{ animation:fadeUp .45s ease } @keyframes fadeUp{ from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
 
 /* Editor */
+.section{ padding:56px 0 }
 .panel{ background:var(--glass); backdrop-filter:blur(14px); border:1px solid rgba(255,255,255,.5);
-  border-radius:22px; padding:22px; box-shadow:0 10px 30px rgba(17,24,39,.1); overflow:hidden }
+  border-radius:22px; padding:22px; box-shadow:0 10px 30px rgba(17,24,39,.1) }
 .form-label{ font-weight:900; margin:12px 0 6px; display:block }
 .input,.textarea{ width:100%; padding:14px 16px; border:1px solid #e5e7eb; border-radius:12px; font-size:16px; line-height:1.6; resize:none }
 .input:focus,.textarea:focus{ outline:none; border-color:var(--brand); box-shadow:0 0 0 3px rgba(33,64,177,.18) }
@@ -81,9 +105,18 @@ header{
 .kpi{ display:grid; grid-template-columns:1fr 1fr; gap:12px }
 @media (max-width:900px){ .kpi{ grid-template-columns:1fr } }
 
-.fade{ animation:fadeUp .45s ease }
-@keyframes fadeUp{ from{ opacity:0; transform:translateY(8px) } to{ opacity:1; transform:none } }
-.hidden{ display:none }
+/* Auth modal */
+.modal-backdrop{ position:fixed; inset:0; background:rgba(17,24,39,.4); display:flex; align-items:center; justify-content:center; z-index:50 }
+.modal{ width:min(560px,90vw); background:#fff; border-radius:18px; border:1px solid #e5e7eb; box-shadow:0 24px 60px rgba(17,24,39,.22); padding:18px }
+.tabs{ display:flex; gap:8px; margin-bottom:12px }
+.tab{ flex:1; height:40px; border-radius:999px; border:1px solid #e5e7eb; background:#f8fafc; font-weight:800; cursor:pointer }
+.tab.active{ background:#EEF2FF; border-color:#dbe4ff; color:var(--brand-700) }
+.row{ display:flex; gap:10px }
+.avatar{ width:32px; height:32px; border-radius:50%; background:#EEF2FF; color:var(--brand-700); display:flex; align-items:center; justify-content:center; font-weight:900 }
+.dropdown{ position:relative }
+.dropdown-menu{ position:absolute; right:0; top:44px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 12px 30px rgba(17,24,39,.12); padding:8px; min-width:160px; display:none }
+.dropdown-menu a, .dropdown-menu button{ display:block; width:100%; text-align:left; background:transparent; border:none; padding:8px 10px; border-radius:8px; font-weight:700; color:#374151; cursor:pointer }
+.dropdown-menu a:hover, .dropdown-menu button:hover{ background:#f3f4f6 }
 </style>
 </head>
 
@@ -95,16 +128,23 @@ header{
       <span>아카데미창</span>
     </div>
     <div class="nav-right">
-      <a href="#services" class="nav-link" onclick="scrollToId('services')">서비스</a>
-      <a href="#guide" class="nav-link" onclick="scrollToId('guide')">이용안내</a>
-      <a href="#pricing" class="nav-link" onclick="scrollToId('pricing')">가격</a>
+      <div id="profileArea" class="dropdown hidden">
+        <div id="profileBtn" class="btn btn-ghost" style="display:flex;align-items:center;gap:8px">
+          <div class="avatar" id="avatarInitial">A</div>
+          <span id="profileName" class="muted" style="font-weight:800"></span>
+        </div>
+        <div class="dropdown-menu" id="profileMenu">
+          <button onclick="logout()">로그아웃</button>
+        </div>
+      </div>
+      <button id="loginBtn" class="btn btn-ghost" onclick="openAuth()">로그인</button>
       <button class="btn btn-primary" onclick="goToEditor()">AI 첨삭하기</button>
     </div>
   </div>
 </header>
 
 <main>
-  <!-- ===================== HOME ===================== -->
+  <!-- ===================== HERO ===================== -->
   <section id="homeSection" class="hero">
     <div class="container">
       <div class="badge">✨ 논술 AI 첨삭 · 상담용 리포트</div>
@@ -112,68 +152,50 @@ header{
       <p>학생 글 입력 → AI 평가/그래프 → 제시문 기반 예시답안 → PDF 저장까지, 한 번에.</p>
       <div style="display:flex; gap:12px; flex-wrap:wrap">
         <button class="btn btn-primary" style="height:52px" onclick="goToEditor()">시작하기</button>
-        <button class="btn btn-ghost" style="height:52px" onclick="scrollToId('services')">예시 미리보기</button>
-      </div>
-
-      <div class="section-tight"></div>
-      <div class="process">
-        <div class="item"><div class="icon">✍️</div><b>논술 입력</b><div class="muted">질문·제시문·논술문</div></div>
-        <div class="item"><div class="icon">📊</div><b>평가 카드/그래프</b><div class="muted">점수와 근거</div></div>
-        <div class="item"><div class="icon">💡</div><b>예시답안</b><div class="muted">제시문만 활용</div></div>
-        <div class="item"><div class="icon">📄</div><b>PDF 저장</b><div class="muted">기록 보관</div></div>
       </div>
     </div>
   </section>
 
-  <section id="services" class="section">
+  <!-- ===================== SHOWCASE (Two Monitors) ===================== -->
+  <section id="showcase" class="showcase">
     <div class="container">
-      <h2 style="margin:0 0 8px; font-size:28px; font-weight:900">다쓰 리포트, 왜 좋아요?</h2>
-      <p class="muted" style="margin:0 0 18px">상담 현장에서 바로 설득 가능한 결과물 중심 설계</p>
-      <div class="grid-4">
-        <div class="card"><h3 style="margin:0 0 6px">✅ 제시문 기반 평가</h3><p class="muted">외부 지식 없이 제시문만 근거로 채점과 이유 제공.</p></div>
-        <div class="card"><h3 style="margin:0 0 6px">📈 한눈에 이해되는 리포트</h3><p class="muted">총점·판정·게이지·막대그래프까지 즉시 이해.</p></div>
-        <div class="card"><h3 style="margin:0 0 6px">🎯 기준선 명시</h3><p class="muted">40점 만점, 30/36 기준으로 결과 해석이 쉬워요.</p></div>
-        <div class="card"><h3 style="margin:0 0 6px">📦 PDF 리포트</h3><p class="muted">이름·날짜·평가·예시답안·비교분석을 한 파일로.</p></div>
+      <div style="display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:12px">
+        <h3 style="margin:0;font-weight:900">한 눈에 보는 첨삭 흐름</h3>
+        <div class="muted" style="font-size:13px">입력부터 결과까지 실제 화면 그대로</div>
       </div>
-    </div>
-  </section>
 
-  <section id="guide" class="section" style="background:#fff">
-    <div class="container">
-      <span class="badge">이용안내</span>
-      <h2 style="margin:8px 0 12px; font-size:28px; font-weight:900">1분이면 시작 가능</h2>
-      <ul style="margin:10px 0 0 0; padding-left:18px; color:#374151">
-        <li><b>학생·질문·제시문·논술문</b>을 입력하고 <b>리포트 생성</b>을 눌러요.</li>
-        <li>AI가 <b>논리·독해·구성·표현</b>을 점수화하고 이유를 제공해요.</li>
-        <li><b>예시답안·비교분석</b>은 버튼을 눌러 필요할 때만 생성해요.</li>
-        <li>결과는 <b>PDF</b>로 저장·공유할 수 있어요.</li>
-      </ul>
-      <div style="margin-top:14px"><button class="btn btn-chip" onclick="goToEditor()">동의하고 시작하기</button></div>
-    </div>
-  </section>
+      <div class="monitor-grid">
+        <!-- Left Monitor: Input preview -->
+        <div class="monitor fade">
+          <div class="bar">
+            <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+            <span class="muted" style="font-weight:800;margin-left:8px">다쓰 리포트 · 입력</span>
+          </div>
+          <div class="screen">
+            <div class="viewport"><div id="monitorInputStage" class="stage"></div></div>
+          </div>
+        </div>
 
-  <section id="pricing" class="section-tight">
-    <div class="container grid-3">
-      <div class="card"><h3 style="margin:0 0 6px">베이직</h3><p class="muted">필수 기능 · 기본 PDF</p><button class="btn btn-primary" style="margin-top:8px" onclick="goToEditor()">시작하기</button></div>
-      <div class="card"><h3 style="margin:0 0 6px">프로</h3><p class="muted">무제한 · 로고/브랜드 PDF</p><button class="btn btn-primary" style="margin-top:8px" onclick="goToEditor()">시작하기</button></div>
-      <div class="card"><h3 style="margin:0 0 6px">팀/학원</h3><p class="muted">여러 계정 · 대시보드</p><button class="btn btn-primary" style="margin-top:8px" onclick="goToEditor()">시작하기</button></div>
-    </div>
-  </section>
-
-  <section class="section" style="padding:46px 0 64px">
-    <div class="container card" style="text-align:center">
-      <h2 style="margin:0 0 10px; font-weight:900">지금, 학생의 글에 날개를</h2>
-      <p class="muted" style="margin:0 0 16px">오늘의 작은 수정이, 내일의 큰 도약을 만듭니다.</p>
-      <button class="btn btn-primary" style="height:52px" onclick="goToEditor()">AI 첨삭하기</button>
+        <!-- Right Monitor: Result preview -->
+        <div class="monitor fade">
+          <div class="bar">
+            <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+            <span class="muted" style="font-weight:800;margin-left:8px">다쓰 리포트 · 결과</span>
+          </div>
+          <div class="screen">
+            <div class="viewport"><div id="monitorResultStage" class="stage"></div></div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
   <!-- ===================== EDITOR ===================== -->
-  <section id="editorSection" class="section hidden">
+  <section id="editorSection" class="section hidden" style="visibility:hidden">
     <div class="container">
 
       <!-- 입력 패널 -->
-      <div class="panel fade">
+      <div id="inputPanel" class="panel fade">
         <h2 style="margin:0 0 12px; font-weight:900">✨ 너의 글, 오늘 더 멀리 날아가게.</h2>
         <p class="muted" style="margin-top:0">정성껏 쓴 문장 위에 필요한 피드백만 얹어, 목표에 닿도록 부드럽게 이끌어 드릴게요.</p>
 
@@ -196,7 +218,7 @@ header{
         <div id="charCount" class="muted" style="margin-top:6px"></div>
 
         <label class="form-label">글자 수 제한</label>
-        <div style="display:flex; gap:10px">
+        <div class="row">
           <input id="charLimit" class="input" placeholder="예: 700" />
           <input id="charRange" class="input" placeholder="± 예: 50" />
         </div>
@@ -231,11 +253,56 @@ header{
   </section>
 </main>
 
+<!-- ===================== AUTH MODAL ===================== -->
+<div id="authWrap" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3 id="authTitle" style="margin:0;font-weight:900">내 계정</h3>
+      <button class="btn btn-ghost" onclick="closeAuth()">닫기</button>
+    </div>
+
+    <div class="tabs" style="margin-top:10px">
+      <button id="tabLogin" class="tab active" onclick="switchTab('login')">로그인</button>
+      <button id="tabRegister" class="tab" onclick="switchTab('register')">회원가입</button>
+    </div>
+
+    <div id="loginPanel">
+      <label class="form-label">이메일</label>
+      <input id="loginEmail" class="input" placeholder="you@example.com" />
+      <label class="form-label">비밀번호</label>
+      <input id="loginPassword" type="password" class="input" placeholder="••••••" />
+      <button class="btn btn-primary" style="margin-top:12px" onclick="login()">로그인</button>
+      <div id="loginError" class="muted" style="color:#dc2626;margin-top:8px;display:none"></div>
+    </div>
+
+    <div id="registerPanel" class="hidden">
+      <label class="form-label">이름</label>
+      <input id="regName" class="input" placeholder="홍길동" />
+      <label class="form-label">이메일</label>
+      <input id="regEmail" class="input" placeholder="you@example.com" />
+      <label class="form-label">비밀번호 (6자 이상)</label>
+      <input id="regPassword" type="password" class="input" placeholder="••••••" />
+      <button class="btn btn-primary" style="margin-top:12px" onclick="register()">회원가입</button>
+      <div id="registerError" class="muted" style="color:#dc2626;margin-top:8px;display:none"></div>
+    </div>
+  </div>
+</div>
+
 <script>
-/* ===== Router & CTA ===== */
+/* ===== Router ===== */
 function show(section){
-  document.getElementById('homeSection').classList.toggle('hidden', section!=='home');
-  document.getElementById('editorSection').classList.toggle('hidden', section!=='editor');
+  const home = document.getElementById('homeSection');
+  const editor = document.getElementById('editorSection');
+  home.classList.toggle('hidden', section!=='home');
+  editor.classList.toggle('hidden', section!=='editor');
+
+  if(section==='editor'){
+    requestAnimationFrame(refreshAutosize);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(refreshAutosize);
+    editor.style.visibility = 'visible';
+    // 입력 모니터도 업데이트 (입력 패널 미러링)
+    mirrorInputToMonitor();
+  }
   window.scrollTo({ top:0, behavior:'instant' });
 }
 function go(section){ location.hash = (section==='editor' ? '#editor' : '#home'); show(section); }
@@ -243,20 +310,104 @@ function routeFromHash(){ const h=(location.hash||'').toLowerCase(); if(h==='#ed
 window.addEventListener('hashchange', routeFromHash);
 window.addEventListener('DOMContentLoaded', routeFromHash);
 function goToEditor(){ location.hash='#editor'; show('editor'); setTimeout(()=>{document.getElementById('studentName')?.focus({preventScroll:true});},0); }
-function scrollToId(id){ document.getElementById(id)?.scrollIntoView({behavior:'smooth'}); }
-
-/* ===== Globals ===== */
-let scoreChart, savedScores=[], savedReasons={}, savedExample="", savedComparison="";
-let exampleGenerated=false;
 
 /* ===== Textarea Autoresize & Counters ===== */
 function autoResize(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,1200)+'px'; }
+function refreshAutosize(){ document.querySelectorAll('textarea').forEach(t=>{ autoResize(t); }); }
 function bindAutoResize(){ document.querySelectorAll('textarea').forEach(t=>{ t.addEventListener('input',()=>autoResize(t)); autoResize(t); }); }
 window.addEventListener('DOMContentLoaded', bindAutoResize);
-function addPassage(){ const t=document.createElement('textarea'); t.className='passage textarea'; t.rows=3; t.placeholder='제시문을 그대로 적어 주세요.'; document.getElementById('passages').appendChild(t); t.addEventListener('input',()=>autoResize(t)); autoResize(t); }
+
+function addPassage(){ const t=document.createElement('textarea'); t.className='passage textarea'; t.rows=3; t.placeholder='제시문을 그대로 적어 주세요.'; document.getElementById('passages').appendChild(t); t.addEventListener('input',()=>autoResize(t)); autoResize(t); mirrorInputToMonitor(); }
 function updateCharCount(){ const essay=document.getElementById('essay').value; const l=parseInt(document.getElementById('charLimit').value); const r=parseInt(document.getElementById('charRange').value)||0; const enabled=!Number.isNaN(l); const min=enabled?Math.max(0,l-r):0; const max=enabled?l+r:Infinity; const inRange=!enabled?true:(essay.length>=min && essay.length<=max); const el=document.getElementById('charCount'); el.textContent = enabled ? `현재 글자 수: ${essay.length} · 기준 ${min}~${max}` : `현재 글자 수: ${essay.length}`; el.style.color = inRange ? '#6B7280' : '#ef4444'; }
 
+/* ===== Showcase: Two Monitors ===== */
+function scaleStageToScreen(stage, screenEl){
+  const screenW = screenEl.clientWidth;
+  const screenH = screenEl.clientHeight;
+  const baseW = 980; // stage width
+  const stageHeight = stage.scrollHeight;
+  const scaleX = screenW / baseW;
+  const scaleY = screenH / stageHeight;
+  const scale = Math.min(scaleX, scaleY, 1.0);
+  stage.style.transform = `scale(${scale})`;
+}
+
+function renderPlaceholders(){
+  // 입력 모니터 placeholder
+  const inStage = document.getElementById('monitorInputStage');
+  inStage.innerHTML = `
+    <div class="placeholder">
+      <span class="chip">학생 이름</span> <span class="chip">질문</span> <span class="chip">제시문</span>
+      <div class="line" style="width:70%"></div>
+      <div class="line" style="width:84%"></div>
+      <div class="line" style="width:65%"></div>
+      <div class="line" style="width:90%"></div>
+      <div class="line" style="width:55%"></div>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <div class="chip">⚡ 리포트 생성</div>
+        <div class="chip">📝 예시답안</div>
+      </div>
+    </div>`;
+  // 결과 모니터 placeholder
+  const outStage = document.getElementById('monitorResultStage');
+  outStage.innerHTML = `
+    <div class="placeholder">
+      <h4>📊 평가 요약</h4>
+      <div class="line" style="width:50%"></div>
+      <div class="line" style="width:40%"></div>
+      <div class="line" style="width:60%"></div>
+      <div class="line" style="width:55%"></div>
+      <h4 style="margin-top:16px">📝 예시답안</h4>
+      <div class="line" style="width:90%"></div>
+      <div class="line" style="width:80%"></div>
+      <div class="line" style="width:70%"></div>
+    </div>`;
+  requestAnimationFrame(()=>{
+    scaleStageToScreen(inStage, inStage.closest('.screen'));
+    scaleStageToScreen(outStage, outStage.closest('.screen'));
+  });
+}
+window.addEventListener('DOMContentLoaded', renderPlaceholders);
+window.addEventListener('resize', ()=>renderPlaceholders());
+
+function mirrorInputToMonitor(){
+  const src = document.getElementById('inputPanel');
+  const stage = document.getElementById('monitorInputStage');
+  if(!src || !stage) return;
+  stage.innerHTML = '';
+  const clone = src.cloneNode(true);
+  // 폼 입력은 disable/readOnly로 보이도록
+  clone.querySelectorAll('input,textarea,button').forEach(el=>{
+    if(el.tagName==='BUTTON'){ el.disabled = true; }
+    else { el.setAttribute('readonly','readonly'); el.disabled = true; }
+  });
+  stage.appendChild(clone);
+  requestAnimationFrame(()=>scaleStageToScreen(stage, stage.closest('.screen')));
+}
+
+function mirrorResultToMonitor(){
+  const res = document.getElementById('resultCard');
+  const ex = document.getElementById('exampleSection');
+  const stage = document.getElementById('monitorResultStage');
+  if(!stage) return;
+
+  stage.innerHTML = '';
+  if(res && !res.classList.contains('hidden')){
+    const resClone = res.cloneNode(true);
+    resClone.querySelectorAll('button').forEach(b=>b.disabled=true);
+    stage.appendChild(resClone);
+  }
+  if(ex && !ex.classList.contains('hidden')){
+    const exClone = ex.cloneNode(true);
+    exClone.querySelectorAll('button').forEach(b=>b.disabled=true);
+    stage.appendChild(exClone);
+  }
+  requestAnimationFrame(()=>scaleStageToScreen(stage, stage.closest('.screen')));
+}
+
 /* ===== Helpers ===== */
+let scoreChart, savedScores=[], savedReasons={}, savedExample="", savedComparison="";
+let exampleGenerated=false;
 function getLimitInfo(){
   const essayLen=(document.getElementById('essay')?.value||'').length;
   const l=parseInt(document.getElementById('charLimit')?.value);
@@ -335,31 +486,20 @@ async function submitEssay(){
       <div style="margin-top:18px"><canvas id="scoreChart" height="140"></canvas></div>
     `;
 
-    // Chart (height=140, barThickness=28, categoryPercentage=0.65)
     const ctx=document.getElementById('scoreChart').getContext('2d');
     if(scoreChart) scoreChart.destroy();
     scoreChart=new Chart(ctx,{
       type:'bar',
-      data:{
-        labels:['논리력','독해력','구성력','표현력'],
-        datasets:[{
-          data:savedScores,
-          backgroundColor:"rgba(33,64,177,.75)",
-          borderRadius:8, barThickness:28, categoryPercentage:0.65
-        }]
-      },
-      options:{
-        animation:{duration:600,easing:'easeOutQuart'},
+      data:{ labels:['논리력','독해력','구성력','표현력'],
+        datasets:[{ data:savedScores, backgroundColor:"rgba(33,64,177,.75)", borderRadius:8, barThickness:28, categoryPercentage:0.65 }]},
+      options:{ animation:{duration:600,easing:'easeOutQuart'},
         scales:{ x:{grid:{display:false},ticks:{color:'#6B7280',font:{size:12}}},
-                 y:{beginAtZero:true,max:10,ticks:{stepSize:1,color:'#9CA3AF',font:{size:11}},grid:{color:'rgba(17,24,39,.06)'}} },
-        plugins:{legend:{display:false},tooltip:{enabled:true}}
-      }
+                 y:{beginAtZero:true,max:10,ticks:{stepSize:1,color:'#9CA3AF',font:{size:11}},grid:{color:'rgba(17,24,39,.06)'}}},
+        plugins:{legend:{display:false},tooltip:{enabled:true}}}
     });
 
     document.getElementById('loading').style.display='none';
     document.getElementById('resultCard').classList.remove('hidden');
-
-    // 예시 섹션은 버튼으로
     document.getElementById('exampleSection').classList.remove('hidden');
     document.getElementById('exampleNote').style.display='none';
     document.getElementById('exampleOutput').innerHTML='';
@@ -367,6 +507,9 @@ async function submitEssay(){
     document.getElementById('btnExample').disabled=false;
     document.getElementById('btnExample').textContent='예시답안 보기';
     exampleGenerated=false;
+
+    // 🔴 결과 모니터 LIVE 반영
+    mirrorResultToMonitor();
 
   }catch(e){
     console.error(e);
@@ -390,7 +533,6 @@ async function loadExample(){
     const range=document.getElementById('charRange').value;
 
     const payload={name,question,passages,essay,limit,range};
-    // 힌트 전달(서버가 보정 지원 시 사용)
     const info=getLimitInfo();
     if(info.enabled){
       payload.target_length = info.target;
@@ -407,15 +549,12 @@ async function loadExample(){
     savedComparison=data.comparison||'';
     exampleGenerated=true;
 
-    // 글자수 미충족이라도 숨기지 않음. 부드러운 안내만 노출.
-    if(data.skipped){
+    if(!data.length_valid){
       note.style.display='block';
       note.textContent='✍️ 글자 수는 기준과 조금 다를 수 있지만, 최대한 맞춘 예시예요. 필요하면 가볍게 손봐도 좋아요.';
     }else{
       note.style.display='none';
     }
-
-    // 만약 서버가 내용 자체를 비워 보냈다면(예외 케이스) 안내만 노출
     if(!savedExample.trim() && !savedComparison.trim()){
       note.style.display='block';
       note.textContent='이번에는 자동 생성이 어려웠어요. 글자 수 범위를 조금 조정하거나 다시 시도해 보세요.';
@@ -425,6 +564,9 @@ async function loadExample(){
     document.getElementById('comparisonOutput').innerHTML=savedComparison.replace(/\n/g,'<br>');
     btn.textContent='예시답안 생성됨';
 
+    // 🔴 예시 생성 후 결과 모니터 갱신
+    mirrorResultToMonitor();
+
   }catch(e){
     console.error(e);
     document.getElementById('exampleNote').style.display='block';
@@ -433,16 +575,12 @@ async function loadExample(){
   }
 }
 
-/* ===== PDF (화면 구성 그대로) ===== */
+/* ===== PDF ===== */
 function downloadPDF(){
   const name=document.getElementById('studentName').value || '이름 미입력';
-  const essay=document.getElementById('essay').value || '';
   const today=new Date().toISOString().split('T')[0];
   const { total, status } = getTotalAndStatus(savedScores);
-
-  // 차트 이미지만 변환
   let chartImg=''; try{ const canvas=document.getElementById('scoreChart'); if(canvas) chartImg=canvas.toDataURL('image/png',1.0); }catch(e){}
-
   const noteHtml = (document.getElementById('exampleNote').style.display==='block')
     ? `<div style="margin:8px 0;color:#6b7280;font-size:12px">✍️ 글자 수는 기준과 조금 다를 수 있지만, 최대한 맞춘 예시예요. 필요하면 가볍게 손봐도 좋아요.</div>`
     : ``;
@@ -450,11 +588,13 @@ function downloadPDF(){
   const html=`
   <div style="font-family:'SUIT',system-ui,-apple-system,sans-serif; color:#111827;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <h2 style="margin:0">다쓰 리포트</h2>
+      <div style="display:flex;align-items:center;gap:8px">
+        <img src="/static/academy_logo.png" alt="아카데미창" style="height:22px;object-fit:contain"/>
+        <h2 style="margin:0">다쓰 리포트</h2>
+      </div>
       <div style="color:#6b7280;font-size:12px">학생: ${name} · 날짜: ${today}</div>
     </div>
 
-    <!-- 요약 카드 -->
     <div style="display:flex;gap:12px;align-items:center;border:1px solid #e5e7eb;border-radius:12px;padding:12px;">
       <div style="font-size:26px">${status.emoji}</div>
       <div style="flex:1">
@@ -480,7 +620,6 @@ function downloadPDF(){
       </div>
     </div>
 
-    <!-- 4개 평가 카드 -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
       ${['논리력','독해력','구성력','표현력'].map((k,i)=>`
         <div style="border:1px solid #e5e7eb;border-radius:12px;padding:12px">
@@ -490,14 +629,8 @@ function downloadPDF(){
       `).join('')}
     </div>
 
-    <!-- 막대그래프(140) -->
     ${chartImg ? `<div style="margin-top:12px;border:1px solid #e5e7eb;border-radius:12px;padding:12px"><img src="${chartImg}" style="width:100%;height:auto;display:block;"/></div>` : ''}
 
-    <!-- 작성한 논술문 -->
-    <h3 style="margin:16px 0 6px">작성한 논술문</h3>
-    <div style="border:1px solid #e5e7eb;border-radius:12px;padding:12px;font-size:13px;color:#374151">${(document.getElementById('essay').value||'').replace(/\n/g,'<br>')}</div>
-
-    <!-- 예시답안 & 비교분석 -->
     <h3 style="margin:16px 0 6px">예시답안</h3>
     ${noteHtml}
     <div style="border:1px solid #e5e7eb;border-radius:12px;padding:12px;font-size:13px;color:#374151">${(savedExample||'').replace(/\n/g,'<br>')}</div>
@@ -505,12 +638,60 @@ function downloadPDF(){
     <h3 style="margin:16px 0 6px">비교 분석</h3>
     <div style="border:1px solid #e5e7eb;border-radius:12px;padding:12px;font-size:13px;color:#374151">${(savedComparison||'').replace(/\n/g,'<br>')}</div>
   </div>`;
-
   const wrap=document.createElement('div'); wrap.innerHTML=html;
   html2pdf().from(wrap).set({ margin:10, filename:`다쓰_리포트_${today}.pdf`, html2canvas:{ scale:2, useCORS:true }, jsPDF:{ unit:'mm', format:'a4', orientation:'portrait' } }).save();
 }
-
 function resetReport(){ location.hash='#home'; routeFromHash(); }
+
+/* ===== Auth Modal / API ===== */
+let currentUser=null;
+async function fetchMe(){ try{ const r=await fetch('/auth/me'); const data=await r.json(); if(data.ok && data.user){ currentUser=data.user; paintHeader(); } }catch(e){} }
+function paintHeader(){
+  const loginBtn=document.getElementById('loginBtn');
+  const prof=document.getElementById('profileArea');
+  if(currentUser){
+    loginBtn.classList.add('hidden');
+    prof.classList.remove('hidden');
+    const initial=(currentUser.name||currentUser.email||'A').trim()[0].toUpperCase();
+    document.getElementById('avatarInitial').textContent=initial;
+    document.getElementById('profileName').textContent=currentUser.name||currentUser.email;
+  }else{
+    prof.classList.add('hidden');
+    loginBtn.classList.remove('hidden');
+  }
+}
+function openAuth(){ document.getElementById('authWrap').classList.remove('hidden'); switchTab('login'); }
+function closeAuth(){ document.getElementById('authWrap').classList.add('hidden'); document.getElementById('loginError').style.display='none'; document.getElementById('registerError').style.display='none'; }
+function switchTab(which){
+  const l=document.getElementById('loginPanel'), r=document.getElementById('registerPanel');
+  const tl=document.getElementById('tabLogin'), tr=document.getElementById('tabRegister');
+  if(which==='login'){ l.classList.remove('hidden'); r.classList.add('hidden'); tl.classList.add('active'); tr.classList.remove('active'); }
+  else{ r.classList.remove('hidden'); l.classList.add('hidden'); tr.classList.add('active'); tl.classList.remove('active'); }
+}
+async function register(){
+  const body={ name:document.getElementById('regName').value, email:document.getElementById('regEmail').value, password:document.getElementById('regPassword').value };
+  const r=await fetch('/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const data=await r.json();
+  if(!data.ok){ const el=document.getElementById('registerError'); el.style.display='block'; el.textContent=data.error||'가입에 실패했어요.'; return; }
+  currentUser=data.user; paintHeader(); closeAuth();
+}
+async function login(){
+  const body={ email:document.getElementById('loginEmail').value, password:document.getElementById('loginPassword').value };
+  const r=await fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const data=await r.json();
+  if(!data.ok){ const el=document.getElementById('loginError'); el.style.display='block'; el.textContent=data.error||'로그인에 실패했어요.'; return; }
+  currentUser=data.user; paintHeader(); closeAuth();
+}
+async function logout(){ await fetch('/auth/logout',{method:'POST'}); currentUser=null; paintHeader(); }
+window.addEventListener('DOMContentLoaded', fetchMe);
+
+/* Profile dropdown */
+document.addEventListener('click', (e)=>{
+  const btn=document.getElementById('profileBtn');
+  const menu=document.getElementById('profileMenu');
+  if(btn && btn.contains(e.target)){ menu.style.display = (menu.style.display==='block'?'none':'block'); }
+  else if(menu && !menu.contains(e.target)){ menu.style.display='none'; }
+});
 </script>
 </body>
 </html>

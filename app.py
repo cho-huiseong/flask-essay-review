@@ -1,33 +1,159 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from openai import OpenAI
-import os
-import re
-import json
+import os, re, json
+# ==== Auth/DB ====
+from datetime import datetime
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text
+from sqlalchemy.orm import sessionmaker, declarative_base
+from passlib.hash import bcrypt
 
-app = Flask(__name__)
-CORS(app)
+# -----------------------------------------------------------------------------
+# App & Config
+# -----------------------------------------------------------------------------
+app = Flask(__name__, template_folder=".")
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-me")
+# 세션/쿠키 기본 보안 값 (운영에서 Secure=True 권장)
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = bool(int(os.environ.get("SESSION_COOKIE_SECURE", "0")))  # 1이면 True
+
+CORS(app, supports_credentials=True)
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+# -----------------------------------------------------------------------------
+# DB (SQLite 기본, 추후 POSTGRES_URL 존재 시 그걸 사용)
+# -----------------------------------------------------------------------------
+DATABASE_URL = os.environ.get("DATABASE_URL")  # 예: render Postgres 사용 시
+if DATABASE_URL:
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+else:
+    engine = create_engine("sqlite:///app.db", connect_args={"check_same_thread": False})
+
+SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+Base = declarative_base()
+
+class User(Base, UserMixin):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True)
+    email = Column(String(255), unique=True, nullable=False, index=True)
+    password_hash = Column(String(255), nullable=False)
+    name = Column(String(120), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    def set_password(self, raw):
+        self.password_hash = bcrypt.hash(raw)
+
+    def check_password(self, raw):
+        try:
+            return bcrypt.verify(raw, self.password_hash)
+        except Exception:
+            return False
+
+# (후속 확장용) 상담 리포트 저장 테이블 골격만 만들어 둠
+class Report(Base):
+    __tablename__ = "reports"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, nullable=True)
+    payload_json = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+Base.metadata.create_all(bind=engine)
+
+# -----------------------------------------------------------------------------
+# Login manager
+# -----------------------------------------------------------------------------
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+@login_manager.user_loader
+def load_user(user_id: str):
+    db = SessionLocal()
+    try:
+        return db.get(User, int(user_id))
+    finally:
+        db.close()
+
+# -----------------------------------------------------------------------------
+# Routes: Pages
+# -----------------------------------------------------------------------------
 @app.route("/")
 def index():
-    # 템플릿 폴더를 현재 경로로 지정했으므로 index.html을 그대로 렌더링
     return render_template("index.html")
 
-@app.route("/review", methods=["POST"])
+# -----------------------------------------------------------------------------
+# Routes: Auth API (JSON)
+# -----------------------------------------------------------------------------
+def _normalize_email(email: str) -> str:
+    return (email or "").strip().lower()
+
+@app.post("/auth/register")
+def auth_register():
+    data = request.get_json(force=True)
+    email = _normalize_email(data.get("email"))
+    password = (data.get("password") or "").strip()
+    name = (data.get("name") or "").strip()
+
+    if not email or not password or not name:
+        return jsonify({"ok": False, "error": "필수 정보가 누락되었습니다."}), 400
+    if len(password) < 6:
+        return jsonify({"ok": False, "error": "비밀번호는 6자 이상이어야 합니다."}), 400
+
+    db = SessionLocal()
+    try:
+        if db.query(User).filter_by(email=email).first():
+            return jsonify({"ok": False, "error": "이미 가입된 이메일입니다."}), 400
+        user = User(email=email, name=name)
+        user.set_password(password)
+        db.add(user)
+        db.commit()
+        login_user(user, remember=True)
+        return jsonify({"ok": True, "user": {"id": user.id, "email": user.email, "name": user.name}})
+    finally:
+        db.close()
+
+@app.post("/auth/login")
+def auth_login():
+    data = request.get_json(force=True)
+    email = _normalize_email(data.get("email"))
+    password = (data.get("password") or "").strip()
+
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter_by(email=email).first()
+        if not user or not user.check_password(password):
+            return jsonify({"ok": False, "error": "이메일 또는 비밀번호가 올바르지 않습니다."}), 401
+        login_user(user, remember=True)
+        return jsonify({"ok": True, "user": {"id": user.id, "email": user.email, "name": user.name}})
+    finally:
+        db.close()
+
+@app.post("/auth/logout")
+@login_required
+def auth_logout():
+    logout_user()
+    return jsonify({"ok": True})
+
+@app.get("/auth/me")
+def auth_me():
+    if current_user.is_authenticated:
+        return jsonify({"ok": True, "user": {"id": current_user.id, "email": current_user.email, "name": current_user.name}})
+    return jsonify({"ok": False, "user": None})
+
+# -----------------------------------------------------------------------------
+# Review API (기존 유지)
+# -----------------------------------------------------------------------------
+@app.post("/review")
 def review():
     data = request.get_json()
     passages = data.get("passages", [])
     question = data.get("question", "")
     essay = data.get("essay", "")
-    char_base = data.get("charBase")
-    char_range = data.get("charRange")
 
     labels = ['가','나','다','라','마','바','사','아','자','차']
     passage_text = "\n".join([f"제시문 <{labels[i]}>: {p}" for i, p in enumerate(passages)])
-
-    # 글자수 제한은 '현 상태 유지' (차단 없음)
 
     prompt = f"""
 당신은 초등학생을 가르치는 논술 선생님입니다.
@@ -102,7 +228,6 @@ def review():
             temperature=0.7,
             max_tokens=1500
         )
-
         content = response.choices[0].message.content
 
         sections = {"논리력": {}, "독해력": {}, "구성력": {}, "표현력": {}}
@@ -122,7 +247,6 @@ def review():
                 if "이유" in line:
                     sections[current]["reason"] = line.split(":", 1)[-1].strip()
                 elif "reason" not in sections[current]:
-                    # 이유 줄 다음 줄 등도 수집
                     prev = sections[current].get("reason", "")
                     sections[current]["reason"] = (prev + " " + line).strip()
 
@@ -134,13 +258,14 @@ def review():
             "scores": [sections[k]["score"] for k in ["논리력", "독해력", "구성력", "표현력"]],
             "reasons": {k: sections[k]["reason"] for k in ["논리력", "독해력", "구성력", "표현력"]}
         })
-
     except Exception as e:
         print("❗예외 발생 (review):", str(e), flush=True)
         return jsonify({"error": str(e)}), 500
 
-
-@app.route("/example", methods=["POST"])
+# -----------------------------------------------------------------------------
+# Example API (기존 유지: 2회 길이 보정 재시도 + 키 네이밍 고정)
+# -----------------------------------------------------------------------------
+@app.post("/example")
 def example():
     data = request.json
     passages = data.get('passages', [])
@@ -148,7 +273,6 @@ def example():
     essay = data.get('essay', '')
     retry = data.get('retryConfirmed', False)
 
-    # 글자 수 기본값/범위: 기존 동작 유지
     try:
         char_base = int(data.get('charBase')) if data.get('charBase') else 600
         char_range = int(data.get('charRange')) if data.get('charRange') else 100
@@ -158,11 +282,8 @@ def example():
 
     min_chars = char_base - char_range
     max_chars = char_base + char_range
-
     if retry:
-        # 재요청 시 기준 상향은 유지 (기존 코드와 동일한 느낌으로 동작)
         min_chars += 100
-        print(f"🔁 재요청으로 기준 글자 수 증가: {min_chars}자 이상")
 
     initial_prompt = f"""
 아래는 학생이 작성한 논술문입니다. 이 글을 바탕으로 다음 작업을 수행해 주십시오.
@@ -197,7 +318,6 @@ def example():
 학생의 논술문:
 {essay}
 """
-
     messages = [
         {"role": "system", "content":
          "너는 고등학생 논술 첨삭 선생님이다. "
@@ -229,7 +349,6 @@ def example():
             new_example = parsed.get("example", "")
             new_comparison = parsed.get("comparison", "")
 
-            # 길이 검증: 최소/최대 모두 확인
             length_ok = (len(new_example) >= min_chars and len(new_example) <= max_chars)
 
             if length_ok or attempt == max_attempts - 1:
@@ -237,7 +356,6 @@ def example():
                 comparison_text = new_comparison
                 break
 
-            # 재시도 프롬프트 보강
             messages.append({"role": "assistant", "content": content})
             messages.append({
                 "role": "user",
@@ -250,7 +368,6 @@ def example():
 
         except json.JSONDecodeError:
             print("❌ JSON 파싱 실패:\n", content)
-            # 형식 위반 시 재시도
             continue
         except Exception as e:
             print("❗예외 발생 (example):", str(e), flush=True)
@@ -263,6 +380,8 @@ def example():
         "length_actual": len(example_text)
     })
 
-
+# -----------------------------------------------------------------------------
+# Main
+# -----------------------------------------------------------------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))

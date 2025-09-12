@@ -1,5 +1,7 @@
 flask
 flask-cors
-openai
 gunicorn
 openai>=1.0.0
+flask-login
+sqlalchemy
+passlib[bcrypt]
