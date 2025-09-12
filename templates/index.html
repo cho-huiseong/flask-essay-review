@@ -108,11 +108,14 @@ header{
 /* Auth modal */
 .modal-backdrop{ position:fixed; inset:0; background:rgba(17,24,39,.4); display:flex; align-items:center; justify-content:center; z-index:50 }
 .modal{ width:min(560px,90vw); background:#fff; border-radius:18px; border:1px solid #e5e7eb; box-shadow:0 24px 60px rgba(17,24,39,.22); padding:18px }
+/* 새로 추가: hidden이 항상 우선 (모달 기본 숨김 보장) */
+.modal-backdrop.hidden{ display:none !important; }
+
 .tabs{ display:flex; gap:8px; margin-bottom:12px }
 .tab{ flex:1; height:40px; border-radius:999px; border:1px solid #e5e7eb; background:#f8fafc; font-weight:800; cursor:pointer }
 .tab.active{ background:#EEF2FF; border-color:#dbe4ff; color:var(--brand-700) }
 .row{ display:flex; gap:10px }
-.avatar{ width:32px; height:32px; border-radius:50%; background:#EEF2FF; color:var(--brand-700); display:flex; align-items:center; justify-content:center; font-weight:900 }
+.avatar{ width:32px; height:32px; border-radius:50%; background:#EEF2FF; color:#2140B1; display:flex; align-items:center; justify-content:center; font-weight:900 }
 .dropdown{ position:relative }
 .dropdown-menu{ position:absolute; right:0; top:44px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 12px 30px rgba(17,24,39,.12); padding:8px; min-width:160px; display:none }
 .dropdown-menu a, .dropdown-menu button{ display:block; width:100%; text-align:left; background:transparent; border:none; padding:8px 10px; border-radius:8px; font-weight:700; color:#374151; cursor:pointer }
@@ -124,8 +127,9 @@ header{
 <header>
   <div class="container nav">
     <div class="nav-left" style="gap:10px">
-      <div style="width:10px;height:10px;border-radius:50%;background:var(--brand)"></div>
-      <span>아카데미창</span>
+      <!-- 헤더 로고: PDF와 동일 경로로 통일 -->
+      <img src="/static/academy_logo.png" alt="아카데미창" style="height:20px;object-fit:contain">
+      <span style="font-weight:900">아카데미창</span>
     </div>
     <div class="nav-right">
       <div id="profileArea" class="dropdown hidden">
@@ -240,7 +244,10 @@ header{
       <div id="exampleSection" class="panel fade hidden" style="margin-top:18px">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
           <h3 style="margin:0">📝 예시답안</h3>
-          <button id="btnExample" class="btn btn-primary" onclick="loadExample()">예시답안 보기</button>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn btn-ghost" onclick="openRecords()">내 기록</button>
+            <button id="btnExample" class="btn btn-primary" onclick="loadExample()">예시답안 보기</button>
+          </div>
         </div>
         <div id="exampleNote" class="muted" style="margin-top:8px;display:none"></div>
         <div id="exampleOutput" class="card" style="background:#fff"></div>
@@ -288,6 +295,17 @@ header{
   </div>
 </div>
 
+<!-- ===================== RECORDS MODAL (신규) ===================== -->
+<div id="recordsWrap" class="modal-backdrop hidden">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h3 style="margin:0;font-weight:900">내 기록</h3>
+      <button class="btn btn-ghost" onclick="closeRecords()">닫기</button>
+    </div>
+    <div id="recordsList" class="muted" style="margin-top:8px">불러오는 중…</div>
+  </div>
+</div>
+
 <script>
 /* ===== Router ===== */
 function show(section){
@@ -298,7 +316,10 @@ function show(section){
 
   if(section==='editor'){
     requestAnimationFrame(refreshAutosize);
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(refreshAutosize);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(()=>{
+      refreshAutosize();
+      mirrorInputToMonitor(); // 폰트 로딩 완료 후 한 번 더 보정
+    });
     editor.style.visibility = 'visible';
     // 입력 모니터도 업데이트 (입력 패널 미러링)
     mirrorInputToMonitor();
@@ -309,7 +330,10 @@ function go(section){ location.hash = (section==='editor' ? '#editor' : '#home')
 function routeFromHash(){ const h=(location.hash||'').toLowerCase(); if(h==='#editor') show('editor'); else show('home'); }
 window.addEventListener('hashchange', routeFromHash);
 window.addEventListener('DOMContentLoaded', routeFromHash);
-function goToEditor(){ location.hash='#editor'; show('editor'); setTimeout(()=>{document.getElementById('studentName')?.focus({preventScroll:true});},0); }
+function goToEditor(){
+  if(!currentUser){ deferredAction='goEditor'; openAuth(); return; }
+  location.hash='#editor'; show('editor'); setTimeout(()=>{document.getElementById('studentName')?.focus({preventScroll:true});},0);
+}
 
 /* ===== Textarea Autoresize & Counters ===== */
 function autoResize(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,1200)+'px'; }
@@ -325,7 +349,7 @@ function scaleStageToScreen(stage, screenEl){
   const screenW = screenEl.clientWidth;
   const screenH = screenEl.clientHeight;
   const baseW = 980; // stage width
-  const stageHeight = stage.scrollHeight;
+  const stageHeight = stage.scrollHeight || 1;
   const scaleX = screenW / baseW;
   const scaleY = screenH / stageHeight;
   const scale = Math.min(scaleX, scaleY, 1.0);
@@ -333,37 +357,43 @@ function scaleStageToScreen(stage, screenEl){
 }
 
 function renderPlaceholders(){
-  // 입력 모니터 placeholder
-  const inStage = document.getElementById('monitorInputStage');
-  inStage.innerHTML = `
-    <div class="placeholder">
-      <span class="chip">학생 이름</span> <span class="chip">질문</span> <span class="chip">제시문</span>
-      <div class="line" style="width:70%"></div>
-      <div class="line" style="width:84%"></div>
-      <div class="line" style="width:65%"></div>
-      <div class="line" style="width:90%"></div>
-      <div class="line" style="width:55%"></div>
-      <div style="display:flex;gap:8px;margin-top:6px">
-        <div class="chip">⚡ 리포트 생성</div>
-        <div class="chip">📝 예시답안</div>
-      </div>
-    </div>`;
-  // 결과 모니터 placeholder
+  const inStage  = document.getElementById('monitorInputStage');
   const outStage = document.getElementById('monitorResultStage');
-  outStage.innerHTML = `
-    <div class="placeholder">
-      <h4>📊 평가 요약</h4>
-      <div class="line" style="width:50%"></div>
-      <div class="line" style="width:40%"></div>
-      <div class="line" style="width:60%"></div>
-      <div class="line" style="width:55%"></div>
-      <h4 style="margin-top:16px">📝 예시답안</h4>
-      <div class="line" style="width:90%"></div>
-      <div class="line" style="width:80%"></div>
-      <div class="line" style="width:70%"></div>
-    </div>`;
+
+  // 이미 내용이 있으면 덮어쓰지 않기 (결과 미러링 보존)
+  if (!inStage.innerHTML.trim()) {
+    inStage.innerHTML = `
+      <div class="placeholder">
+        <span class="chip">학생 이름</span> <span class="chip">질문</span> <span class="chip">제시문</span>
+        <div class="line" style="width:70%"></div>
+        <div class="line" style="width:84%"></div>
+        <div class="line" style="width:65%"></div>
+        <div class="line" style="width:90%"></div>
+        <div class="line" style="width:55%"></div>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <div class="chip">⚡ 리포트 생성</div>
+          <div class="chip">📝 예시답안</div>
+        </div>
+      </div>`;
+  }
+  if (!outStage.innerHTML.trim()) {
+    outStage.innerHTML = `
+      <div class="placeholder">
+        <h4>📊 평가 요약</h4>
+        <div class="line" style="width:50%"></div>
+        <div class="line" style="width:40%"></div>
+        <div class="line" style="width:60%"></div>
+        <div class="line" style="width:55%"></div>
+        <h4 style="margin-top:16px">📝 예시답안</h4>
+        <div class="line" style="width:90%"></div>
+        <div class="line" style="width:80%"></div>
+        <div class="line" style="width:70%"></div>
+      </div>`;
+  }
+
+  // 내용 유무와 관계없이 스케일은 보정 (글자 뭉개짐 방지)
   requestAnimationFrame(()=>{
-    scaleStageToScreen(inStage, inStage.closest('.screen'));
+    scaleStageToScreen(inStage,  inStage.closest('.screen'));
     scaleStageToScreen(outStage, outStage.closest('.screen'));
   });
 }
@@ -405,9 +435,12 @@ function mirrorResultToMonitor(){
   requestAnimationFrame(()=>scaleStageToScreen(stage, stage.closest('.screen')));
 }
 
-/* ===== Helpers ===== */
+/* ===== State ===== */
 let scoreChart, savedScores=[], savedReasons={}, savedExample="", savedComparison="";
 let exampleGenerated=false;
+let currentUser=null;
+let deferredAction=null; // 'goEditor'|'review'|'example'|'records'
+
 function getLimitInfo(){
   const essayLen=(document.getElementById('essay')?.value||'').length;
   const l=parseInt(document.getElementById('charLimit')?.value);
@@ -428,6 +461,8 @@ function getTotalAndStatus(scores){
 
 /* ===== Review ===== */
 async function submitEssay(){
+  if(!currentUser){ deferredAction='review'; openAuth(); return; }
+
   document.getElementById('loading').style.display='block';
   document.getElementById('error').style.display='none';
   try{
@@ -435,11 +470,12 @@ async function submitEssay(){
     const question=document.getElementById('question').value;
     const passages=[...document.querySelectorAll('.passage')].map(p=>p.value);
     const essay=document.getElementById('essay').value;
-    const limit=document.getElementById('charLimit').value;
-    const range=document.getElementById('charRange').value;
 
-    const r=await fetch('/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,question,passages,essay,limit,range})});
+    const r=await fetch('/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,question,passages,essay})});
+    if(r.status===401){ deferredAction='review'; openAuth(); return; }
     const data=await r.json();
+    if(!r.ok){ throw new Error(data.error||'오류'); }
+
     savedScores=data.scores; savedReasons=data.reasons;
 
     const { total, status } = getTotalAndStatus(savedScores);
@@ -508,8 +544,20 @@ async function submitEssay(){
     document.getElementById('btnExample').textContent='예시답안 보기';
     exampleGenerated=false;
 
-    // 🔴 결과 모니터 LIVE 반영
+    // 결과 모니터 LIVE 반영
     mirrorResultToMonitor();
+
+    // 자동 저장(리뷰 스냅샷)
+    try{
+      await fetch('/reports',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          student:name, question, passages, essay,
+          scores:savedScores, reasons:savedReasons,
+          total, status: status.label, saved_at:new Date().toISOString()
+        })
+      });
+    }catch(e){}
 
   }catch(e){
     console.error(e);
@@ -520,6 +568,8 @@ async function submitEssay(){
 
 /* ===== Example (on demand) ===== */
 async function loadExample(){
+  if(!currentUser){ deferredAction='example'; openAuth(); return; }
+
   const btn=document.getElementById('btnExample');
   const note=document.getElementById('exampleNote');
   btn.disabled=true; const old=btn.textContent; btn.textContent='생성 중...';
@@ -532,18 +582,16 @@ async function loadExample(){
     const limit=document.getElementById('charLimit').value;
     const range=document.getElementById('charRange').value;
 
-    const payload={name,question,passages,essay,limit,range};
-    const info=getLimitInfo();
-    if(info.enabled){
-      payload.target_length = info.target;
-      payload.min_length = info.min;
-      payload.max_length = info.max;
-      payload.length_strategy = (info.len<info.min)?'expand':(info.len>info.max)?'compress':'keep';
-      payload.enforce_length = true;
-    }
+    // 백엔드 스펙: charBase / charRange
+    const payload={ name, question, passages, essay };
+    const base=parseInt(limit), rng=parseInt(range);
+    if(!Number.isNaN(base)) payload.charBase=base;
+    if(!Number.isNaN(rng))  payload.charRange=rng;
 
     const r=await fetch('/example',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(r.status===401){ deferredAction='example'; openAuth(); btn.disabled=false; btn.textContent=old; return; }
     const data=await r.json();
+    if(!r.ok){ throw new Error(data.error||'오류'); }
 
     savedExample=data.example||'';
     savedComparison=data.comparison||'';
@@ -551,21 +599,34 @@ async function loadExample(){
 
     if(!data.length_valid){
       note.style.display='block';
-      note.textContent='✍️ 글자 수는 기준과 조금 다를 수 있지만, 최대한 맞춘 예시예요. 필요하면 가볍게 손봐도 좋아요.';
+      note.textContent='✍️ 권장 글자수 범위를 벗어났지만, 참고용으로 예시를 제공합니다.';
     }else{
       note.style.display='none';
     }
     if(!savedExample.trim() && !savedComparison.trim()){
       note.style.display='block';
-      note.textContent='이번에는 자동 생성이 어려웠어요. 글자 수 범위를 조금 조정하거나 다시 시도해 보세요.';
+      note.textContent='이번에는 자동 생성이 어려웠어요. 글자수 범위를 조정하거나 다시 시도해 주세요.';
     }
 
-    document.getElementById('exampleOutput').innerHTML=savedExample.replace(/\n/g,'<br>');
-    document.getElementById('comparisonOutput').innerHTML=savedComparison.replace(/\n/g,'<br>');
+    document.getElementById('exampleOutput').innerHTML=(savedExample||'').replace(/\n/g,'<br>');
+    document.getElementById('comparisonOutput').innerHTML=(savedComparison||'').replace(/\n/g,'<br>');
     btn.textContent='예시답안 생성됨';
 
-    // 🔴 예시 생성 후 결과 모니터 갱신
+    // 결과 모니터 갱신
     mirrorResultToMonitor();
+
+    // 자동 저장(예시 스냅샷)
+    try{
+      await fetch('/reports',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          student:name, question, passages, essay,
+          example:savedExample, comparison:savedComparison,
+          example_length:data.length_actual,
+          saved_at:new Date().toISOString()
+        })
+      });
+    }catch(e){}
 
   }catch(e){
     console.error(e);
@@ -582,7 +643,7 @@ function downloadPDF(){
   const { total, status } = getTotalAndStatus(savedScores);
   let chartImg=''; try{ const canvas=document.getElementById('scoreChart'); if(canvas) chartImg=canvas.toDataURL('image/png',1.0); }catch(e){}
   const noteHtml = (document.getElementById('exampleNote').style.display==='block')
-    ? `<div style="margin:8px 0;color:#6b7280;font-size:12px">✍️ 글자 수는 기준과 조금 다를 수 있지만, 최대한 맞춘 예시예요. 필요하면 가볍게 손봐도 좋아요.</div>`
+    ? `<div style="margin:8px 0;color:#6b7280;font-size:12px">✍️ 글자수는 권장과 차이날 수 있어요.</div>`
     : ``;
 
   const html=`
@@ -623,8 +684,8 @@ function downloadPDF(){
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
       ${['논리력','독해력','구성력','표현력'].map((k,i)=>`
         <div style="border:1px solid #e5e7eb;border-radius:12px;padding:12px">
-          <div style="font-weight:800">${k} (${savedScores[i]}점)</div>
-          <div style="color:#6b7280;font-size:13px;margin-top:6px">${savedReasons[k]}</div>
+          <div style="font-weight:800">${k} (${savedScores[i]||'-'}점)</div>
+          <div style="color:#6b7280;font-size:13px;margin-top:6px">${savedReasons[k]||''}</div>
         </div>
       `).join('')}
     </div>
@@ -644,8 +705,7 @@ function downloadPDF(){
 function resetReport(){ location.hash='#home'; routeFromHash(); }
 
 /* ===== Auth Modal / API ===== */
-let currentUser=null;
-async function fetchMe(){ try{ const r=await fetch('/auth/me'); const data=await r.json(); if(data.ok && data.user){ currentUser=data.user; paintHeader(); } }catch(e){} }
+async function fetchMe(){ try{ const r=await fetch('/auth/me'); const data=await r.json(); if(data.ok){ currentUser=data.user; paintHeader(); } }catch(e){} }
 function paintHeader(){
   const loginBtn=document.getElementById('loginBtn');
   const prof=document.getElementById('profileArea');
@@ -660,8 +720,8 @@ function paintHeader(){
     loginBtn.classList.remove('hidden');
   }
 }
-function openAuth(){ document.getElementById('authWrap').classList.remove('hidden'); switchTab('login'); }
-function closeAuth(){ document.getElementById('authWrap').classList.add('hidden'); document.getElementById('loginError').style.display='none'; document.getElementById('registerError').style.display='none'; }
+function openAuth(){ document.getElementById('authWrap').classList.remove('hidden'); switchTab('login'); document.body.style.overflow='hidden'; }
+function closeAuth(){ document.getElementById('authWrap').classList.add('hidden'); document.getElementById('loginError').style.display='none'; document.getElementById('registerError').style.display='none'; document.body.style.overflow=''; }
 function switchTab(which){
   const l=document.getElementById('loginPanel'), r=document.getElementById('registerPanel');
   const tl=document.getElementById('tabLogin'), tr=document.getElementById('tabRegister');
@@ -674,6 +734,12 @@ async function register(){
   const data=await r.json();
   if(!data.ok){ const el=document.getElementById('registerError'); el.style.display='block'; el.textContent=data.error||'가입에 실패했어요.'; return; }
   currentUser=data.user; paintHeader(); closeAuth();
+  // 자동 재개
+  if(deferredAction==='goEditor'){ goToEditor(); }
+  if(deferredAction==='review'){ submitEssay(); }
+  if(deferredAction==='example'){ loadExample(); }
+  if(deferredAction==='records'){ openRecords(true); }
+  deferredAction=null;
 }
 async function login(){
   const body={ email:document.getElementById('loginEmail').value, password:document.getElementById('loginPassword').value };
@@ -681,6 +747,12 @@ async function login(){
   const data=await r.json();
   if(!data.ok){ const el=document.getElementById('loginError'); el.style.display='block'; el.textContent=data.error||'로그인에 실패했어요.'; return; }
   currentUser=data.user; paintHeader(); closeAuth();
+  // 자동 재개
+  if(deferredAction==='goEditor'){ goToEditor(); }
+  if(deferredAction==='review'){ submitEssay(); }
+  if(deferredAction==='example'){ loadExample(); }
+  if(deferredAction==='records'){ openRecords(true); }
+  deferredAction=null;
 }
 async function logout(){ await fetch('/auth/logout',{method:'POST'}); currentUser=null; paintHeader(); }
 window.addEventListener('DOMContentLoaded', fetchMe);
@@ -692,6 +764,37 @@ document.addEventListener('click', (e)=>{
   if(btn && btn.contains(e.target)){ menu.style.display = (menu.style.display==='block'?'none':'block'); }
   else if(menu && !menu.contains(e.target)){ menu.style.display='none'; }
 });
+
+/* 모달 백드롭/ESC 닫힘 */
+window.addEventListener('DOMContentLoaded', ()=>{
+  const authWrap=document.getElementById('authWrap');
+  if(authWrap){ authWrap.addEventListener('click', e=>{ if(e.target===authWrap) closeAuth(); }); }
+  const recWrap=document.getElementById('recordsWrap');
+  if(recWrap){ recWrap.addEventListener('click', e=>{ if(e.target===recWrap) closeRecords(); }); }
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeAuth(); closeRecords(); } });
+});
+/* 초기 안전장치: 절대 자동 표시 금지 */
+window.addEventListener('DOMContentLoaded', ()=>{ document.getElementById('authWrap').classList.add('hidden'); });
+
+/* ===== Records ===== */
+async function openRecords(authed=false){
+  if(!currentUser && !authed){ deferredAction='records'; openAuth(); return; }
+  document.getElementById('recordsWrap').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+  const box=document.getElementById('recordsList'); box.textContent='불러오는 중…';
+  try{
+    const r=await fetch('/reports'); const j=await r.json();
+    if(!r.ok){ box.textContent=j.error||'오류'; return; }
+    if(!j.items.length){ box.textContent='아직 저장된 기록이 없습니다.'; return; }
+    box.innerHTML = j.items.map(it=>`
+      <div style="padding:8px 0; border-bottom:1px solid #f3f4f6">
+        <div><b>${(it.student||'무명')}</b> · ${it.total??'-'}점 <span class="muted">(${it.status||'-'})</span></div>
+        <div class="muted" style="font-size:12px">${new Date(it.created_at).toLocaleString()}</div>
+      </div>
+    `).join('');
+  }catch{ box.textContent='네트워크 오류'; }
+}
+function closeRecords(){ document.getElementById('recordsWrap').classList.add('hidden'); document.body.style.overflow=''; }
 </script>
 </body>
 </html>
