@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, make_response
 from flask_cors import CORS
 from openai import OpenAI
 import os, re, json
@@ -9,24 +9,29 @@ from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text
 from sqlalchemy.orm import sessionmaker, declarative_base
 from passlib.hash import bcrypt
 
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------
 # App & Config
-# -----------------------------------------------------------------------------
-app = Flask(__name__, template_folder=".")
+# ---------------------------------------------------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+app = Flask(
+    __name__,
+    template_folder=os.path.join(BASE_DIR, "templates"),
+    static_folder=os.path.join(BASE_DIR, "static"),
+)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-change-me")
-# 세션/쿠키 기본 보안 값 (운영에서 Secure=True 권장)
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = bool(int(os.environ.get("SESSION_COOKIE_SECURE", "0")))  # 1이면 True
 
-CORS(app, supports_credentials=True)
+CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*"}})
+
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# -----------------------------------------------------------------------------
-# DB (SQLite 기본, 추후 POSTGRES_URL 존재 시 그걸 사용)
-# -----------------------------------------------------------------------------
-DATABASE_URL = os.environ.get("DATABASE_URL")  # 예: render Postgres 사용 시
+# ---------------------------------------------------------------------
+# DB (SQLite 기본, POSTGRES_URL 있으면 Postgres)
+# ---------------------------------------------------------------------
+DATABASE_URL = os.environ.get("DATABASE_URL")
 if DATABASE_URL:
     engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 else:
@@ -52,7 +57,6 @@ class User(Base, UserMixin):
         except Exception:
             return False
 
-# (후속 확장용) 상담 리포트 저장 테이블 골격만 만들어 둠
 class Report(Base):
     __tablename__ = "reports"
     id = Column(Integer, primary_key=True)
@@ -62,9 +66,9 @@ class Report(Base):
 
 Base.metadata.create_all(bind=engine)
 
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------
 # Login manager
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------
 login_manager = LoginManager()
 login_manager.init_app(app)
 
@@ -76,16 +80,17 @@ def load_user(user_id: str):
     finally:
         db.close()
 
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------
 # Routes: Pages
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return make_response(render_template("index.html"))
 
-# -----------------------------------------------------------------------------
-# Routes: Auth API (JSON)
-# -----------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------
+# Auth API
+# ---------------------------------------------------------------------
 def _normalize_email(email: str) -> str:
     return (email or "").strip().lower()
 
@@ -142,9 +147,9 @@ def auth_me():
         return jsonify({"ok": True, "user": {"id": current_user.id, "email": current_user.email, "name": current_user.name}})
     return jsonify({"ok": False, "user": None})
 
-# -----------------------------------------------------------------------------
-# Review API (기존 유지)
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------
+# Review API
+# ---------------------------------------------------------------------
 @app.post("/review")
 def review():
     data = request.get_json()
@@ -262,9 +267,9 @@ def review():
         print("❗예외 발생 (review):", str(e), flush=True)
         return jsonify({"error": str(e)}), 500
 
-# -----------------------------------------------------------------------------
-# Example API (기존 유지: 2회 길이 보정 재시도 + 키 네이밍 고정)
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------
+# Example API
+# ---------------------------------------------------------------------
 @app.post("/example")
 def example():
     data = request.json
@@ -292,7 +297,7 @@ def example():
 - 문체는 고등학교 논술 평가에 적합하게 단정하고 객관적인 서술을 유지하십시오.
 - 예시답안은 반드시 제시문에 포함된 정보와 주장 흐름만으로 구성하십시오.
 - 제시문 정보를 해석·조합하여 논지를 전개해야 합니다.
-- ❗ 제시문 밖의 배경지식, 상식, 사례, 정의 등을 활용하면 오답으로 간주합니다. (즉시 무효 처리)
+- ❗ 제시문 밖의 배경지식, 상식, 사례, 정의 등을 활용하면 오답으로 간주합니다.
 - 모든 주장과 근거는 반드시 제시문에서만 취해야 합니다.
 - 예시답안 서두에 질문에 대한 명확한 답변을 반드시 제시하십시오.
 - 글자 수는 학생이 작성한 논술문 기준({char_base} ± {char_range}자) 내에서 작성하십시오.
@@ -322,7 +327,7 @@ def example():
         {"role": "system", "content":
          "너는 고등학생 논술 첨삭 선생님이다. "
          "예시답안과 비교설명 작성 시 제시문 밖의 배경지식/사실/사례 사용은 절대 금지다. "
-         "이를 사용하면 오답으로 간주된다. "
+         "이를 사용하면 무효로 간주된다. "
          "모든 주장과 근거는 반드시 입력된 제시문에서만 취한다. "
          "출력은 반드시 JSON만 사용한다."
         },
@@ -361,8 +366,7 @@ def example():
                 "role": "user",
                 "content": (
                     f"방금 예시답안 길이 {len(new_example)}자입니다. "
-                    f"반드시 {min_chars}자 이상 {max_chars}자 이하로, 제시문 내용만 활용하여 다시 작성하십시오. "
-                    f"배경지식/외부 정보를 사용하면 무효입니다."
+                    f"반드시 {min_chars}자 이상 {max_chars}자 이하로, 제시문 내용만 활용하여 다시 작성하십시오."
                 )
             })
 
@@ -380,8 +384,8 @@ def example():
         "length_actual": len(example_text)
     })
 
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------
 # Main
-# -----------------------------------------------------------------------------
+# ---------------------------------------------------------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
