@@ -19,16 +19,9 @@
 *{ box-sizing:border-box; font-family:'SUIT',system-ui,sans-serif; letter-spacing:-.2px }
 html,body{ margin:0; color:var(--ink); background:var(--bg) }
 a{ color:inherit; text-decoration:none }
-.container{ max-width:1180px; margin:0 auto; padding:0 24px }
-.hidden{ display:none }
+.hidden{ display:none !important }
 .muted{ color:var(--muted) }
-
-/* 버튼 */
-.btn{ border:none; height:44px; padding:0 18px; border-radius:14px; font-weight:800; cursor:pointer; transition:.2s }
-.btn-primary{ background:var(--brand); color:#fff; box-shadow:0 8px 20px rgba(33,64,177,.18) }
-.btn-primary:hover{ transform:translateY(-1px); box-shadow:0 12px 28px rgba(33,64,177,.22) }
-.btn-ghost{ background:#fff; border:1px solid #e5e7eb }
-.btn-link{ background:transparent; border:none; color:#374151; font-weight:800; cursor:pointer }
+.container{ max-width:1180px; margin:0 auto; padding:0 24px }
 
 /* 헤더 */
 header{
@@ -38,6 +31,10 @@ header{
 .nav{ height:66px; display:flex; align-items:center; justify-content:space-between }
 .nav-left{ display:flex; align-items:center; gap:10px; font-weight:900 }
 .nav-right{ display:flex; gap:12px; align-items:center }
+.btn{ border:none; height:44px; padding:0 18px; border-radius:14px; font-weight:800; cursor:pointer; transition:.2s }
+.btn-primary{ background:var(--brand); color:#fff; box-shadow:0 8px 20px rgba(33,64,177,.18) }
+.btn-primary:hover{ transform:translateY(-1px); box-shadow:0 12px 28px rgba(33,64,177,.22) }
+.btn-ghost{ background:#fff; border:1px solid #e5e7eb }
 .avatar{ width:32px; height:32px; border-radius:50%; background:#EEF2FF; color:#2140B1; display:flex; align-items:center; justify-content:center; font-weight:900 }
 .dropdown{ position:relative }
 .dropdown-menu{ position:absolute; right:0; top:44px; background:#fff; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 12px 30px rgba(17,24,39,.12); padding:8px; min-width:160px; display:none }
@@ -55,18 +52,16 @@ header{
 }
 .hero h1{ margin:0 0 12px; font-size:clamp(36px,6vw,64px); line-height:1.08; font-weight:900 }
 .hero p{ margin:0 0 24px; font-size:18px; color:#4b5563 }
-.badge{ font-weight:900; color:var(--brand-700); background:#EEF2FF; border:1px solid #e6ebff; padding:6px 10px; border-radius:999px; display:inline-flex; align-items:center; gap:6px }
 
-/* ===================== 3-STEP DEMO (Toss-style) ===================== */
-/* 섹션 레이아웃: 왼쪽 카피, 오른쪽 '데스크탑 모니터' */
+/* ============== 3-STEP 데모 ============== */
+.container.wide{ max-width:1720px; }                      /* 480(카피)+1120(모니터)+여백 */
 .step{ padding:70px 0; }
-.step-grid{ display:grid; grid-template-columns:420px 1fr; gap:36px; align-items:center }
-@media(max-width:1100px){ .step-grid{ grid-template-columns:1fr; } }
+.step-grid{ display:grid; gap:36px; align-items:center }
+.step-grid.fixed{ grid-template-columns:minmax(360px,480px) 1120px; } /* 모니터 1120px 고정 */
+@media(max-width:1720px){ .step-grid.fixed{ grid-template-columns:1fr; } }
 .step h2{ margin:0 0 8px; font-size:32px; font-weight:900 }
 .step p{ margin:0; color:#6b7280 }
 .step .cta-row{ display:flex; gap:10px; margin-top:12px }
-
-/* 모니터 프레임(진짜 화면 크기) */
 .monitor{
   border-radius:22px; padding:16px; background:rgba(255,255,255,.8);
   border:1px solid rgba(229,231,235,.8); box-shadow:0 30px 60px rgba(33,64,177,.14), inset 0 0 0 1px #eef2ff;
@@ -74,33 +69,11 @@ header{
 .monitor .bar{ height:22px; display:flex; align-items:center; gap:8px; padding:0 10px; }
 .dot{ width:10px; height:10px; border-radius:50% }
 .dot.red{ background:#ff5f57 } .dot.yellow{ background:#ffbd2e } .dot.green{ background:#28c840 }
-
-/* 진짜 화면 영역 */
 .screen{ border-radius:16px; background:#fff; border:1px solid #eef2ff; overflow:hidden; }
-
-/* === 핵심: 실제와 동일 크기 ===
-   stage 폭을 실제 앱의 컨테이너 폭(여기선 1120px)으로 고정.
-   화면이 더 작으면 scale로 축소하고, 크면 1:1로 유지. */
 .viewport{ position:relative; overflow:hidden }
-.stage{ width:1120px; /* 실제 에디터 컨테이너 폭 */ margin:0 auto; padding:18px; transform-origin: top center; }
+.stage{ width:1120px; margin:0 auto; padding:18px; transform-origin: top center; }
 
-/* 입력/결과 데모 스타일 (실제와 유사) */
-.input-demo .field{ background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:12px; margin:10px 0 }
-.input-demo .chips{ display:grid; grid-template-columns:1fr 1fr; gap:10px }
-@media(max-width:680px){ .input-demo .chips{ grid-template-columns:1fr } }
-.input-demo .chip{ padding:12px; border:1px solid #e5e7eb; border-radius:12px; color:#6b7280 }
-
-.kpi{ display:grid; grid-template-columns:1fr 1fr; gap:12px }
-@media (max-width:900px){ .kpi{ grid-template-columns:1fr } }
-
-/* 차트 캔버스 높이 고정 */
-canvas.demoChart{ height:140px !important; }
-
-/* 구분선/여백 */
-.divider{ height:1px; background:var(--line); margin:14px 0 }
-
-/* ===================== EDITOR ===================== */
-.section{ padding:56px 0 }
+/* 입력/결과 데모 스타일 */
 .panel{ background:rgba(255,255,255,.6); backdrop-filter:blur(14px); border:1px solid rgba(255,255,255,.5);
   border-radius:22px; padding:22px; box-shadow:0 10px 30px rgba(17,24,39,.1) }
 .form-label{ font-weight:900; margin:12px 0 6px; display:block }
@@ -109,12 +82,15 @@ canvas.demoChart{ height:140px !important; }
 .textarea::placeholder,.input::placeholder{ color:#9CA3AF }
 #passages{ display:grid; grid-template-columns:1fr 1fr; gap:14px }
 @media (max-width:680px){ #passages{ grid-template-columns:1fr } }
+.kpi{ display:grid; grid-template-columns:1fr 1fr; gap:12px }
+@media (max-width:900px){ .kpi{ grid-template-columns:1fr } }
+canvas.demoChart{ height:140px !important; }
+.divider{ height:1px; background:var(--line); margin:14px 0 }
 
 /* 모달 */
 .modal-backdrop{ position:fixed; inset:0; background:rgba(17,24,39,.4); display:flex; align-items:center; justify-content:center; z-index:50 }
 .modal{ width:min(560px,90vw); background:#fff; border-radius:18px; border:1px solid #e5e7eb; box-shadow:0 24px 60px rgba(17,24,39,.22); padding:18px }
 .modal-backdrop.hidden{ display:none !important; }
-
 .tabs{ display:flex; gap:8px; margin-bottom:12px }
 .tab{ flex:1; height:40px; border-radius:999px; border:1px solid #e5e7eb; background:#f8fafc; font-weight:800; cursor:pointer }
 .tab.active{ background:#EEF2FF; border-color:#dbe4ff; color:var(--brand-700) }
@@ -146,10 +122,9 @@ canvas.demoChart{ height:140px !important; }
 </header>
 
 <main>
-  <!-- ===================== HERO ===================== -->
+  <!-- HERO -->
   <section id="homeSection" class="hero">
     <div class="container">
-      <div class="badge">✨ 논술 AI 첨삭 · 상담용 리포트</div>
       <h1>글 평가와 예시 작성,<br/>바로 체험해 보세요</h1>
       <p>입력 → 평가 → 예시답안 · 차이점까지, 실제 화면 크기로 보여줍니다.</p>
       <div style="display:flex; gap:12px; flex-wrap:wrap">
@@ -158,74 +133,67 @@ canvas.demoChart{ height:140px !important; }
     </div>
   </section>
 
-  <!-- ===================== STEP 1: 입력 ===================== -->
+  <!-- STEP 1 -->
   <section id="step1" class="step">
-    <div class="container step-grid">
+    <div class="container wide step-grid fixed">
       <div>
         <h2>1. 입력하기</h2>
         <p>학생·질문·제시문(다중)·논술문을 실제와 <b>동일한 크기</b>로 확인해요.</p>
         <div class="cta-row"><button class="btn btn-primary" onclick="document.getElementById('step2').scrollIntoView({behavior:'smooth'});">다음 단계</button></div>
       </div>
-
-      <!-- 데스크탑 모니터 -->
       <div class="monitor">
-        <div class="bar">
-          <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
-        </div>
+        <div class="bar"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
         <div class="screen">
           <div class="viewport" data-demo="input">
             <div class="stage input-demo">
-              <!-- 실제 입력 폼과 동일 폭으로 구성 (DEMO 고정 텍스트) -->
               <h3 style="margin:0 0 6px;font-weight:900">✨ 너의 글, 오늘 더 멀리 날아가게.</h3>
               <p class="muted" style="margin-top:0">정성껏 쓴 문장 위에 필요한 피드백만 얹어, 목표에 닿도록 부드럽게 이끌어 드릴게요.</p>
 
               <label class="form-label">학생 이름</label>
-              <div class="field">홍길동</div>
+              <div class="panel" style="padding:12px">홍길동</div>
 
               <label class="form-label">질문</label>
-              <div class="field">제시문을 바탕으로 ‘공정’의 의미를 정의하고, 사회적 약자 보호의 관점에서 그 정당성을 논하시오.</div>
+              <div class="panel" style="padding:12px" data-demo-question>제시문을 바탕으로 '공정'의 의미를 정의하고, 사회적 약자 보호의 관점에서 그 정당성을 논하시오.</div>
 
               <label class="form-label">제시문 <span class="muted">(최소 1개)</span></label>
-              <div class="chips">
-                <div class="chip">“공정은 기회가 균등하게 주어질 때 성립한다.”</div>
-                <div class="chip">“성과에 따른 차등은 공동체의 활력을 높인다.”</div>
-                <div class="chip">“약자 배려는 공정과 충돌하지 않는다.”</div>
-                <div class="chip">“제도는 구조적 불평등을 완화해야 한다.”</div>
+              <div id="demoPassages" class="row" style="flex-wrap:wrap">
+                <div class="panel" style="padding:12px;flex:1;min-width:300px" data-demo-passage>“공정은 누구나 경쟁에 참여할 수 있도록 동등한 출발선을 보장하려는 사회의 약속이다.”</div>
+                <div class="panel" style="padding:12px;flex:1;min-width:300px" data-demo-passage>“성과에 따른 차등 보상은 동기를 높이지만, 출발선이 기울어져 있으면 불평등을 확대할 수 있다.”</div>
+                <div class="panel" style="padding:12px;flex:1;min-width:300px" data-demo-passage>“약자를 보호하는 정책은 경쟁을 약화시키는 예외가 아니라 참여 능력을 회복시키는 조건이다.”</div>
+                <div class="panel" style="padding:12px;flex:1;min-width:300px" data-demo-passage>“제도는 기회의 불균형을 완화하기 위해 투명한 기준과 명확한 종료 조건을 갖추어야 한다.”</div>
               </div>
 
               <label class="form-label">논술문</label>
-              <div class="field" style="height:auto;min-height:120px">저는 공정을 ‘결과의 동일’이 아닌 ‘기회의 균등’으로 이해한다. 그러나… (중략)</div>
+              <div class="panel" style="padding:12px">
+                나는 공정을 결과의 균등이 아니라 기회의 균등으로 이해한다. 같은 규칙이 주어져도 출발선이 기울어 있으면 경쟁은 공정해 보이지 않는다. … (생략) … 출발선의 균형과 결과의 책임이 함께 작동할 때 우리는 비로소 공정하다고 말할 수 있다.
+              </div>
 
               <label class="form-label">글자 수 제한</label>
               <div class="row">
-                <div class="field" style="flex:1">기준 700</div>
-                <div class="field" style="flex:1">± 50</div>
+                <div class="panel" style="padding:12px;flex:1">기준 700</div>
+                <div class="panel" style="padding:12px;flex:1">± 50</div>
               </div>
-              <div style="text-align:center;margin-top:10px">
-                <button class="btn btn-primary">⚡ 리포트 생성</button>
-              </div>
+              <div style="text-align:center;margin-top:10px"><button class="btn btn-primary">⚡ 리포트 생성</button></div>
             </div>
           </div>
         </div>
-      </div><!-- /monitor -->
+      </div>
     </div>
   </section>
 
-  <!-- ===================== STEP 2: 평가 ===================== -->
+  <!-- STEP 2 -->
   <section id="step2" class="step">
-    <div class="container step-grid">
+    <div class="container wide step-grid fixed">
       <div>
         <h2>2. 평가 요약</h2>
         <p>4개 항목 점수와 이유, 막대그래프(높이 140), 총점 게이지(110×110)를 보여줘요.</p>
         <div class="cta-row"><button class="btn btn-primary" onclick="document.getElementById('step3').scrollIntoView({behavior:'smooth'});">다음 단계</button></div>
       </div>
-
       <div class="monitor">
         <div class="bar"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
         <div class="screen">
           <div class="viewport" data-demo="score">
             <div class="stage">
-              <!-- 결과 헤더 -->
               <div class="panel" style="margin-bottom:10px">
                 <div style="display:flex;align-items:center;gap:14px">
                   <div style="font-size:28px">🙂</div>
@@ -238,19 +206,17 @@ canvas.demoChart{ height:140px !important; }
                       <div style="position:absolute;left:90%;top:0;bottom:0;width:2px;background:rgba(17,24,39,.25)"></div>
                     </div>
                   </div>
-                  <!-- 게이지 110×110 -->
                   <div style="position:relative;width:110px;height:110px">
                     <svg width="110" height="110">
                       <circle r="52" cx="55" cy="55" fill="transparent" stroke="#eef2ff" stroke-width="10"></circle>
                       <circle r="52" cx="55" cy="55" fill="transparent" stroke="#10b981" stroke-width="10"
-                        stroke-dasharray="327" stroke-dashoffset="${327-(327*(37/40))}"></circle>
+                        stroke-dasharray="327" stroke-dashoffset="49"></circle>
                     </svg>
                     <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-weight:900">37</div>
                   </div>
                 </div>
               </div>
 
-              <!-- 4개 항목 카드 -->
               <div class="kpi">
                 <div class="panel"><div style="font-weight:800">논리력 (9)</div><div class="muted" style="margin-top:6px">주장-근거-예시가 짝을 이루며 반론 대비가 포함됨.</div></div>
                 <div class="panel"><div style="font-weight:800">독해력 (9)</div><div class="muted" style="margin-top:6px">제시문 핵심을 정확히 요약하고 상호관계를 반영.</div></div>
@@ -258,64 +224,57 @@ canvas.demoChart{ height:140px !important; }
                 <div class="panel"><div style="font-weight:800">표현력 (10)</div><div class="muted" style="margin-top:6px">어휘 선택이 적절하고 문법 오류가 거의 없음.</div></div>
               </div>
 
-              <!-- 막대그래프 높이 140 -->
               <div style="margin-top:14px" class="panel">
                 <canvas id="demoChart" class="demoChart"></canvas>
               </div>
             </div>
           </div>
         </div>
-      </div><!-- /monitor -->
+      </div>
     </div>
   </section>
 
-  <!-- ===================== STEP 3: 예시답안/비교 ===================== -->
+  <!-- STEP 3 -->
   <section id="step3" class="step">
-    <div class="container step-grid">
+    <div class="container wide step-grid fixed">
       <div>
-        <h2>3. 예시답안 · 차이점</h2>
+        <h2>3. 예시답안 · 비교분석</h2>
         <p>버튼을 누르면 생성되는 실제 흐름을, 데모에서는 <b>고정 예시</b>로 보여줘요.</p>
         <div class="cta-row">
           <button class="btn btn-primary" onclick="location.hash='#editor'">내 글로 시작하기</button>
         </div>
       </div>
-
       <div class="monitor">
         <div class="bar"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
         <div class="screen">
           <div class="viewport" data-demo="example">
             <div class="stage">
               <div class="panel">
-                <h3 style="margin:0">📝 예시답안</h3>
-                <p class="muted" style="margin-top:6px">권장 글자수 범위를 벗어나도 참고용 예시는 표시됩니다.</p>
-                <div class="divider"></div>
-                <div style="color:#374151;line-height:1.8">
-                  공정은 결과의 동일이 아니라 기회의 균등에 가깝다. 다만 구조적 제약으로 〮〮〮 (생략)…<br/>
-                  제시문 A가 말한 ‘기회의 균등’을 제도 설계로 보완해야 한다는 점에서, 〮〮〮
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                  <h3 style="margin:0">📝 예시답안</h3>
+                  <button id="demoExampleBtn" class="btn btn-primary" onclick="renderDemoExample()">예시답안 보기</button>
                 </div>
-              </div>
-              <div class="panel" style="margin-top:12px">
-                <h3 style="margin:0">🔍 비교 분석</h3>
-                <div class="divider"></div>
-                <ul style="margin:8px 0 0 18px; line-height:1.8">
-                  <li>주장-근거 간의 거리 좁히기(근거를 주장 직후에 배치)</li>
-                  <li>제시문 핵심어를 문장 주어/서술어에 반영</li>
-                  <li>반론 가능 지점 1개를 선제적으로 다루기</li>
-                  <li>문단 첫 문장은 ‘이번 단락의 목표’를 선언</li>
-                </ul>
+                <p class="muted" style="margin-top:6px">권장 글자수 범위를 벗어나도 참고용 예시는 표시됩니다.</p>
+                <div id="demoExampleWrap" class="hidden">
+                  <div id="demoExampleText" class="panel" style="background:#fff"></div>
+                  <div class="panel" style="background:#fff;margin-top:12px">
+                    <h3 style="margin:0">🔍 비교 분석</h3>
+                    <div id="demoComparisonText" style="margin-top:8px;line-height:1.8"></div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div><!-- /monitor -->
+      </div>
     </div>
   </section>
 
-  <!-- ===================== 실제 에디터 (기존) ===================== -->
-  <section id="editorSection" class="section hidden" style="visibility:hidden">
+  <!-- 실제 에디터 -->
+  <section id="editorSection" class="hidden" style="visibility:hidden; padding:56px 0">
     <div class="container">
 
-      <!-- 입력 패널 -->
+      <!-- 입력 -->
       <div id="inputPanel" class="panel">
         <h2 style="margin:0 0 12px; font-weight:900">✨ 너의 글, 오늘 더 멀리 날아가게.</h2>
         <p class="muted" style="margin-top:0">정성껏 쓴 문장 위에 필요한 피드백만 얹어, 목표에 닿도록 부드럽게 이끌어 드릴게요.</p>
@@ -351,19 +310,18 @@ canvas.demoChart{ height:140px !important; }
         <div id="error" class="muted" style="display:none; color:#dc2626; margin-top:8px">잠시 후 다시 시도해 주세요.</div>
       </div>
 
-      <!-- 결과 -->
+      <!-- 결과 (예시 버튼만 노출) -->
       <div id="resultCard" class="panel hidden" style="margin-top:18px">
         <h3 style="margin-top:0">📊 한눈에 이해되는 리포트</h3>
         <div id="evalSummary"></div>
       </div>
 
-      <!-- 예시/비교 + PDF -->
+      <!-- 예시/비교 + PDF (버튼 누르기 전에는 감춤) -->
       <div id="exampleSection" class="panel hidden" style="margin-top:18px">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
           <h3 style="margin:0">📝 예시답안</h3>
           <div style="display:flex;gap:8px;align-items:center">
             <button class="btn btn-ghost" onclick="openRecords()">내 기록</button>
-            <button id="btnExample" class="btn btn-primary" onclick="loadExample()">예시답안 보기</button>
           </div>
         </div>
         <div id="exampleNote" class="muted" style="margin-top:8px;display:none"></div>
@@ -377,19 +335,17 @@ canvas.demoChart{ height:140px !important; }
   </section>
 </main>
 
-<!-- ===================== AUTH MODAL ===================== -->
+<!-- AUTH MODAL -->
 <div id="authWrap" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="authTitle">
   <div class="modal">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <h3 id="authTitle" style="margin:0;font-weight:900">내 계정</h3>
       <button class="btn btn-ghost" onclick="closeAuth()">닫기</button>
     </div>
-
     <div class="tabs" style="margin-top:10px">
       <button id="tabLogin" class="tab active" onclick="switchTab('login')">로그인</button>
       <button id="tabRegister" class="tab" onclick="switchTab('register')">회원가입</button>
     </div>
-
     <div id="loginPanel">
       <label class="form-label">이메일</label>
       <input id="loginEmail" class="input" placeholder="you@example.com" />
@@ -398,7 +354,6 @@ canvas.demoChart{ height:140px !important; }
       <button class="btn btn-primary" style="margin-top:12px" onclick="login()">로그인</button>
       <div id="loginError" class="muted" style="color:#dc2626;margin-top:8px;display:none"></div>
     </div>
-
     <div id="registerPanel" class="hidden">
       <label class="form-label">이름</label>
       <input id="regName" class="input" placeholder="홍길동" />
@@ -412,7 +367,7 @@ canvas.demoChart{ height:140px !important; }
   </div>
 </div>
 
-<!-- ===================== RECORDS MODAL ===================== -->
+<!-- RECORDS MODAL -->
 <div id="recordsWrap" class="modal-backdrop hidden">
   <div class="modal">
     <div style="display:flex;justify-content:space-between;align-items:center">
@@ -424,6 +379,29 @@ canvas.demoChart{ height:140px !important; }
 </div>
 
 <script>
+/* ===== 데모 데이터 ===== */
+const demoSet = {
+  student: "김다움",
+  question: "제시문을 바탕으로 '공정'의 의미를 정의하고, 사회적 약자 보호의 관점에서 그 정당성을 논하시오.",
+  passages: [
+    "공정은 누구나 경쟁에 참여할 수 있도록 동등한 출발선을 보장하려는 사회의 약속이다.",
+    "성과에 따른 차등 보상은 동기를 높이지만, 출발선이 기울어져 있으면 불평등을 확대할 수 있다.",
+    "약자를 보호하는 정책은 경쟁을 약화시키는 예외가 아니라 참여 능력을 회복시키는 조건이다.",
+    "제도는 기회의 불균형을 완화하기 위해 투명한 기준과 명확한 종료 조건을 갖추어야 한다."
+  ],
+  essay:"나는 공정을 결과의 균등이 아니라 기회의 균등으로 이해한다. 같은 규칙이 주어져도 출발선이 기울어 있으면 경쟁은 공정해 보이지 않는다. … (생략) … 출발선의 균형과 결과의 책임이 함께 작동할 때 우리는 비로소 공정하다고 말할 수 있다.",
+  charBase:700, charRange:50,
+  scores:[9,9,9,10], total:37, status:"합격",
+  reasons:{
+    "논리력":"주장→근거→조건→결론으로 전개가 일관됨.",
+    "독해력":"출발선·차등·약자보호·제도설계의 핵심을 각각 논지에 연결.",
+    "구성력":"도입-본문-결론의 아치형 구조, 단락 목표가 분명.",
+    "표현력":"핵심어 반복으로 응집력 강화, 문법 오류 없음."
+  },
+  example:"공정은 결과의 동일을 강제하는 규범이 아니라, 누구나 경쟁에 참여할 수 있도록 출발선을 균등화하는 원칙이다. 이때 약자 보호는 예외가 아니라 공정의 조건이다. 교육·정보·건강과 같은 기본 역량을 보장해 참여 능력을 끌어올리고, 이후의 성과는 예측 가능한 기준에 따라 차등 보상되어야 한다.\n\n지원은 목적·대상·기간·종료 조건이 명확해야 한다. 보정이 성과 보상과 뒤섞이면 특혜로 오해되기 때문이다. 반대로 성과가 확인되면 더 큰 자율과 책임을 부여해야 제도는 신뢰를 얻는다. 결국 공정은 ‘기회 보정’과 ‘성과 책임’이 동시에 작동할 때 유지된다.",
+  comparison:"원문은 ‘지원과 보상 분리’의 필요성을 간단히 언급했다. 예시는 지원의 네 요소(목적·대상·기간·종료)를 분명히 해 정책 설계의 닫힘을 확보한다. 또한 원문이 추상적 범주에 머문 반면, 예시는 교육·정보·건강 등으로 구체화하여 적용 가능성을 높였다. 마지막으로 결론에서 ‘기회 보정 + 성과 책임’이라는 이원 구조를 공식처럼 제시해 메시지 회수와 기억 용이성을 강화했다."
+};
+
 /* ===== 라우팅 ===== */
 function show(section){
   const home = document.getElementById('homeSection');
@@ -443,31 +421,30 @@ window.addEventListener('hashchange', routeFromHash);
 window.addEventListener('DOMContentLoaded', routeFromHash);
 function goToEditor(){ if(!currentUser){ deferredAction='goEditor'; openAuth(); return; } location.hash='#editor'; show('editor'); setTimeout(()=>{document.getElementById('studentName')?.focus({preventScroll:true});},0); }
 
-/* ===== 실 화면 스케일: 모니터(stage=1120px)를 1:1 유지, 필요 시 축소 ===== */
+/* ===== 실 화면 스케일: 1120px 1:1, 필요 시 축소 ===== */
 function scaleDemo(){
   document.querySelectorAll('.viewport').forEach(vp=>{
     const stage = vp.querySelector('.stage');
     if(!stage) return;
-    const c = vp.closest('.screen');
-    const maxW = c.clientWidth - 0; // padding 고려
-    const scale = Math.min(1, maxW / 1120); // 1120px이 실제 폭
+    const maxW = vp.closest('.screen').clientWidth;
+    const scale = Math.min(1, maxW / 1120);
+    stage.style.transformOrigin = 'top center';
     stage.style.transform = `scale(${scale})`;
-    // 높이 계산(축소 시 내부가 잘리지 않도록)
-    const h = stage.getBoundingClientRect().height;
-    vp.style.height = (h*scale) + 'px';
+    const rect = stage.getBoundingClientRect();        // 변환 후 실제 높이
+    vp.style.height = rect.height + 'px';               // h*scale 아님!
   });
 }
 window.addEventListener('DOMContentLoaded', scaleDemo);
 window.addEventListener('resize', scaleDemo);
 
-/* ===== 데모 차트 렌더(막대 140) ===== */
+/* ===== 데모 차트 ===== */
 function renderDemoChart(){
   const el=document.getElementById('demoChart');
   if(!el) return;
   new Chart(el.getContext('2d'),{
     type:'bar',
     data:{ labels:['논리력','독해력','구성력','표현력'],
-      datasets:[{ data:[9,9,9,10], backgroundColor:"rgba(16,185,129,.85)", borderRadius:8, barThickness:28, categoryPercentage:0.65 }]},
+      datasets:[{ data:[9,9,9,10], backgroundColor:"rgba(33,64,177,.75)", borderRadius:8, barThickness:28, categoryPercentage:0.65 }]},
     options:{ animation:{duration:400},
       scales:{ x:{grid:{display:false},ticks:{color:'#6B7280',font:{size:12}}},
                y:{beginAtZero:true,max:10,ticks:{stepSize:1,color:'#9CA3AF',font:{size:11}},grid:{color:'rgba(17,24,39,.06)'}}},
@@ -476,12 +453,26 @@ function renderDemoChart(){
 }
 window.addEventListener('DOMContentLoaded', renderDemoChart);
 
+/* ===== 데모 예시 토글 ===== */
+function renderDemoExample(){
+  const btn=document.getElementById('demoExampleBtn');
+  const wrap=document.getElementById('demoExampleWrap');
+  const ex=document.getElementById('demoExampleText');
+  const cmp=document.getElementById('demoComparisonText');
+  btn.disabled=true; const old=btn.textContent; btn.textContent='생성 중…';
+  setTimeout(()=>{
+    ex.innerHTML = (demoSet.example||'').replace(/\n/g,'<br>');
+    cmp.innerHTML = (demoSet.comparison||'').replace(/\n/g,'<br>');
+    wrap.classList.remove('hidden');
+    btn.textContent='예시답안 생성됨';
+  }, 500);
+}
+
 /* ===== textarea 자동 리사이즈 & 카운트 ===== */
 function autoResize(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,1200)+'px'; }
 function refreshAutosize(){ document.querySelectorAll('textarea').forEach(t=>{ autoResize(t); }); }
 function bindAutoResize(){ document.querySelectorAll('textarea').forEach(t=>{ t.addEventListener('input',()=>autoResize(t)); autoResize(t); }); }
 window.addEventListener('DOMContentLoaded', bindAutoResize);
-
 function updateCharCount(){
   const essay=document.getElementById('essay').value;
   const l=parseInt(document.getElementById('charLimit').value);
@@ -495,7 +486,7 @@ function updateCharCount(){
   el.style.color = inRange ? '#6B7280' : '#ef4444';
 }
 
-/* ===== 제시문 추가(버튼 미동작 이슈 방지: 전역 바인딩) ===== */
+/* ===== 제시문 추가 (전역 바인딩) ===== */
 window.addPassage = function(){
   const t=document.createElement('textarea');
   t.className='passage textarea'; t.rows=3;
@@ -510,7 +501,7 @@ document.addEventListener('DOMContentLoaded', ()=>{ document.getElementById('btn
 let scoreChart, savedScores=[], savedReasons={}, savedExample="", savedComparison="";
 let exampleGenerated=false; let currentUser=null; let deferredAction=null;
 
-/* ===== 평가 총점/상태 ===== */
+/* ===== 총점/상태 ===== */
 function getTotalAndStatus(scores){
   const total=(scores||[]).reduce((a,b)=>a+(parseInt(b)||0),0);
   let status={label:"예비",desc:"조금만 다듬으면 더 좋아져요.",emoji:"🙂",tone:"#f59e0b"};
@@ -519,7 +510,7 @@ function getTotalAndStatus(scores){
   return { total, status };
 }
 
-/* ===== 리뷰/예시/리포트 (기존 로직 동일) ===== */
+/* ===== 리뷰 ===== */
 async function submitEssay(){
   if(!currentUser){ deferredAction='review'; openAuth(); return; }
 
@@ -537,20 +528,9 @@ async function submitEssay(){
     if(!r.ok){ throw new Error(data.error||'오류'); }
 
     savedScores=data.scores; savedReasons=data.reasons;
-
     const { total, status } = getTotalAndStatus(savedScores);
-    const progress=`
-      <div style="margin-top:8px">
-        <div style="position:relative;height:10px;background:#eef2ff;border-radius:999px;overflow:hidden">
-          <div style="width:${(total/40)*100}%;height:100%;background:${status.tone};transition:width .5s"></div>
-          <div style="position:absolute;left:${(30/40)*100}%;top:0;bottom:0;width:2px;background:rgba(17,24,39,.15)"></div>
-          <div style="position:absolute;left:${(36/40)*100}%;top:0;bottom:0;width:2px;background:rgba(17,24,39,.25)"></div>
-        </div>
-        <div class="muted" style="display:flex;justify-content:space-between;font-size:12px;margin-top:6px">
-          <span>0</span><span>30(예비)</span><span>36(합격)</span><span>40</span>
-        </div>
-      </div>`;
 
+    /* 결과 카드 그리기 (예시 버튼만 노출) */
     document.getElementById('evalSummary').innerHTML=`
       <div class="panel" style="display:flex;align-items:center;gap:14px">
         <div style="font-size:30px">${status.emoji}</div>
@@ -558,7 +538,11 @@ async function submitEssay(){
           <div style="font-weight:900">총점 <span style="color:${status.tone}">${total}</span> / 40 ·
             <span style="color:${status.tone}">${status.label}</span></div>
           <div class="muted" style="margin-top:4px">${status.desc}</div>
-          ${progress}
+          <div style="margin-top:8px;position:relative;height:10px;background:#eef2ff;border-radius:999px;overflow:hidden">
+            <div style="width:${(total/40)*100}%;height:100%;background:${status.tone};transition:width .5s"></div>
+            <div style="position:absolute;left:${(30/40)*100}%;top:0;bottom:0;width:2px;background:rgba(17,24,39,.15)"></div>
+            <div style="position:absolute;left:${(36/40)*100}%;top:0;bottom:0;width:2px;background:rgba(17,24,39,.25)"></div>
+          </div>
         </div>
         <div style="position:relative; width:110px; height:110px">
           <svg width="110" height="110">
@@ -580,6 +564,10 @@ async function submitEssay(){
       </div>
 
       <div class="panel" style="margin-top:14px"><canvas id="scoreChart" height="140"></canvas></div>
+
+      <div id="exampleCTA" style="text-align:right;margin-top:12px">
+        <button id="btnExample" class="btn btn-primary" onclick="loadExample()">예시답안 보기</button>
+      </div>
     `;
 
     const ctx=document.getElementById('scoreChart').getContext('2d');
@@ -596,12 +584,10 @@ async function submitEssay(){
 
     document.getElementById('loading').style.display='none';
     document.getElementById('resultCard').classList.remove('hidden');
-    document.getElementById('exampleSection').classList.remove('hidden');
+    document.getElementById('exampleSection').classList.add('hidden'); // ✅ 사전 노출 금지
     document.getElementById('exampleNote').style.display='none';
     document.getElementById('exampleOutput').innerHTML='';
     document.getElementById('comparisonOutput').innerHTML='';
-    document.getElementById('btnExample').disabled=false;
-    document.getElementById('btnExample').textContent='예시답안 보기';
     exampleGenerated=false;
 
   }catch(e){
@@ -611,11 +597,21 @@ async function submitEssay(){
   }
 }
 
-/* ===== 예시답안 ===== */
+/* ===== 예시 ===== */
 async function loadExample(){
   if(!currentUser){ deferredAction='example'; openAuth(); return; }
   const btn=document.getElementById('btnExample');
   const note=document.getElementById('exampleNote');
+  const errId='exampleInlineErr';
+  let err=document.getElementById(errId);
+  if(!err){
+    err=document.createElement('div');
+    err.id=errId; err.className='muted';
+    err.style.cssText='margin-top:6px;color:#dc2626;text-align:right';
+    document.getElementById('exampleCTA')?.appendChild(err);
+  }
+  err.textContent='';
+
   btn.disabled=true; const old=btn.textContent; btn.textContent='생성 중...';
 
   try{
@@ -636,21 +632,22 @@ async function loadExample(){
     const data=await r.json();
     if(!r.ok){ throw new Error(data.error||'오류'); }
 
-    savedExample=data.example||'';
-    savedComparison=data.comparison||'';
-    if(!data.length_valid){
+    savedExample=data.example||''; savedComparison=data.comparison||'';
+    if(data.length_valid===false){
       note.style.display='block';
-      note.textContent='✍️ 권장 글자수 범위를 벗어났지만, 참고용으로 예시를 제공합니다.';
+      note.textContent='✍️ 권장 글자수 범위를 벗어났지만, 참고용 예시는 표시합니다.';
     }else{ note.style.display='none'; }
 
     document.getElementById('exampleOutput').innerHTML=(savedExample||'').replace(/\n/g,'<br>');
     document.getElementById('comparisonOutput').innerHTML=(savedComparison||'').replace(/\n/g,'<br>');
+
+    document.getElementById('exampleSection').classList.remove('hidden'); // ✅ 이때만 열기
+    document.getElementById('exampleSection').scrollIntoView({behavior:'smooth',block:'start'});
     btn.textContent='예시답안 생성됨';
 
   }catch(e){
     console.error(e);
-    document.getElementById('exampleNote').style.display='block';
-    document.getElementById('exampleNote').textContent='생성 중 문제가 있었어요. 잠시 뒤 다시 시도해 주세요.';
+    err.textContent='생성 중 문제가 있었어요. 잠시 뒤 다시 시도해 주세요.';
     btn.textContent=old; btn.disabled=false;
   }
 }
