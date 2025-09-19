@@ -54,11 +54,11 @@ header{
 .hero p{ margin:0 0 24px; font-size:18px; color:#4b5563 }
 
 /* ============== 3-STEP 데모 ============== */
-.container.wide{ max-width:1720px; }                      /* 480(카피)+1120(모니터)+여백 */
+.container.wide{ max-width:1440px; }                      /* 480(카피)+1120(모니터)+여백 */
 .step{ padding:70px 0; }
-.step-grid{ display:grid; gap:36px; align-items:center }
-.step-grid.fixed{ grid-template-columns:minmax(360px,480px) 1120px; } /* 모니터 1120px 고정 */
-@media(max-width:1720px){ .step-grid.fixed{ grid-template-columns:1fr; } }
+.step-grid{ display:grid; gap:24px; align-items:center }
+.step-grid.fixed{ grid-template-columns:400px 960px; } /* 모니터 1120px 고정 */
+@media(max-width:1440px){ .step-grid.fixed{ grid-template-columns:1fr; } }
 .step h2{ margin:0 0 8px; font-size:32px; font-weight:900 }
 .step p{ margin:0; color:#6b7280 }
 .step .cta-row{ display:flex; gap:10px; margin-top:12px }
@@ -138,13 +138,13 @@ canvas.demoChart{ height:140px !important; }
     <div class="container wide step-grid fixed">
       <div>
         <h2>1. 입력하기</h2>
-        <p>학생·질문·제시문(다중)·논술문을 실제와 <b>동일한 크기</b>로 확인해요.</p>
+        <p>학생·질문·제시문(여러 개)·논술문을 그대로 붙여넣기만 하세요. 글자 수는 자동으로 세고, 제시문은 버튼으로 빠르게 추가돼요.</p>
         <div class="cta-row"><button class="btn btn-primary" onclick="document.getElementById('step2').scrollIntoView({behavior:'smooth'});">다음 단계</button></div>
       </div>
       <div class="monitor">
         <div class="bar"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
         <div class="screen">
-          <div class="viewport" data-demo="input">
+          <div class="viewport" data-demo="input" data-stage="960">
             <div class="stage input-demo">
               <h3 style="margin:0 0 6px;font-weight:900">✨ 너의 글, 오늘 더 멀리 날아가게.</h3>
               <p class="muted" style="margin-top:0">정성껏 쓴 문장 위에 필요한 피드백만 얹어, 목표에 닿도록 부드럽게 이끌어 드릴게요.</p>
@@ -185,14 +185,14 @@ canvas.demoChart{ height:140px !important; }
   <section id="step2" class="step">
     <div class="container wide step-grid fixed">
       <div>
-        <h2>2. 평가 요약</h2>
-        <p>4개 항목 점수와 이유, 막대그래프(높이 140), 총점 게이지(110×110)를 보여줘요.</p>
+        <h2>2. 평가 받기</h2>
+        <p>논리·독해·구성·표현 4개 항목 점수와 이유를 한 화면에서 확인하세요. 합격/예비/다시쓰기 기준도 함께 보여드립니다.</p>
         <div class="cta-row"><button class="btn btn-primary" onclick="document.getElementById('step3').scrollIntoView({behavior:'smooth'});">다음 단계</button></div>
       </div>
       <div class="monitor">
         <div class="bar"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
         <div class="screen">
-          <div class="viewport" data-demo="score">
+          <div class="viewport" data-demo="score" data-stage="960">
             <div class="stage">
               <div class="panel" style="margin-bottom:10px">
                 <div style="display:flex;align-items:center;gap:14px">
@@ -239,7 +239,7 @@ canvas.demoChart{ height:140px !important; }
     <div class="container wide step-grid fixed">
       <div>
         <h2>3. 예시답안 · 비교분석</h2>
-        <p>버튼을 누르면 생성되는 실제 흐름을, 데모에서는 <b>고정 예시</b>로 보여줘요.</p>
+        <p>예시답안 보기를 누르면 내 글과 다른 점을 줄글로 정리해 드려요. 마음에 들면 PDF 저장하고, 내 기록에서 언제든 다시 볼 수 있어요.</p>
         <div class="cta-row">
           <button class="btn btn-primary" onclick="location.hash='#editor'">내 글로 시작하기</button>
         </div>
@@ -247,7 +247,7 @@ canvas.demoChart{ height:140px !important; }
       <div class="monitor">
         <div class="bar"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
         <div class="screen">
-          <div class="viewport" data-demo="example">
+          <div class="viewport" data-demo="example" data-stage="960">
             <div class="stage">
               <div class="panel">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
@@ -426,8 +426,10 @@ function scaleDemo(){
   document.querySelectorAll('.viewport').forEach(vp=>{
     const stage = vp.querySelector('.stage');
     if(!stage) return;
-    const maxW = vp.closest('.screen').clientWidth;
-    const scale = Math.min(1, maxW / 1120);
+    const stageW = parseInt(vp.dataset.stage || '1120', 10); // 랜딩=960, 에디터=1120
+    stage.style.width = stageW + 'px';
+    const maxW = (vp.closest('.screen')||vp).clientWidth;
+    const scale = Math.min(1, maxW / stageW);
     stage.style.transformOrigin = 'top center';
     stage.style.transform = `scale(${scale})`;
     const rect = stage.getBoundingClientRect();        // 변환 후 실제 높이
