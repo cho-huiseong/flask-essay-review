@@ -327,7 +327,7 @@ canvas.demoChart{ height:140px !important; }
         <div id="exampleNote" class="muted" style="margin-top:8px;display:none"></div>
         <div id="exampleOutput" class="panel" style="background:#fff"></div>
         <div id="comparisonOutput" class="panel" style="background:#fff;margin-top:12px"></div>
-        <button class="btn btn-primary" style="margin-top:14px" onclick="downloadPDF()">📥 PDF 저장</button>
+        <button id="btnSavePDF" class="btn btn-primary" style="margin-top:14px">📥 PDF 저장</button>
         <button class="btn btn-ghost" style="margin-top:14px" onclick="resetReport()">🔄 새 리포트 시작</button>
       </div>
 
@@ -635,10 +635,16 @@ async function loadExample(){
     if(!r.ok){ throw new Error(data.error||'오류'); }
 
     savedExample=data.example||''; savedComparison=data.comparison||'';
-    if(data.length_valid===false){
-      note.style.display='block';
-      note.textContent='✍️ 권장 글자수 범위를 벗어났지만, 참고용 예시는 표시합니다.';
-    }else{ note.style.display='none'; }
+    if (data.length_note) {
+  note.style.display = 'block';
+  note.textContent = data.length_note;
+} else if (data.length_valid === false) {
+  note.style.display = 'block';
+  note.textContent = '✍️ 권장 글자수 범위를 벗어났지만, 참고용 예시는 표시합니다.';
+} else {
+  note.style.display = 'none';
+}
+
 
     document.getElementById('exampleOutput').innerHTML=(savedExample||'').replace(/\n/g,'<br>');
     document.getElementById('comparisonOutput').innerHTML=(savedComparison||'').replace(/\n/g,'<br>');
@@ -660,39 +666,112 @@ function downloadPDF(){
   const today=new Date().toISOString().split('T')[0];
   const { total, status } = getTotalAndStatus(savedScores);
   let chartImg=''; try{ const canvas=document.getElementById('scoreChart'); if(canvas) chartImg=canvas.toDataURL('image/png',1.0); }catch(e){}
-  const html=`
-  <div style="font-family:'SUIT',system-ui,-apple-system,sans-serif; color:#111827;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <div style="display:flex;align-items:center;gap:8px">
-        <img src="/static/academy_logo.png" alt="아카데미창" style="height:22px;object-fit:contain"/>
-        <h2 style="margin:0">다쓰 리포트</h2>
-      </div>
-      <div style="color:#6b7280;font-size:12px">학생: ${name} · 날짜: ${today}</div>
+  const html = `
+<div style="font-family:'SUIT',system-ui,-apple-system,'Noto Sans KR',sans-serif;color:#111827">
+
+  <!-- 상단 헤더 -->
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <div style="display:flex;align-items:center;gap:8px">
+      <img src="/static/academy_logo.png" alt="아카데미창" style="height:22px;object-fit:contain"/>
+      <h2 style="margin:0;font-weight:800;letter-spacing:-.2px">다쓰 리포트</h2>
     </div>
-    <div style="display:flex;gap:12px;align-items:center;border:1px solid #e5e7eb;border-radius:12px;padding:12px;">
-      <div style="font-size:26px">${status.emoji}</div>
-      <div style="flex:1">
-        <div style="font-weight:900">총점 <span style="color:${status.tone}">${total}</span> / 40 ·
-          <span style="color:${status.tone}">${status.label}</span></div>
+    <div style="color:#6b7280;font-size:12px">학생: ${name} · 날짜: ${today}</div>
+  </div>
+
+  <!-- 요약 (토스톤: 진행바 + 도넛) -->
+  <div style="display:flex;gap:12px;align-items:center;border:1px solid #e5e7eb;border-radius:14px;padding:12px;background:#fff">
+    <div style="font-size:26px">${status.emoji || '😃'}</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:900">
+        총점 <span style="color:${status.tone}">${total}</span> / 40 ·
+        <span style="color:${status.tone}">${status.label}</span>
       </div>
-      <div style="position:relative;width:110px;height:110px">
-        <svg width="110" height="110">
-          <circle r="52" cx="55" cy="55" fill="transparent" stroke="#eef2ff" stroke-width="10"></circle>
-          <circle r="52" cx="55" cy="55" fill="transparent" stroke="${status.tone}" stroke-width="10"
-            stroke-dasharray="327" stroke-dashoffset="${327-(327*(total/40))}"></circle>
-        </svg>
-        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-weight:900">${total}</div>
+      <div style="margin-top:6px;position:relative;height:8px;background:#eef2ff;border-radius:999px;overflow:hidden">
+        <div style="width:${(total/40)*100}%;height:100%;background:${status.tone}"></div>
+        <div style="position:absolute;left:${(30/40)*100}%;top:0;bottom:0;width:2px;background:rgba(17,24,39,.12)"></div>
+        <div style="position:absolute;left:${(36/40)*100}%;top:0;bottom:0;width:2px;background:rgba(17,24,39,.12)"></div>
+      </div>
+      <div style="margin-top:4px;color:#6b7280;font-size:12px">${status.desc}</div>
+    </div>
+    <div style="position:relative;width:92px;height:92px">
+      <svg width="92" height="92">
+        <circle r="42" cx="46" cy="46" fill="transparent" stroke="#eef2ff" stroke-width="10"></circle>
+        <circle r="42" cx="46" cy="46" fill="transparent" stroke="${status.tone}" stroke-width="10"
+          stroke-dasharray="${2*Math.PI*42}" stroke-dashoffset="${2*Math.PI*42 - (2*Math.PI*42*(total/40))}"></circle>
+      </svg>
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-weight:900">${total}</div>
+    </div>
+  </div>
+
+  <!-- (있으면) 막대차트 이미지 -->
+  ${chartImg ? `
+    <div style="margin-top:10px;border:1px solid #e5e7eb;border-radius:12px;padding:10px;background:#fff">
+      <img src="${chartImg}" style="width:100%;height:auto;display:block"/>
+    </div>` : ''}
+
+  <!-- 한눈에 이해되는 리포트 (두 번째 스샷 느낌의 카드 4개) -->
+  <div style="margin-top:10px;border:1px solid #e5e7eb;border-radius:12px;padding:10px;background:#fff">
+    <div style="font-weight:800;margin-bottom:8px">한눈에 이해되는 리포트</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:12px;background:#fff">
+        <div style="display:inline-block;padding:4px 8px;background:#eef2ff;color:#1d4ed8;border-radius:999px;font-weight:700;font-size:12px">
+          논리력 (${(savedScores?.[0] ?? 0)}점)
+        </div>
+        <div style="margin-top:8px;font-size:12.5px;line-height:1.6;color:#1f2937">
+          ${(savedReasons?.['논리력'] || '').replace(/\n/g,'<br>')}
+        </div>
+      </div>
+      <div style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:12px;background:#fff">
+        <div style="display:inline-block;padding:4px 8px;background:#eef2ff;color:#1d4ed8;border-radius:999px;font-weight:700;font-size:12px">
+          독해력 (${(savedScores?.[1] ?? 0)}점)
+        </div>
+        <div style="margin-top:8px;font-size:12.5px;line-height:1.6;color:#1f2937">
+          ${(savedReasons?.['독해력'] || '').replace(/\n/g,'<br>')}
+        </div>
+      </div>
+      <div style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:12px;background:#fff">
+        <div style="display:inline-block;padding:4px 8px;background:#eef2ff;color:#1d4ed8;border-radius:999px;font-weight:700;font-size:12px">
+          구성력 (${(savedScores?.[2] ?? 0)}점)
+        </div>
+        <div style="margin-top:8px;font-size:12.5px;line-height:1.6;color:#1f2937">
+          ${(savedReasons?.['구성력'] || '').replace(/\n/g,'<br>')}
+        </div>
+      </div>
+      <div style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:12px;background:#fff">
+        <div style="display:inline-block;padding:4px 8px;background:#eef2ff;color:#1d4ed8;border-radius:999px;font-weight:700;font-size:12px">
+          표현력 (${(savedScores?.[3] ?? 0)}점)
+        </div>
+        <div style="margin-top:8px;font-size:12.5px;line-height:1.6;color:#1f2937">
+          ${(savedReasons?.['표현력'] || '').replace(/\n/g,'<br>')}
+        </div>
       </div>
     </div>
-    ${chartImg ? `<div style="margin-top:12px;border:1px solid #e5e7eb;border-radius:12px;padding:12px"><img src="${chartImg}" style="width:100%;height:auto;display:block;"/></div>` : ''}
-    <h3 style="margin:16px 0 6px">예시답안</h3>
-    <div style="border:1px solid #e5e7eb;border-radius:12px;padding:12px;font-size:13px;color:#374151">${(savedExample||'').replace(/\n/g,'<br>')}</div>
-    <h3 style="margin:16px 0 6px">비교 분석</h3>
-    <div style="border:1px solid #e5e7eb;border-radius:12px;padding:12px;font-size:13px;color:#374151">${(savedComparison||'').replace(/\n/g,'<br>')}</div>
-  </div>`;
+  </div>
+
+  <!-- 예시답안 -->
+  <h3 style="margin:12px 0 6px">예시답안</h3>
+  <div style="border:1px solid #e5e7eb;border-radius:12px;padding:10px;background:#fff;font-size:13px;line-height:1.65;color:#374151;max-height:360px;overflow:hidden">
+    ${(savedExample || '').replace(/\n/g,'<br>')}
+  </div>
+
+  <!-- 비교 분석 -->
+  <h3 style="margin:12px 0 6px">비교 분석</h3>
+  <div style="border:1px solid #e5e7eb;border-radius:12px;padding:10px;background:#fff;font-size:13px;line-height:1.65;color:#374151;max-height:300px;overflow:hidden">
+    ${(savedComparison || '').replace(/\n/g,'<br>')}
+  </div>
+
+</div>`;
+
   const wrap=document.createElement('div'); wrap.innerHTML=html;
-  html2pdf().from(wrap).set({ margin:10, filename:`다쓰_리포트_${today}.pdf`, html2canvas:{ scale:2, useCORS:true }, jsPDF:{ unit:'mm', format:'a4', orientation:'portrait' } }).save();
+  html2pdf().from(wrap).set({
+  margin: 8, // 1페이지 여유
+  filename: `다쓰_리포트_${today}.pdf`,
+  html2canvas: { scale: 2, useCORS: true },
+  jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+  pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } // 카드 중간 분할 방지
+}).save();
 }
+
 function resetReport(){ location.hash='#home'; routeFromHash(); }
 
 /* ===== Auth ===== */
