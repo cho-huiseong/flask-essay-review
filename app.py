@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template, make_response
 from flask_cors import CORS
 from openai import OpenAI
-import os, json
+import os, json, re  # ← re 추가
 from datetime import datetime
 
 # ==== Auth/DB ====
@@ -28,6 +28,18 @@ CORS(app, supports_credentials=True)
 # OpenAI
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+
+# ---------- JSON parse helper (safe) ----------
+def parse_json_safely(s: str):
+    try:
+        return json.loads(s)
+    except Exception:
+        # 코드펜스/부가 문구 제거 후, 첫 번째 JSON 블록만 추출
+        s2 = re.sub(r"^```json|^```|```$", "", s.strip(), flags=re.IGNORECASE|re.MULTILINE)
+        m = re.search(r"\{.*\}", s2, flags=re.DOTALL)
+        if m:
+            return json.loads(m.group(0))
+        raise
 
 # ---------------------------------------------------------------------
 # DB
@@ -85,7 +97,7 @@ def _normalize_email(s):
     return (s or "").strip().lower()
 
 # ---------------------------------------------------------------------
-# 🔧 Utils (이번 패치 핵심)
+# 🔧 Utils
 # ---------------------------------------------------------------------
 def _s(v):
     """문자/None만 strip. 리스트/숫자 들어와도 안전하게 문자열로."""
@@ -103,8 +115,27 @@ def _coerce_passages(raw):
         return [x for x in raw if isinstance(x, str)]
     return [str(raw)]
 
+CRITERIA_KEYS = ["논리력","독해력","구성력","표현력"]
+
+def parse_review_text(block: str):
+    """[항목] 점수: N / 이유: ... 형식의 텍스트에서 점수·이유를 추출"""
+    scores = []
+    reasons = {}
+    for key in CRITERIA_KEYS:
+        pat = rf"\[{key}\][\s\S]*?점수\s*:\s*(\d+)[\s\S]*?이유\s*:\s*(.+?)(?=\n\s*\[|$)"
+        m = re.search(pat, block, flags=re.IGNORECASE | re.MULTILINE | re.DOTALL)
+        if m:
+            score = max(0, min(10, int(m.group(1))))
+            reason = m.group(2).strip()
+        else:
+            score, reason = 0, ""
+        scores.append(score)
+        reasons[key] = reason
+    return scores, reasons
+
+
 # ---------------------------------------------------------------------
-# Admin seed (선택, 스키마 변경 없음)
+# Admin seed (선택)
 # ---------------------------------------------------------------------
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "changeme!")
@@ -146,6 +177,8 @@ def auth_register():
         return jsonify({"ok": False, "error": "필수 정보가 누락되었습니다."}), 400
     if len(password) < 6:
         return jsonify({"ok": False, "error": "비밀번호는 6자 이상이어야 합니다."}), 400
+    if len(password.encode("utf-8")) > 72:
+        return jsonify({"ok": False, "error": "비밀번호는 [영문 72자, 한글 약 24자] 이하로 설정해 주세요."}), 400
 
     db = SessionLocal()
     try:
@@ -266,6 +299,7 @@ def review():
 ❗ 다른 형식은 사용하지 말고 위와 같이 숫자 점수와 이유를 항목별로 분리해서 반드시 작성하세요.
 예시답안은 지금 작성하지 마세요.
             """.strip()
+
             resp = client.chat.completions.create(
                 model="gpt-4-turbo",
                 messages=[
@@ -275,10 +309,19 @@ def review():
                 temperature=0.7,
                 max_tokens=1500
             )
-            content = resp.choices[0].message.content
-            data = json.loads(content)
-            scores = data.get("scores") or [0,0,0,0]
-            reasons = data.get("reasons") or {}
+
+            content = resp.choices[0].message.content or ""
+            print("🧾 REVIEW 원문:\n", content)  # (선택) 로그 확인용
+
+            # 1) 혹시 JSON으로 올 때 먼저 시도
+            try:
+                data_json = parse_json_safely(content)
+                scores = data_json.get("scores") or [0,0,0,0]
+                reasons = data_json.get("reasons") or {}
+            except Exception:
+                # 2) 현재 프롬프트의 텍스트 형식([논리력]… 점수/이유) 파싱
+                scores, reasons = parse_review_text(content)
+
         else:
             # OpenAI 키 없을 때 폴백
             scores = [8,7,7,8]
@@ -290,9 +333,11 @@ def review():
             }
 
         return jsonify({"scores": scores, "reasons": reasons})
+
     except Exception as e:
         print("❗예외 발생 (review):", str(e), flush=True)
         return jsonify({"error": str(e)}), 500
+
 
 # ---------- AI: Example ----------
 @app.post("/example")
@@ -335,10 +380,10 @@ def example():
 
 3. 반드시 아래 JSON 형식으로만 출력하십시오. 설명 문구를 붙이지 마십시오.
 
-{{
+{
   "example": "예시답안을 여기에 작성하십시오.",
   "comparison": "비교 설명을 여기에 작성하십시오. 반드시 500~700자 분량."
-}}
+}
 
 제시문:
 {chr(10).join(passages)}
@@ -371,12 +416,13 @@ def example():
                 model="gpt-4-turbo",
                 messages=messages,
                 temperature=0.7,
-                max_tokens=2000
+                max_tokens=2000,
+                response_format={"type": "json_object"}  # ← JSON 모드 강제
             )
             content = res.choices[0].message.content
             print("🧾 GPT 응답 원문:\n", content)
 
-            parsed = json.loads(content)
+            parsed = parse_json_safely(content)  # ← 안전 파싱 적용
             new_example = parsed.get("example", "")
             new_comparison = parsed.get("comparison", "")
 
@@ -404,11 +450,24 @@ def example():
             print("❗예외 발생 (example):", str(e), flush=True)
             return jsonify({"error": str(e)}), 500
 
+    # 길이 기준 안내 + 최종 폴백(빈 값 방지)
+    length_valid = (len(example_text) >= min_chars and len(example_text) <= max_chars)
+    length_note = "" if length_valid else (
+        f"※ 본 예시는 권장 글자수 범위({min_chars}~{max_chars}자)와 "
+        f"{abs(len(example_text) - char_base)}자 차이가 있습니다. 제시문 내에서 최대한 근접하게 생성했어요."
+    )
+
+    # 최종 폴백: 파싱이 끝까지 안 되었을 때라도 원문을 노출
+    if not example_text and 'content' in locals() and content:
+        example_text = content.strip()
+        comparison_text = comparison_text or ""
+
     return jsonify({
         "example": example_text,
         "comparison": comparison_text,
-        "length_valid": (len(example_text) >= min_chars and len(example_text) <= max_chars),
-        "length_actual": len(example_text)
+        "length_valid": length_valid,
+        "length_actual": len(example_text),
+        "length_note": length_note  # (프런트에서 선택적으로 노출 가능)
     })
 
 # ---------- Reports ----------
