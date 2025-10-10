@@ -4,4 +4,6 @@ gunicorn
 openai>=1.0.0
 flask-login
 sqlalchemy
-passlib[bcrypt]
+passlib==1.7.4
+bcrypt==3.2.2
+psycopg2-binary
