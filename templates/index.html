@@ -327,7 +327,8 @@ canvas.demoChart{ height:140px !important; }
         <div id="exampleNote" class="muted" style="margin-top:8px;display:none"></div>
         <div id="exampleOutput" class="panel" style="background:#fff"></div>
         <div id="comparisonOutput" class="panel" style="background:#fff;margin-top:12px"></div>
-        <button id="btnSavePDF" class="btn btn-primary" style="margin-top:14px">📥 PDF 저장</button>
+        <button id="btnSavePDF" class="btn btn-primary" style="margin-top:14px"
+        onclick="downloadPDF_v2()">📥 PDF 저장</button>
         <button class="btn btn-ghost" style="margin-top:14px" onclick="resetReport()">🔄 새 리포트 시작</button>
       </div>
 
@@ -503,6 +504,62 @@ document.addEventListener('DOMContentLoaded', ()=>{ document.getElementById('btn
 let scoreChart, savedScores=[], savedReasons={}, savedExample="", savedComparison="";
 let exampleGenerated=false; let currentUser=null; let deferredAction=null;
 
+function resetReport(){
+  document.getElementById('studentName').value = '';
+  document.getElementById('question').value = '';
+
+  // 첫 번째 제시문만 비우고 나머지는 제거
+  document.querySelectorAll('.passage').forEach((p, i) => {
+    if (i === 0) p.value = '';
+    else p.remove();
+  });
+
+  document.getElementById('essay').value = '';
+  document.getElementById('charLimit').value = '';
+  document.getElementById('charRange').value = '';
+  document.getElementById('charCount').textContent = '';
+
+  // 결과/예시 영역 닫고 비우기
+  document.getElementById('resultCard').classList.add('hidden');
+  document.getElementById('exampleSection').classList.add('hidden');
+  document.getElementById('exampleNote').style.display = 'none';
+  document.getElementById('exampleOutput').innerHTML = '';
+  document.getElementById('comparisonOutput').innerHTML = '';
+
+  // 상태값 / 차트 초기화
+  savedScores = [];
+  savedReasons = {};
+  savedExample = '';
+  savedComparison = '';
+  if (scoreChart) { try { scoreChart.destroy(); } catch(e) {} scoreChart = null; }
+
+  updatePdfBtnState();
+  refreshAutosize();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+
+// === PDF v2 유틸/버튼 바인딩 ===
+window.__pdf_version = 'v2.1-2025-10-10';
+
+function updatePdfBtnState(){
+  const b = document.getElementById('btnSavePDF');
+  if(!b) return;
+  b.disabled = !(savedScores?.length); // 점수 없을 때 비활성화
+}
+
+async function waitFontsAndImages(root){
+  try { if (document.fonts?.ready) await document.fonts.ready; } catch(e){}
+  const imgs = Array.from(root.querySelectorAll('img')).filter(i=>!i.complete);
+  await Promise.all(imgs.map(img=>new Promise(res=>{ img.onload = img.onerror = res; })));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const b = document.getElementById('btnSavePDF');
+  if (b) b.addEventListener('click', downloadPDF_v2);
+  updatePdfBtnState();
+});
+
 /* ===== 총점/상태 ===== */
 function getTotalAndStatus(scores){
   const total=(scores||[]).reduce((a,b)=>a+(parseInt(b)||0),0);
@@ -592,6 +649,7 @@ async function submitEssay(){
     document.getElementById('comparisonOutput').innerHTML='';
     exampleGenerated=false;
 
+    updatePdfBtnState();
   }catch(e){
     console.error(e);
     document.getElementById('loading').style.display='none';
@@ -653,6 +711,7 @@ async function loadExample(){
     document.getElementById('exampleSection').scrollIntoView({behavior:'smooth',block:'start'});
     btn.textContent='예시답안 생성됨';
 
+   updatePdfBtnState();
   }catch(e){
     console.error(e);
     err.textContent='생성 중 문제가 있었어요. 잠시 뒤 다시 시도해 주세요.';
@@ -661,15 +720,46 @@ async function loadExample(){
 }
 
 /* ===== PDF ===== */
-function downloadPDF(){
-  const name=document.getElementById('studentName').value || '이름 미입력';
-  const today=new Date().toISOString().split('T')[0];
-  const { total, status } = getTotalAndStatus(savedScores);
-  let chartImg=''; try{ const canvas=document.getElementById('scoreChart'); if(canvas) chartImg=canvas.toDataURL('image/png',1.0); }catch(e){}
+// === PDF 저장 (최종) ===
+window.__pdf_version = 'v2.1-2025-10-10';
+
+function updatePdfBtnState(){
+  const b = document.getElementById('btnSavePDF');
+  if(!b) return;
+  b.disabled = !(savedScores?.length); // 점수 없을 때 비활성화
+}
+
+async function waitFontsAndImages(root){
+  try { if (document.fonts?.ready) await document.fonts.ready; } catch(e){}
+  const imgs = Array.from(root.querySelectorAll('img')).filter(i=>!i.complete);
+  await Promise.all(imgs.map(img=>new Promise(res=>{ img.onload = img.onerror = res; })));
+}
+
+async function downloadPDF_v2(){
+  // 0) 가드
+  if (!window.html2pdf) { alert('PDF 모듈(html2pdf)이 아직 로드되지 않았습니다.'); return; }
+  if (location.protocol === 'file:') { alert('file://로 열면 PDF 생성이 막힐 수 있어요. http(s) 주소로 열어주세요.'); return; }
+
+  // 1) 버튼 잠금
+  const btn = document.getElementById('btnSavePDF');
+  if (btn) btn.disabled = true;
+
+  // 2) 데이터 수집
+  const name = document.getElementById('studentName').value || '이름 미입력';
+  const today = new Date().toISOString().split('T')[0];
+  const { total, status } = getTotalAndStatus(savedScores || []);
+
+  // 3) 차트 이미지(있으면)
+  let chartImg = '';
+  try {
+    const canvas = document.getElementById('scoreChart');
+    if (canvas) chartImg = canvas.toDataURL('image/png', 1.0);
+  } catch(e) {}
+
+  // 4) HTML 템플릿 (백틱 사용!)
   const html = `
 <div style="font-family:'SUIT',system-ui,-apple-system,'Noto Sans KR',sans-serif;color:#111827">
-
-  <!-- 상단 헤더 -->
+  <!-- 헤더 -->
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
     <div style="display:flex;align-items:center;gap:8px">
       <img src="/static/academy_logo.png" alt="아카데미창" style="height:22px;object-fit:contain"/>
@@ -678,7 +768,7 @@ function downloadPDF(){
     <div style="color:#6b7280;font-size:12px">학생: ${name} · 날짜: ${today}</div>
   </div>
 
-  <!-- 요약 (토스톤: 진행바 + 도넛) -->
+  <!-- 요약 -->
   <div style="display:flex;gap:12px;align-items:center;border:1px solid #e5e7eb;border-radius:14px;padding:12px;background:#fff">
     <div style="font-size:26px">${status.emoji || '😃'}</div>
     <div style="flex:1;min-width:0">
@@ -703,13 +793,11 @@ function downloadPDF(){
     </div>
   </div>
 
-  <!-- (있으면) 막대차트 이미지 -->
   ${chartImg ? `
-    <div style="margin-top:10px;border:1px solid #e5e7eb;border-radius:12px;padding:10px;background:#fff">
-      <img src="${chartImg}" style="width:100%;height:auto;display:block"/>
-    </div>` : ''}
+  <div style="margin-top:10px;border:1px solid #e5e7eb;border-radius:12px;padding:10px;background:#fff">
+    <img src="${chartImg}" style="width:100%;height:auto;display:block"/>
+  </div>` : ''}
 
-  <!-- 한눈에 이해되는 리포트 (두 번째 스샷 느낌의 카드 4개) -->
   <div style="margin-top:10px;border:1px solid #e5e7eb;border-radius:12px;padding:10px;background:#fff">
     <div style="font-weight:800;margin-bottom:8px">한눈에 이해되는 리포트</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -718,7 +806,7 @@ function downloadPDF(){
           논리력 (${(savedScores?.[0] ?? 0)}점)
         </div>
         <div style="margin-top:8px;font-size:12.5px;line-height:1.6;color:#1f2937">
-          ${(savedReasons?.['논리력'] || '').replace(/\n/g,'<br>')}
+          ${(savedReasons?.['논리력'] || '').replace(/\\n/g,'<br>')}
         </div>
       </div>
       <div style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:12px;background:#fff">
@@ -726,7 +814,7 @@ function downloadPDF(){
           독해력 (${(savedScores?.[1] ?? 0)}점)
         </div>
         <div style="margin-top:8px;font-size:12.5px;line-height:1.6;color:#1f2937">
-          ${(savedReasons?.['독해력'] || '').replace(/\n/g,'<br>')}
+          ${(savedReasons?.['독해력'] || '').replace(/\\n/g,'<br>')}
         </div>
       </div>
       <div style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:12px;background:#fff">
@@ -734,7 +822,7 @@ function downloadPDF(){
           구성력 (${(savedScores?.[2] ?? 0)}점)
         </div>
         <div style="margin-top:8px;font-size:12.5px;line-height:1.6;color:#1f2937">
-          ${(savedReasons?.['구성력'] || '').replace(/\n/g,'<br>')}
+          ${(savedReasons?.['구성력'] || '').replace(/\\n/g,'<br>')}
         </div>
       </div>
       <div style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:12px;background:#fff">
@@ -742,37 +830,74 @@ function downloadPDF(){
           표현력 (${(savedScores?.[3] ?? 0)}점)
         </div>
         <div style="margin-top:8px;font-size:12.5px;line-height:1.6;color:#1f2937">
-          ${(savedReasons?.['표현력'] || '').replace(/\n/g,'<br>')}
+          ${(savedReasons?.['표현력'] || '').replace(/\\n/g,'<br>')}
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 예시답안 -->
   <h3 style="margin:12px 0 6px">예시답안</h3>
   <div style="border:1px solid #e5e7eb;border-radius:12px;padding:10px;background:#fff;font-size:13px;line-height:1.65;color:#374151;max-height:360px;overflow:hidden">
-    ${(savedExample || '').replace(/\n/g,'<br>')}
+    ${(savedExample || '').replace(/\\n/g,'<br>')}
   </div>
 
-  <!-- 비교 분석 -->
   <h3 style="margin:12px 0 6px">비교 분석</h3>
   <div style="border:1px solid #e5e7eb;border-radius:12px;padding:10px;background:#fff;font-size:13px;line-height:1.65;color:#374151;max-height:300px;overflow:hidden">
-    ${(savedComparison || '').replace(/\n/g,'<br>')}
+    ${(savedComparison || '').replace(/\\n/g,'<br>')}
   </div>
-
 </div>`;
 
-  const wrap=document.createElement('div'); wrap.innerHTML=html;
-  html2pdf().from(wrap).set({
-  margin: 8, // 1페이지 여유
-  filename: `다쓰_리포트_${today}.pdf`,
-  html2canvas: { scale: 2, useCORS: true },
-  jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-  pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } // 카드 중간 분할 방지
-}).save();
+  // 5) 옵션
+  const opt = {
+    margin: 8,
+    filename: `다쓰_리포트_${today}.pdf`,
+    html2canvas: { scale: 2, useCORS: true, logging: false, letterRendering: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['css','legacy'] }
+  };
+
+  // 6) 생성
+  let wrap = null;
+  try {
+    wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed;left:-99999px;top:-99999px;opacity:0;pointer-events:none;';
+    wrap.innerHTML = html;
+    document.body.appendChild(wrap);
+
+    await waitFontsAndImages(wrap);
+    await html2pdf().from(wrap).set(opt).save();
+  } catch (e) {
+    console.error(e);
+    alert('PDF 생성 실패: ' + (e?.message || e));
+  } finally {
+    if (wrap && wrap.parentNode) wrap.parentNode.removeChild(wrap);
+    if (btn) btn.disabled = false;
+  }
 }
 
-function resetReport(){ location.hash='#home'; routeFromHash(); }
+  // html2pdf 옵션
+  const opt = {
+    margin: 8,
+    filename: `다쓰_리포트_${today}.pdf`,
+    html2canvas: { scale: 2, useCORS: true, logging: false, letterRendering: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['css','legacy'] }
+  };
+
+  // 임시 DOM 생성 → 리소스 로드 대기 → PDF 생성 → 정리
+  let wrap = null;
+  try {
+    wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed;left:-99999px;top:-99999px;opacity:0;pointer-events:none;';
+    wrap.innerHTML = html;
+    document.body.appendChild(wrap);                 // ✅ 임시로 DOM에 부착
+    await waitFontsAndImages(wrap);                  // ✅ 폰트/이미지 로드 대기
+    await html2pdf().from(wrap).set(opt).save();     // ✅ PDF 생성
+  } finally {
+    if (wrap && wrap.parentNode) wrap.parentNode.removeChild(wrap);  // ✅ 정리
+    if (btn) btn.disabled = false;                                    // 버튼 복구
+  }
+}
 
 /* ===== Auth ===== */
 async function fetchMe(){ try{ const r=await fetch('/auth/me'); const data=await r.json(); if(data.ok){ currentUser=data.user; paintHeader(); } }catch(e){} }
