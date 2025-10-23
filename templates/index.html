@@ -554,11 +554,7 @@ async function waitFontsAndImages(root){
   await Promise.all(imgs.map(img=>new Promise(res=>{ img.onload = img.onerror = res; })));
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const b = document.getElementById('btnSavePDF');
-  if (b) b.addEventListener('click', downloadPDF_v2);
-  updatePdfBtnState();
-});
+document.addEventListener('DOMContentLoaded', updatePdfBtnState);
 
 /* ===== 총점/상태 ===== */
 function getTotalAndStatus(scores){
@@ -826,12 +822,12 @@ async function downloadPDF_v2(){
 
   <h3 style="margin:12px 0 6px">예시답안</h3>
   <div style="border:1px solid #e5e7eb;border-radius:12px;padding:10px;background:#fff;font-size:13px;line-height:1.65;color:#374151;max-height:360px;overflow:hidden">
-    ${(savedExample || '').replace(/\\n/g,'<br>')}
+    ${(savedExample || '').replace(/\n/g,'<br>')}
   </div>
 
   <h3 style="margin:12px 0 6px">비교 분석</h3>
   <div style="border:1px solid #e5e7eb;border-radius:12px;padding:10px;background:#fff;font-size:13px;line-height:1.65;color:#374151;max-height:300px;overflow:hidden">
-    ${(savedComparison || '').replace(/\\n/g,'<br>')}
+    ${(savedComparison || '').replace(/\n/g,'<br>')}
   </div>
 </div>`;
 
@@ -847,7 +843,7 @@ async function downloadPDF_v2(){
   let wrap=null;
   try{
     wrap = document.createElement('div');
-    wrap.style.cssText = 'position:fixed;left:-99999px;top:-99999px;opacity:0;pointer-events:none;';
+    wrap.style.cssText = 'position:fixed;left:-99999px;top:-99999px;pointer-events:none;';
     wrap.innerHTML = html;
     document.body.appendChild(wrap);
 
