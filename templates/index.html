@@ -800,38 +800,26 @@ async function downloadPDF_v2(){
 
   <div style="margin-top:10px;border:1px solid #e5e7eb;border-radius:12px;padding:10px;background:#fff">
     <div style="font-weight:800;margin-bottom:8px">한눈에 이해되는 리포트</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:12px;background:#fff">
-        <div style="display:inline-block;padding:4px 8px;background:#eef2ff;color:#1d4ed8;border-radius:999px;font-weight:700;font-size:12px">
-          논리력 (${(savedScores?.[0] ?? 0)}점)
-        </div>
-        <div style="margin-top:8px;font-size:12.5px;line-height:1.6;color:#1f2937">
-          ${(savedReasons?.['논리력'] || '').replace(/\\n/g,'<br>')}
-        </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div>
+        <div class="muted" style="font-size:12px">논리력</div>
+        <div style="font-weight:800">${savedScores?.[0]??'-'}점</div>
+        <div style="color:#374151;font-size:13px;line-height:1.6">${(savedReasons?.['논리력']||'').replace(/\n/g,'<br>')}</div>
       </div>
-      <div style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:12px;background:#fff">
-        <div style="display:inline-block;padding:4px 8px;background:#eef2ff;color:#1d4ed8;border-radius:999px;font-weight:700;font-size:12px">
-          독해력 (${(savedScores?.[1] ?? 0)}점)
-        </div>
-        <div style="margin-top:8px;font-size:12.5px;line-height:1.6;color:#1f2937">
-          ${(savedReasons?.['독해력'] || '').replace(/\\n/g,'<br>')}
-        </div>
+      <div>
+        <div class="muted" style="font-size:12px">독해력</div>
+        <div style="font-weight:800">${savedScores?.[1]??'-'}점</div>
+        <div style="color:#374151;font-size:13px;line-height:1.6">${(savedReasons?.['독해력']||'').replace(/\n/g,'<br>')}</div>
       </div>
-      <div style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:12px;background:#fff">
-        <div style="display:inline-block;padding:4px 8px;background:#eef2ff;color:#1d4ed8;border-radius:999px;font-weight:700;font-size:12px">
-          구성력 (${(savedScores?.[2] ?? 0)}점)
-        </div>
-        <div style="margin-top:8px;font-size:12.5px;line-height:1.6;color:#1f2937">
-          ${(savedReasons?.['구성력'] || '').replace(/\\n/g,'<br>')}
-        </div>
+      <div>
+        <div class="muted" style="font-size:12px">구성력</div>
+        <div style="font-weight:800">${savedScores?.[2]??'-'}점</div>
+        <div style="color:#374151;font-size:13px;line-height:1.6">${(savedReasons?.['구성력']||'').replace(/\n/g,'<br>')}</div>
       </div>
-      <div style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:12px;background:#fff">
-        <div style="display:inline-block;padding:4px 8px;background:#eef2ff;color:#1d4ed8;border-radius:999px;font-weight:700;font-size:12px">
-          표현력 (${(savedScores?.[3] ?? 0)}점)
-        </div>
-        <div style="margin-top:8px;font-size:12.5px;line-height:1.6;color:#1f2937">
-          ${(savedReasons?.['표현력'] || '').replace(/\\n/g,'<br>')}
-        </div>
+      <div>
+        <div class="muted" style="font-size:12px">표현력</div>
+        <div style="font-weight:800">${savedScores?.[3]??'-'}점</div>
+        <div style="color:#374151;font-size:13px;line-height:1.6">${(savedReasons?.['표현력']||'').replace(/\n/g,'<br>')}</div>
       </div>
     </div>
   </div>
@@ -853,12 +841,11 @@ async function downloadPDF_v2(){
     filename: `다쓰_리포트_${today}.pdf`,
     html2canvas: { scale: 2, useCORS: true, logging: false, letterRendering: true },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    pagebreak: { mode: ['css','legacy'] }
   };
 
   // 6) 생성
-  let wrap = null;
-  try {
+  let wrap=null;
+  try{
     wrap = document.createElement('div');
     wrap.style.cssText = 'position:fixed;left:-99999px;top:-99999px;opacity:0;pointer-events:none;';
     wrap.innerHTML = html;
@@ -875,112 +862,68 @@ async function downloadPDF_v2(){
   }
 }
 
-  // html2pdf 옵션
-  const opt = {
-    margin: 8,
-    filename: `다쓰_리포트_${today}.pdf`,
-    html2canvas: { scale: 2, useCORS: true, logging: false, letterRendering: true },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    pagebreak: { mode: ['css','legacy'] }
-  };
-
-  // 임시 DOM 생성 → 리소스 로드 대기 → PDF 생성 → 정리
-  let wrap = null;
-  try {
-    wrap = document.createElement('div');
-    wrap.style.cssText = 'position:fixed;left:-99999px;top:-99999px;opacity:0;pointer-events:none;';
-    wrap.innerHTML = html;
-    document.body.appendChild(wrap);                 // ✅ 임시로 DOM에 부착
-    await waitFontsAndImages(wrap);                  // ✅ 폰트/이미지 로드 대기
-    await html2pdf().from(wrap).set(opt).save();     // ✅ PDF 생성
-  } finally {
-    if (wrap && wrap.parentNode) wrap.parentNode.removeChild(wrap);  // ✅ 정리
-    if (btn) btn.disabled = false;                                    // 버튼 복구
-  }
-}
-
-/* ===== Auth ===== */
-async function fetchMe(){ try{ const r=await fetch('/auth/me'); const data=await r.json(); if(data.ok){ currentUser=data.user; paintHeader(); } }catch(e){} }
-function paintHeader(){
-  const loginBtn=document.getElementById('loginBtn');
-  const prof=document.getElementById('profileArea');
-  if(currentUser){
-    loginBtn.classList.add('hidden');
-    prof.classList.remove('hidden');
-    const initial=(currentUser.name||currentUser.email||'A').trim()[0].toUpperCase();
-    document.getElementById('avatarInitial').textContent=initial;
-    document.getElementById('profileName').textContent=currentUser.name||currentUser.email;
-  }else{
-    prof.classList.add('hidden');
-    loginBtn.classList.remove('hidden');
-  }
-}
-function openAuth(){ document.getElementById('authWrap').classList.remove('hidden'); switchTab('login'); document.body.style.overflow='hidden'; }
-function closeAuth(){ document.getElementById('authWrap').classList.add('hidden'); document.getElementById('loginError').style.display='none'; document.getElementById('registerError').style.display='none'; document.body.style.overflow=''; }
+/* ===== AUTH ===== */
+function openAuth(){ document.getElementById('authWrap').classList.remove('hidden'); document.body.style.overflow='hidden'; }
+function closeAuth(){ document.getElementById('authWrap').classList.add('hidden'); document.body.style.overflow=''; }
 function switchTab(which){
-  const l=document.getElementById('loginPanel'), r=document.getElementById('registerPanel');
-  const tl=document.getElementById('tabLogin'), tr=document.getElementById('tabRegister');
-  if(which==='login'){ l.classList.remove('hidden'); r.classList.add('hidden'); tl.classList.add('active'); tr.classList.remove('active'); }
-  else{ r.classList.remove('hidden'); l.classList.add('hidden'); tr.classList.add('active'); tl.classList.remove('active'); }
+  document.getElementById('tabLogin').classList.toggle('active',which==='login');
+  document.getElementById('tabRegister').classList.toggle('active',which!=='login');
+  document.getElementById('loginPanel').classList.toggle('hidden',which!=='login');
+  document.getElementById('registerPanel').classList.toggle('hidden',which==='login');
 }
 async function register(){
-  const body={ name:document.getElementById('regName').value, email:document.getElementById('regEmail').value, password:document.getElementById('regPassword').value };
-  const r=await fetch('/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  const data=await r.json();
-  if(!data.ok){ const el=document.getElementById('registerError'); el.style.display='block'; el.textContent=data.error||'가입에 실패했어요.'; return; }
-  currentUser=data.user; paintHeader(); closeAuth();
-  if(deferredAction==='goEditor'){ goToEditor(); }
-  if(deferredAction==='review'){ submitEssay(); }
-  if(deferredAction==='example'){ loadExample(); }
-  if(deferredAction==='records'){ openRecords(true); }
-  deferredAction=null;
+  const name=_v('regName'), email=_v('regEmail'), password=_v('regPassword');
+  const r=await fetch('/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,password})});
+  const d=await r.json();
+  if(d.ok){ currentUser=d.user; closeAuth(); onAuthed(); }
+  else{ const el=document.getElementById('registerError'); el.textContent=d.error||'오류'; el.style.display='block'; }
 }
 async function login(){
-  const body={ email:document.getElementById('loginEmail').value, password:document.getElementById('loginPassword').value };
-  const r=await fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-  const data=await r.json();
-  if(!data.ok){ const el=document.getElementById('loginError'); el.style.display='block'; el.textContent=data.error||'로그인에 실패했어요.'; return; }
-  currentUser=data.user; paintHeader(); closeAuth();
-  if(deferredAction==='goEditor'){ goToEditor(); }
-  if(deferredAction==='review'){ submitEssay(); }
-  if(deferredAction==='example'){ loadExample(); }
-  if(deferredAction==='records'){ openRecords(true); }
-  deferredAction=null;
+  const email=_v('loginEmail'), password=_v('loginPassword');
+  const r=await fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+  const d=await r.json();
+  if(d.ok){ currentUser=d.user; closeAuth(); onAuthed(); }
+  else{ const el=document.getElementById('loginError'); el.textContent=d.error||'오류'; el.style.display='block'; }
 }
-async function logout(){ await fetch('/auth/logout',{method:'POST'}); currentUser=null; paintHeader(); }
-window.addEventListener('DOMContentLoaded', fetchMe);
+async function logout(){ await fetch('/auth/logout',{method:'POST'}); currentUser=null; onAuthed(); }
+function _v(id){ return (document.getElementById(id)?.value||'').trim(); }
+function onAuthed(){
+  const p=document.getElementById('profileArea');
+  const l=document.getElementById('loginBtn');
+  const nameEl=document.getElementById('profileName');
+  const av=document.getElementById('avatarInitial');
+  if(currentUser){
+    p.classList.remove('hidden'); l.classList.add('hidden');
+    nameEl.textContent=currentUser.name||'';
+    av.textContent=(currentUser.name||'A').slice(0,1).toUpperCase();
+    if(deferredAction==='goEditor'){ deferredAction=null; goToEditor(); }
+    if(deferredAction==='review'){ deferredAction=null; submitEssay(); }
+    if(deferredAction==='example'){ deferredAction=null; loadExample(); }
+  }else{
+    p.classList.add('hidden'); l.classList.remove('hidden');
+  }
+}
 
-/* 프로필 메뉴 토글 */
-document.addEventListener('click', (e)=>{
-  const btn=document.getElementById('profileBtn');
-  const menu=document.getElementById('profileMenu');
-  if(btn && btn.contains(e.target)){ menu.style.display = (menu.style.display==='block'?'none':'block'); }
-  else if(menu && !menu.contains(e.target)){ menu.style.display='none'; }
-});
-
-/* 모달 백드롭/ESC */
-window.addEventListener('DOMContentLoaded', ()=>{
-  const authWrap=document.getElementById('authWrap');
-  if(authWrap){ authWrap.addEventListener('click', e=>{ if(e.target===authWrap) closeAuth(); }); }
-  const recWrap=document.getElementById('recordsWrap');
-  if(recWrap){ recWrap.addEventListener('click', e=>{ if(e.target===recWrap) closeRecords(); }); }
-  document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeAuth(); closeRecords(); } });
-  document.getElementById('authWrap').classList.add('hidden'); // 초기 자동 오픈 방지
-});
-
-/* 기록 모달 */
-async function openRecords(authed=false){
-  if(!currentUser && !authed){ deferredAction='records'; openAuth(); return; }
-  document.getElementById('recordsWrap').classList.remove('hidden');
-  document.body.style.overflow='hidden';
-  const box=document.getElementById('recordsList'); box.textContent='불러오는 중…';
+/* ===== 초기 로그인 상태 확인 ===== */
+window.addEventListener('DOMContentLoaded', async()=>{
   try{
-    const r=await fetch('/reports'); const j=await r.json();
-    if(!r.ok){ box.textContent=j.error||'오류'; return; }
-    if(!j.items.length){ box.textContent='아직 저장된 기록이 없습니다.'; return; }
-    box.innerHTML = j.items.map(it=>`
-      <div style="padding:8px 0; border-bottom:1px solid #f3f4f6">
-        <div><b>${(it.student||'무명')}</b> · ${it.total??'-'}점 <span class="muted">(${it.status||'-'})</span></div>
+    const r=await fetch('/auth/me');
+    const d=await r.json();
+    if(d?.ok && d.user){ currentUser=d.user; }
+  }catch(e){ console.warn(e); }
+  onAuthed();
+});
+
+/* ===== 기록(더미) ===== */
+async function openRecords(){
+  const w=document.getElementById('recordsWrap'); w.classList.remove('hidden'); document.body.style.overflow='hidden';
+  const box=document.getElementById('recordsList');
+  try{
+    // (API 연동 예정) 더미 목록
+    const items=[{title:'리포트 예시', total:37, status:'합격', created_at:Date.now()}];
+    box.innerHTML = items.map(it=>`
+      <div class="panel" style="margin-top:8px">
+        <div style="font-weight:800">${it.title}</div>
         <div class="muted" style="font-size:12px">${new Date(it.created_at).toLocaleString()}</div>
       </div>
     `).join('');
