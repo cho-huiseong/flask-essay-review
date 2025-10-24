@@ -779,149 +779,134 @@ function updatePdfBtnState(){
 
 /* 메인: PDF 저장 */
 async function downloadPDF_v3(){
+  // 0) 필수 라이브러리 점검
   if (!window.html2pdf || !window.Chart) {
     alert('필수 라이브러리(Chart.js/html2pdf)가 로드되지 않았습니다.');
     return;
   }
 
-  const name  = __val('studentName','이름 미입력');
-  const essay = __val('essay','').replace(/\n/g,'<br>');
-  const dateStr = new Date().toISOString().split('T')[0];
-  const scores = (window.savedScores && window.savedScores.length===4) ? window.savedScores : [9,9,9,10];
-  const reasons = window.savedReasons || { '논리력':'', '독해력':'', '구성력':'', '표현력':'' };
-  const example = (window.savedExample?.trim()) || __html('exampleOutput') || '';
-  const comparison = (window.savedComparison?.trim()) || __html('comparisonOutput') || '';
+  // 1) 화면 데이터 수집
+  const name       = __val('studentName','이름 미입력');
+  const question   = __val('question','');
+  const essayHtml  = __val('essay','').replace(/\n/g,'<br>');
+  const passages   = [...document.querySelectorAll('.passage')].map(p=>p.value).filter(Boolean);
+  const dateStr    = new Date().toISOString().split('T')[0];
 
+  const scores     = (window.savedScores && window.savedScores.length===4) ? window.savedScores : [9,9,9,10];
+  const reasons    = window.savedReasons || { '논리력':'', '독해력':'', '구성력':'', '표현력':'' };
+  const example    = (window.savedExample?.trim())       || __html('exampleOutput')     || '';
+  const comparison = (window.savedComparison?.trim())    || __html('comparisonOutput')  || '';
   const { total, status } = getTotalAndStatus_safe(scores);
   const gap = __buildGapText(scores, reasons);
 
-  const [barPng, donutPng] = await Promise.all([ __makeBarPNG(scores), __makeDonutPNG(total) ]);
+  // 2) 차트 PNG 생성 (동기화 보장)
+  const [barPng, donutPng] = await Promise.all([
+    __makeBarPNG(scores),
+    __makeDonutPNG(total)
+  ]);
 
-  const html = `
-  <div id="pdfRoot" style="width:794px;height:1123px;box-sizing:border-box;padding:8px 10px;background:#F3F4F6;color:#111827;font-family:'SUIT',system-ui,-apple-system,'Noto Sans KR',sans-serif">
-    <!-- 브라우저 프레임(맥 느낌) -->
-    <div style="height:34px;border:1px solid #E5E7EB;border-bottom:none;border-radius:12px 12px 0 0;background:#fff;display:flex;align-items:center;gap:10px;padding:0 12px">
-      <div style="display:flex;gap:6px">
-        <span style="width:10px;height:10px;background:#ff5f57;border-radius:50%;display:inline-block"></span>
-        <span style="width:10px;height:10px;background:#ffbd2e;border-radius:50%;display:inline-block"></span>
-        <span style="width:10px;height:10px;background:#28c840;border-radius:50%;display:inline-block"></span>
+  // 3) PDF용 임시 컨테이너 구성 (A4 폭에 맞춘 심플 스타일)
+  const pdfWrap = document.createElement('div');
+  pdfWrap.style.cssText = `
+    width: 794px;              /* A4 width @ 96dpi */
+    padding: 40px 48px;
+    background:#ffffff;
+    color:#111827;
+    font-family:'SUIT', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    line-height:1.65;
+    box-sizing:border-box;
+  `;
+
+  // 공통 소제목 스타일
+  const h2css = 'margin:24px 0 10px; font-size:20px; font-weight:900;';
+  const chip = (t)=>`<span style="
+  display:inline-block; margin-left:8px; padding:2px 8px; font-size:12px;
+  border:1px solid #e5e7eb; border-radius:999px; color:#2140B1; background:#EEF2FF">${t}</span>`;
+  const card  = (inner) => `
+    <div style="border:1px solid #e5e7eb; border-radius:14px; padding:16px; margin-top:10px; background:#fff">
+      ${inner}
+    </div>
+  `;
+
+  // 3-1) 헤더
+  pdfWrap.innerHTML = `
+    <div style="display:flex; align-items:center; justify-content:space-between;
+   background:linear-gradient(180deg,#ffffff 0%,#f6f9ff 100%);
+   border:1px solid #eef2ff; border-radius:12px; padding:10px 12px">
+      <div style="display:flex; align-items:center; gap:10px">
+        <img src="/static/academy_logo.png" alt="아카데미창" style="height:26px; object-fit:contain">
+        <div style="font-weight:900; font-size:16px">다쓰 리포트</div>
       </div>
-      <div style="flex:1;height:22px;margin-left:6px;border:1px solid #E5E7EB;border-radius:999px;background:#F9FAFB;display:flex;align-items:center;padding:0 10px;font-size:12px;color:#6B7280">https://academy.example/report</div>
+      <div style="font-size:12px; color:#6B7280">${dateStr}</div>
     </div>
 
-    <div style="height:calc(100% - 34px); border:1px solid #E5E7EB; border-radius:0 0 12px 12px; background:#fff; overflow:hidden">
-      <!-- 헤더 -->
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #F1F5F9">
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="width:18px;height:18px;border-radius:4px;background:#EEF2FF"></div>
-          <div style="font-weight:900">다쓰 리포트</div>
+    <div style="margin-top:14px; font-size:22px; font-weight:900">학생 글 평가 리포트</div>
+    ${card(`
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
+        <div><div style="color:#6B7280; font-size:12px">학생</div><div style="font-weight:800">${name}</div></div>
+        <div><div style="color:#6B7280; font-size:12px">총점/판정</div>
+          <div style="display:flex; align-items:center; gap:10px">
+            <img src="${donutPng}" alt="총점" style="width:54px; height:54px">
+            <div style="font-weight:900">${total} / 40 · <span style="color:${status.tone}">${status.label}</span></div>
+          </div>
         </div>
-        <div style="font-size:12px;color:#6B7280">학생: ${name} · 날짜: ${dateStr}</div>
       </div>
+    `)}
 
-      <!-- 본문: 위/아래 1:1 -->
-      <div style="height:calc(100% - 44px); display:grid; grid-template-rows:1fr 1fr; gap:10px; padding:10px 12px">
+    <div style="${h2css}">질문</div>
+    ${card(`${question ? question.replace(/\n/g,'<br>') : '—'}`)}
 
-        <!-- 위: 요약 + 학생 글 -->
-        <section style="display:grid;grid-template-columns:280px 1fr;gap:10px;">
-          <!-- 좌: 한눈에 보는 리포트 -->
-          <div style="border:1px solid #E5E7EB;border-radius:12px;background:linear-gradient(180deg,#ffffff 0%,#f7f9ff 100%); padding:10px">
-            <div style="display:flex;align-items:center;justify-content:space-between">
-              <div style="font-weight:900;display:flex;align-items:center;gap:8px">
-                <span style="font-size:18px">${status.emoji}</span>
-                총점 <span style="color:${status.tone}">${total}</span>/40 · <span style="color:${status.tone}">${status.label}</span>
-              </div>
-              <img src="${donutPng}" alt="총점" style="width:70px;height:70px"/>
+    <div style="${h2css}">제시문</div>
+    ${card(`${(passages.length ? passages : ['—'])
+      .map((t,i)=>`<div style="margin-bottom:${i<passages.length-1?8:0}px">${i+1}. ${t.replace(/\n/g,'<br>')}</div>`).join('')}`)}
+
+    <div style="${h2css}">학생 작성 논술문</div>
+    ${card(`${essayHtml || '—'}`)}
+
+    <div style="${h2css}">평가 요약 (논리·독해·구성·표현) ${chip('Score')}</div>
+    ${card(`
+      <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap:16px; align-items:center">
+        <img src="${barPng}" alt="항목별 점수" style="width:100%; height:auto">
+        <div>
+          ${['논리력','독해력','구성력','표현력'].map((k,i)=>`
+            <div style="margin-bottom:8px">
+              <div style="font-weight:800">${k} (${scores[i]}점)</div>
+              <div style="color:#374151; font-size:14px">${(reasons[k]||'').replace(/\n/g,'<br>')}</div>
             </div>
-            <div style="margin-top:8px;position:relative;height:8px;background:#eef2ff;border-radius:999px;overflow:hidden">
-              <div style="width:${(total/40)*100}%;height:100%;background:${status.tone}"></div>
-              <div style="position:absolute;left:75%;top:0;bottom:0;width:2px;background:rgba(17,24,39,.12)"></div>
-              <div style="position:absolute;left:90%;top:0;bottom:0;width:2px;background:rgba(17,24,39,.12)"></div>
-            </div>
-            <div style="color:#6B7280;font-size:12px;margin-top:6px">${status.desc}</div>
-
-            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:8px">
-              ${['논리력','독해력','구성력','표현력'].map((k,i)=>`
-                <div style="border:1px solid #e5e7eb;border-radius:10px;padding:8px;background:#fff">
-                  <div style="font-size:12px;color:#6B7280">${k}</div>
-                  <div style="font-weight:800">${(scores[i]??'-')}점</div>
-                </div>`).join('')}
-            </div>
-
-            <div style="margin-top:8px">
-              <img src="${barPng}" alt="항목별 차트" style="width:100%;height:auto;border-radius:8px;display:block"/>
-            </div>
-          </div>
-
-          <!-- 우: 학생 글 -->
-          <div style="border:1px solid #E5E7EB;border-radius:12px;background:#fff;padding:10px;display:flex;flex-direction:column">
-            <div style="font-size:12px;color:#6B7280;margin-bottom:6px">학생 글</div>
-            <div style="font-size:13px;line-height:1.65;color:#374151;overflow:auto">${essay}</div>
-          </div>
-        </section>
-
-        <!-- 아래: 예시 + 비교분석 + 부족한 점 -->
-        <section style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <!-- 좌: 예시답안 -->
-          <div style="border:1px solid #E5E7EB;border-radius:12px;background:#fff;padding:10px;display:flex;flex-direction:column">
-            <div style="font-weight:900;margin-bottom:6px">📝 예시답안</div>
-            <div style="font-size:13px;line-height:1.6;color:#374151;overflow:auto">
-              ${(example || '예시답안이 아직 생성되지 않았습니다.')}
-            </div>
-          </div>
-
-          <!-- 우: 비교 + 부족한 점 -->
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <div style="border:1px solid #E5E7EB;border-radius:12px;background:#fff;padding:10px;flex:1">
-              <div style="font-weight:900;margin-bottom:6px">🔍 비교 분석</div>
-              <div style="font-size:13px;line-height:1.6;color:#374151;overflow:auto;max-height:calc(50% - 10px)">
-                ${(comparison || '비교 분석이 아직 없습니다.')}
-              </div>
-            </div>
-            <div style="border:1px solid #E5E7EB;border-radius:12px;background:#fff;padding:10px;flex:1">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-                <div style="width:7px;height:20px;border-radius:6px;background:#2140B1"></div>
-                <div style="font-weight:900">📉 합격자 대비 부족한 점</div>
-              </div>
-              <div style="color:#6B7280;font-size:12px;margin:4px 0">${gap.headline}</div>
-              <div style="font-size:13px;line-height:1.6;color:#374151">${gap.bullets}</div>
-              <div style="font-size:12px;color:#6B7280;margin-top:6px">👍 강점</div>
-              <div style="font-size:13px;line-height:1.6;color:#374151">${gap.positives}</div>
-            </div>
-          </div>
-        </section>
-
+          `).join('')}
+        </div>
       </div>
-    </div>
-  </div>`;
+    `)}
 
+    <div style="${h2css}">미흡 포인트 & 강화 포인트</div>
+    ${card(`
+      <div style="font-weight:700; margin-bottom:8px">${gap.headline}</div>
+      <div style="margin-bottom:10px">${gap.bullets}</div>
+      <div style="color:#6B7280; font-size:12px">강화 포인트</div>
+      <div>${gap.positives}</div>
+    `)}
+
+    <div style="page-break-before:always"></div>
+    <div style="${h2css}">예시답안 ${chip('Model Answer')}</div>
+    ${card(`${example || '—'}`)}
+
+    <div style="${h2css}">비교 분석</div>
+    ${card(`${comparison || '—'}`)}
+  `;
+
+  // 4) html2pdf 옵션 & 저장
   const opt = {
-    margin:[0,0,0,0],
-    filename:`다쓰_리포트_${dateStr}.pdf`,
-    html2canvas:{ scale:2, useCORS:true, logging:false, backgroundColor:'#ffffff' },
-    jsPDF:{ unit:'mm', format:'a4', orientation:'portrait' },
-    pagebreak:{ mode:['avoid-all'] }
+    margin: [0.5, 0.5],                   // inch
+    filename: `${name}_${dateStr}_다쓰리포트.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, backgroundColor:'#ffffff' },
+    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
   };
 
-  let wrap=null;
-  try{
-    wrap = document.createElement('div');
-    wrap.style.cssText='position:absolute;left:0;top:0;z-index:-1;background:#fff;';
-    wrap.innerHTML = html;
-    document.body.appendChild(wrap);
+  await html2pdf().set(opt).from(pdfWrap).save();
 
-    try{ if (document.fonts?.ready) await document.fonts.ready; }catch(e){}
-    const imgs = Array.from(wrap.querySelectorAll('img')).filter(i=>!i.complete);
-    await Promise.all(imgs.map(i=>new Promise(res=>{ i.onload=i.onerror=res; })));
-    await new Promise(r=>setTimeout(r,80));
-
-    await html2pdf().from(wrap).set(opt).save();
-  }catch(e){
-    console.error('PDF 생성 실패:', e);
-    alert('PDF 생성 실패: ' + (e?.message || e));
-  }finally{
-    if (wrap && wrap.parentNode) wrap.parentNode.removeChild(wrap);
-  }
+  // (선택) 메모리 누수 방지
+  pdfWrap.remove();
 }
 
 /* ===== AUTH ===== */
