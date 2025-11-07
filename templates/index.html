@@ -620,16 +620,16 @@ async function submitEssay(){
     window.savedPassages = passages; // (선택) PDF에서도 동일 제시문 사용
     const essay=document.getElementById('essay').value;
 
-    const r=await fetch('/review',{
-     method:'POST',
-     headers:{'Content-Type':'application/json'},
-     body:JSON.stringify({name,question,passages,essay}),
-     credentials:'include'   // ★ 세션 쿠키 동봉
+    const r = await fetch('/api/review', {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({ name, question, passages, essay }),
+     credentials: 'include' // 이 줄은 있어도/없어도 동작엔 영향 없음
 });
 
-    if(r.status===401){ deferredAction='review'; openAuth(); return; }
-    const data=await r.json();
-    if(!r.ok){ throw new Error(data.error||'오류'); }
+const data = await r.json();
+if (!r.ok) { throw new Error(data.error || '오류'); }
+
 
     savedScores=data.scores; savedReasons=data.reasons;
     const { total, status } = getTotalAndStatus(savedScores);
@@ -738,7 +738,6 @@ async function loadExample(){
       body:JSON.stringify(payload),
       credentials:'include'   // ★ 세션 쿠키 동봉
 });
-    if(r.status===401){ deferredAction='example'; openAuth(); btn.disabled=false; btn.textContent=old; return; }
     const data=await r.json();
     if(!r.ok){ throw new Error(data.error||'오류'); }
 
@@ -831,8 +830,7 @@ function syncPdfContainer() {
   if (!(Array.isArray(window.savedScores) && window.savedScores.length===4)) { alert('먼저 [평가하기]로 점수를 생성해 주세요.'); throw new Error('scores not ready'); }
   if (!window.savedReasons) { alert('평가 근거가 준비되지 않았습니다.'); throw new Error('reasons not ready'); }
   if (!window.savedExample || !window.savedComparison) { alert('먼저 [예시답안 만들기]로 예시/비교를 생성해 주세요.'); throw new Error('example/comparison not ready'); }
-  if (!window.savedSummary) { alert('한 줄 총평이 준비되지 않았습니다. [평가하기]를 다시 실행해 주세요.'); throw new Error('summary not ready'); }
-
+  if (!window.savedSummary) {window.savedSummary = '한 줄 총평: (생성되지 않음)';}
   // 헤더/표지
   document.getElementById('pdfHeaderStudent').textContent  = name;
   document.getElementById('pdfHeaderStudent2').textContent = name;
@@ -1116,12 +1114,10 @@ function updatePdfBtnState(){
   if(!btn) return;
   const ready =
     Array.isArray(savedScores) && savedScores.length === 4 &&
-    !!savedReasons &&
-    !!savedSummary &&
     !!savedExample &&
     !!savedComparison;
   btn.disabled = !ready;
-  btn.title = ready ? '' : '평가와 예시 생성 후 저장할 수 있어요';
+  btn.title = ready ? '' : '평가(리포트 생성)와 예시답안까지 생성 후 저장할 수 있어요';
 }
 
   function openRecords(){
