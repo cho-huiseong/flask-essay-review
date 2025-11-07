@@ -22,9 +22,30 @@ app = Flask(
     template_folder=os.path.join(BASE_DIR, "templates"),
     static_folder=os.path.join(BASE_DIR, "static"),
 )
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-secret-key")
-CORS(app, supports_credentials=True)
 
+# 🔐 세션/쿠키 설정 (크로스 도메인에서 쿠키가 안 실리는 문제 해결)
+app.config.update(
+    SECRET_KEY=os.environ.get("SECRET_KEY", "dev-secret-key"),
+    SESSION_COOKIE_SAMESITE="None",   # cross-site XHR에서도 쿠키 전송
+    SESSION_COOKIE_SECURE=True,       # HTTPS 환경 필수
+    # 프론트와 백이 서로 다른 (서브)도메인이라면 공통 루트 도메인으로 지정
+    # 예: api.example.com + app.example.com -> ".example.com"
+    # 같은 정확한 도메인이라면 아래 줄은 주석 그대로 두세요.
+    # SESSION_COOKIE_DOMAIN=".your-domain.com",
+)
+
+# 🌐 CORS: 와일드카드(*) 금지, 실제 프론트 주소를 명시
+CORS(
+    app,
+    supports_credentials=True,
+    resources={
+        r"/*": {
+            "origins": [
+                "https://앱프론트-도메인-여기에",  # 예: https://app.example.com
+            ]
+        }
+    },
+)
 # OpenAI
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
