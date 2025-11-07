@@ -619,7 +619,13 @@ async function submitEssay(){
     window.savedPassages = passages; // (선택) PDF에서도 동일 제시문 사용
     const essay=document.getElementById('essay').value;
 
-    const r=await fetch('/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,question,passages,essay})});
+    const r=await fetch('/review',{
+     method:'POST',
+     headers:{'Content-Type':'application/json'},
+     body:JSON.stringify({name,question,passages,essay}),
+     credentials:'include'   // ★ 세션 쿠키 동봉
+});
+
     if(r.status===401){ deferredAction='review'; openAuth(); return; }
     const data=await r.json();
     if(!r.ok){ throw new Error(data.error||'오류'); }
@@ -726,7 +732,12 @@ async function loadExample(){
     if(!Number.isNaN(base)) payload.charBase=base;
     if(!Number.isNaN(rng))  payload.charRange=rng;
 
-    const r=await fetch('/example',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const r=await fetch('/example',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload),
+      credentials:'include'   // ★ 세션 쿠키 동봉
+});
     if(r.status===401){ deferredAction='example'; openAuth(); btn.disabled=false; btn.textContent=old; return; }
     const data=await r.json();
     if(!r.ok){ throw new Error(data.error||'오류'); }
@@ -900,6 +911,102 @@ async function downloadPDF_dashboard_land(){
     document.body.classList.remove('pdf-mode');
   }
 }
+</script> 
+
+<script>
+// ========== 인증/프로필 최소 구현 ==========
+function openAuth(){ document.getElementById('authWrap').classList.remove('hidden'); }
+function closeAuth(){ document.getElementById('authWrap').classList.add('hidden'); }
+function switchTab(t){
+  document.getElementById('tabLogin').classList.toggle('active', t==='login');
+  document.getElementById('tabRegister').classList.toggle('active', t==='register');
+  document.getElementById('loginPanel').classList.toggle('hidden', t!=='login');
+  document.getElementById('registerPanel').classList.toggle('hidden', t!=='register');
+}
+
+async function refreshMe(){
+  try{
+    const r = await fetch('/auth/me', { credentials:'include' });
+    const j = await r.json();
+    window.currentUser = j && j.user ? j.user : null;
+  }catch{ window.currentUser = null; }
+  renderAuthUI();
+}
+
+function renderAuthUI(){
+  const loginBtn = document.getElementById('loginBtn');
+  const prof = document.getElementById('profileArea');
+  const name = document.getElementById('profileName');
+  const avatar = document.getElementById('avatarInitial');
+  if(currentUser){
+    loginBtn.classList.add('hidden');
+    prof.classList.remove('hidden');
+    name.textContent = currentUser.name || currentUser.email || '';
+    avatar.textContent = (currentUser.name||currentUser.email||'?').slice(0,1).toUpperCase();
+  }else{
+    prof.classList.add('hidden');
+    loginBtn.classList.remove('hidden');
+  }
+}
+
+async function login(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const err = document.getElementById('loginError'); err.style.display='none'; err.textContent='';
+  try{
+    const r = await fetch('/auth/login', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email, password }),
+      credentials:'include'
+    });
+    const j = await r.json();
+    if(!r.ok || !j.ok){ throw new Error(j.error||'로그인 실패'); }
+    closeAuth();
+    await refreshMe();
+    // 대기 중이던 동작 처리
+    if(deferredAction==='review') submitEssay();
+    if(deferredAction==='example') loadExample();
+    if(deferredAction==='goEditor') goToEditor();
+    deferredAction=null;
+  }catch(e){
+    err.textContent = e.message || '이메일/비밀번호를 확인해 주세요.';
+    err.style.display='block';
+  }
+}
+
+async function register(){
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const err = document.getElementById('registerError'); err.style.display='none'; err.textContent='';
+  try{
+    const r = await fetch('/auth/register', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ name, email, password }),
+      credentials:'include'
+    });
+    const j = await r.json();
+    if(!r.ok || !j.ok){ throw new Error(j.error||'회원가입 실패'); }
+    closeAuth();
+    await refreshMe();
+    if(deferredAction==='review') submitEssay();
+    if(deferredAction==='example') loadExample();
+    if(deferredAction==='goEditor') goToEditor();
+    deferredAction=null;
+  }catch(e){
+    err.textContent = e.message || '입력 값을 확인해 주세요.';
+    err.style.display='block';
+  }
+}
+
+async function logout(){
+  try{ await fetch('/auth/logout', { method:'POST', credentials:'include' }); }catch{}
+  currentUser=null; renderAuthUI();
+}
+
+document.addEventListener('DOMContentLoaded', refreshMe);
 </script>
 
 <!-- >>> PDF CONTAINER START (추가) -->
@@ -1016,6 +1123,16 @@ function updatePdfBtnState(){
   btn.disabled = !ready;
   btn.title = ready ? '' : '평가와 예시 생성 후 저장할 수 있어요';
 }
+
+  function openRecords(){
+    document.getElementById('recordsWrap').classList.remove('hidden');
+  }
+  function closeRecords(){
+    document.getElementById('recordsWrap').classList.add('hidden');
+  }
+</script>
+
+<script>
 document.addEventListener('DOMContentLoaded', updatePdfBtnState);
 </script>
 </body>
