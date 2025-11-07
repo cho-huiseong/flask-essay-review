@@ -276,8 +276,120 @@ def _sanitize_headers(resp):
 # ------------------------------------------------------------------
 
 # ---------- AI: Review ----------
+@app.post("/api/review")
+def review_open():
+    data = request.get_json(force=True)
+    student = _s(data.get("student") or data.get("name"))
+    question = _s(data.get("question"))
+    essay = _s(data.get("essay"))
+    passages = _coerce_passages(data.get("passages"))
+
+    try:
+        if client:
+            prompt = f"""
+당신은 초등학생을 가르치는 논술 선생님입니다.
+
+다음은 논술 평가 기준입니다:
+
+[논리력] 
+- 논제가 요구한 질문에 정확히 답했는가?
+- 글의 주장이 분명하게 드러났는가?
+- 제시문을 활용하여 주장을 뒷받침했는가?
+- 글 전체가 읽는 사람을 충분히 설득할 수 있을 만큼 논리적으로 전개되었는가?
+- ❗ 근거가 없거나 근거가 약하거나, 설득력이 부족한 경우에는 반드시 크게 감점하라 (0~4점 이하).
+
+[독해력] 
+- 제시문 속 핵심 내용을 올바르게 요약하거나 인용했는가?
+- 질문에 대한 답변이 글 속에서 명확하게 드러났는가?
+- 제시문을 근거로 삼아 논지를 전개했는가?
+- ❗ 제시문 외의 배경지식이나 외부 정보를 활용한 경우에는 반드시 크게 감점하라 (0~4점 이하).
+
+[구성력] 
+- 문단 구분과 들여쓰기가 잘 되어 있는가?
+- 글 전체의 논리적 흐름이 자연스럽고 방해되지 않는가?
+
+[표현력] 
+- 문법에 맞는 문장을 구사했는가?
+- 적절한 어휘를 사용했는가?
+- 맞춤법이 틀리지 않았는가?
+- 문장이 어색하거나 문법적으로 잘못된 경우(비문)는 감점하라.
+
+---
+
+제시문:
+{passages}
+
+질문:
+{question}
+
+논술문:
+{essay}
+
+---
+
+❗ 아래 형식을 반드시 그대로 지켜서 작성해 주세요:
+
+[논리력]  
+점수: (0~10 사이의 정수만)  
+이유: (한 문장 이상 구체적으로 작성)
+
+[독해력]  
+점수: (정수만)  
+이유: (한 문장 이상 구체적으로 작성)
+
+[구성력]  
+점수: (정수만)  
+이유: (한 문장 이상 구체적으로 작성)
+
+[표현력]  
+점수: (정수만)  
+이유: (한 문장 이상 구체적으로 작성)
+
+❗ 다른 형식은 사용하지 말고 위와 같이 숫자 점수와 이유를 항목별로 분리해서 반드시 작성하세요.
+예시답안은 지금 작성하지 마세요.
+
+[총평]
+한 줄(40~90자)로 전체 인상을 요약하세요. 가장 미흡한 항목을 중심으로 구체적으로 적되, 1문장만 작성하세요.
+""".strip()
+
+            resp = client.chat.completions.create(
+                model="gpt-4-turbo",
+                messages=[
+                    {"role": "system", "content": "너는 초등 논술 첨삭 선생님이야. 평가 기준에 따라 평가만 작성해."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=1500
+            )
+
+            content = resp.choices[0].message.content or ""
+            summary = ""
+            try:
+                data_json = parse_json_safely(content)
+                scores = data_json.get("scores") or [0,0,0,0]
+                reasons = data_json.get("reasons") or {}
+                summary = _s(data_json.get("summary"))
+            except Exception:
+                scores, reasons = parse_review_text(content)
+                m = re.search(r"\[총평\]\s*(.+)", content, flags=re.IGNORECASE|re.DOTALL)
+                summary = _s(m.group(1)) if m else ""
+        else:
+            scores = [8,7,7,8]
+            reasons = {
+                "논리력":"주장을 제시하고 근거로 뒷받침했어요.",
+                "독해력":"제시문 핵심을 대체로 반영했어요.",
+                "구성력":"문단 전환과 연결이 자연스러워요.",
+                "표현력":"문법 오류가 거의 없고 어휘가 적절합니다."
+            }
+            summary = "전체적으로 안정적이지만, 제시문 근거를 더 명시하며 논리 전개를 강화해 보세요."
+
+        return jsonify({"scores": scores, "reasons": reasons, "summary": summary})
+    except Exception as e:
+        print("❗예외 발생 (review_open):", str(e), flush=True)
+        return jsonify({"error": str(e)}), 500
+
+
 @app.post("/review")
-@login_required
 def review():
     data = request.get_json(force=True)
     student = _s(data.get("student") or data.get("name"))
