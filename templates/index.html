@@ -95,6 +95,65 @@ canvas.demoChart{ height:140px !important; }
 .tab{ flex:1; height:40px; border-radius:999px; border:1px solid #e5e7eb; background:#f8fafc; font-weight:800; cursor:pointer }
 .tab.active{ background:#EEF2FF; border-color:#dbe4ff; color:var(--brand-700) }
 .row{ display:flex; gap:10px }
+/* >>> PDF SCOPE START (추가) */
+.pdf-mode .pdf-scope { display:block !important; }
+
+/* 섹션 시작은 새 페이지 */
+.pdf-mode .pdf-scope .page-break { 
+  break-before: page;
+  page-break-before: always;
+}
+
+/* 넘침/줄바꿈 */
+.pdf-mode .pdf-scope .pdf-text {
+  white-space: normal;
+  word-break: break-word;
+  overflow: visible;
+}
+
+/* 블록 중간 절단 방지(가능한 한) */
+.pdf-mode .pdf-scope .avoid-break {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* 유리카드 톤 */
+.pdf-scope .card {
+  background: rgba(255,255,255,0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(33,64,177,0.08);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(33,64,177,0.08);
+  padding: 16px 18px;
+  margin: 12px 0;
+}
+
+/* 러닝 헤더/푸터 & 제목 */
+.pdf-scope .header,.pdf-scope .footer{
+  color:#2140B1;font-weight:600;font-size:12px;opacity:.9;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:6px 0;
+}
+.pdf-scope .header{border-bottom:1px solid rgba(33,64,177,0.1)}
+.pdf-scope .footer{border-top:1px solid rgba(33,64,177,0.1);margin-top:8px}
+.pdf-scope .section-title{color:#2140B1;font-weight:700;font-size:16px;margin:8px 0 6px;}
+
+/* 표 */
+.pdf-scope table{width:100%;border-collapse:collapse;font-size:12px;}
+.pdf-scope thead th{background:rgba(33,64,177,0.06);color:#2140B1;font-weight:700;}
+.pdf-scope th,.pdf-scope td{border:1px solid rgba(17,24,39,0.1);padding:8px;vertical-align:top;}
+.pdf-scope thead{display:table-header-group;} /* 머릿줄 반복 */
+
+/* 커버(표지) 히어로 */
+.pdf-scope .cover-hero{
+  text-align:center;padding:48px 16px 36px;color:#2140B1;font-weight:800;font-size:24px;
+  background:linear-gradient(180deg,rgba(33,64,177,0.06),rgba(33,64,177,0));
+  border-radius:16px;margin-bottom:16px;
+}
+.pdf-scope .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.pdf-scope .muted{color:#6B7280;font-size:12px;}
+/* <<< PDF SCOPE END */
 </style>
 </head>
 
@@ -501,7 +560,7 @@ window.addPassage = function(){
 document.addEventListener('DOMContentLoaded', ()=>{ document.getElementById('btnAddPassage')?.addEventListener('click', ()=>window.addPassage()); });
 
 /* ===== 상태 ===== */
-let scoreChart, savedScores=[], savedReasons={}, savedExample="", savedComparison="";
+let scoreChart, savedScores=[], savedReasons={}, savedExample="", savedComparison="", savedSummary="";
 let exampleGenerated=false; let currentUser=null; let deferredAction=null;
 
 function resetReport(){
@@ -557,6 +616,7 @@ async function submitEssay(){
     const name=document.getElementById('studentName').value;
     const question=document.getElementById('question').value;
     const passages=[...document.querySelectorAll('.passage')].map(p=>p.value);
+    window.savedPassages = passages; // (선택) PDF에서도 동일 제시문 사용
     const essay=document.getElementById('essay').value;
 
     const r=await fetch('/review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,question,passages,essay})});
@@ -566,6 +626,7 @@ async function submitEssay(){
 
     savedScores=data.scores; savedReasons=data.reasons;
     const { total, status } = getTotalAndStatus(savedScores);
+    savedSummary = data.summary; // ✅ 한 줄 총평 저장
 
     /* 결과 카드 그리기 (예시 버튼만 노출) */
     document.getElementById('evalSummary').innerHTML=`
@@ -746,213 +807,216 @@ async function __makeDonutPNG(total){
     options:{ plugins:{legend:{display:false}}, circumference:360, rotation:-90 }
   }, 120, 120);
 }
+function syncPdfContainer() {
+  document.getElementById('pdfExample').innerHTML    = (window.savedExample||'').replace(/\n/g,'<br/>');
+  document.getElementById('pdfComparison').innerHTML = (window.savedComparison||'').replace(/\n/g,'<br/>');
+  const name  = (document.getElementById('studentName')?.value||'').trim() || '이름 미입력';
+  const question = (document.getElementById('question')?.value||'').trim();
+  const essay    = (document.getElementById('essay')?.value||'').trim();
+  const charCount = essay.length;
+  const dateStr = new Date().toISOString().split('T')[0];
 
+  // 준비 체크 (임의 폴백 금지)
+  if (!(Array.isArray(window.savedScores) && window.savedScores.length===4)) { alert('먼저 [평가하기]로 점수를 생성해 주세요.'); throw new Error('scores not ready'); }
+  if (!window.savedReasons) { alert('평가 근거가 준비되지 않았습니다.'); throw new Error('reasons not ready'); }
+  if (!window.savedExample || !window.savedComparison) { alert('먼저 [예시답안 만들기]로 예시/비교를 생성해 주세요.'); throw new Error('example/comparison not ready'); }
+  if (!window.savedSummary) { alert('한 줄 총평이 준비되지 않았습니다. [평가하기]를 다시 실행해 주세요.'); throw new Error('summary not ready'); }
+
+  // 헤더/표지
+  document.getElementById('pdfHeaderStudent').textContent  = name;
+  document.getElementById('pdfHeaderStudent2').textContent = name;
+  document.getElementById('pdfHeaderStudent3').textContent = name;
+
+  document.getElementById('pdfStudentName').textContent = name;
+  document.getElementById('pdfDate').textContent = dateStr;
+  document.getElementById('pdfCharCount').textContent = charCount;
+  document.getElementById('pdfCoverQuestion').textContent = question;
+  document.getElementById('pdfSummary').textContent = window.savedSummary || '';
+
+  // 페이지2 — 질문/제시문/학생문
+  document.getElementById('pdfQuestion').textContent = question;
+
+  const passages = Array.isArray(window.savedPassages) ? window.savedPassages
+    : (document.getElementById('passages')?.value ? [document.getElementById('passages').value] : []);
+  document.getElementById('pdfPassages').innerHTML =
+    passages.map((p,i)=>`<div class="card pdf-text"><div class="muted">[제시문 ${i+1}]</div><div>${(p||'').replace(/\n/g,'<br/>')}</div></div>`).join('');
+
+  document.getElementById('pdfEssay').innerHTML = (essay||'').replace(/\n/g,'<br/>');
+  document.getElementById('pdfCharCount2').textContent = charCount;
+
+  // 점수 카드 + 근거
+  const labels = ['논리력','독해력','구성력','표현력'];
+  const sc = window.savedScores;
+  const rs = window.savedReasons;
+  document.getElementById('pdfScoreCards').innerHTML =
+    labels.map((k,idx)=>`
+      <div class="card avoid-break">
+        <b>${k}</b> — <b>${sc[idx]}점</b><br/>
+        <span class="muted">${(rs[k]||'').replace(/\n/g,' ')}</span>
+      </div>`).join('');
+
+  // 그래프 이미지 (화면 캔버스를 PNG로)
+  try {
+    const cv = document.querySelector('canvas#scoreChart, canvas#radarChart, canvas');
+    if (cv && cv.toDataURL) document.getElementById('pdfScoreChart').src = cv.toDataURL('image/png');
+  } catch(e){ console.warn('chart toDataURL fail', e); }
+
+  // 페이지 수 표기(우선 고정)
+  document.getElementById('pdfTotalPages1').textContent = '3';
+  document.getElementById('pdfTotalPages2').textContent = '3';
+  document.getElementById('pdfTotalPages3').textContent = '3';
+}
 async function downloadPDF_dashboard_land(){
   if(!window.html2pdf || !window.Chart){
     alert('Chart.js 또는 html2pdf 로드 실패'); return;
   }
+  try {
+    // 1) 현재 화면 상태를 PDF 컨테이너에 동기화
+    syncPdfContainer();
 
-  // 1) 화면 데이터 수집
-  const name  = (document.getElementById('studentName')?.value||'').trim() || '이름 미입력';
-  const question = (document.getElementById('question')?.value||'').trim();
-  const essay    = (document.getElementById('essay')?.value||'').trim();
-  const scores   = (window.savedScores?.length===4)?window.savedScores:[9,9,9,10];
-  const reasons  = window.savedReasons||{'논리력':'','독해력':'','구성력':'','표현력':''};
-  const example  = (window.savedExample?.trim()) || (document.getElementById('exampleOutput')?.innerHTML||'').trim();
-  const comparison=(window.savedComparison?.trim())||(document.getElementById('comparisonOutput')?.innerHTML||'').trim();
-  const base = __num(document.getElementById('charLimit')?.value, NaN);
-  const range= __num(document.getElementById('charRange')?.value, 0);
-  const essayLen = essay.length;
-  const dateStr = new Date().toISOString().split('T')[0];
+    // 2) PDF 모드 활성화 (PDF 전용 CSS 스코프 작동)
+    document.body.classList.add('pdf-mode');
 
-  // 2) 점수/차트
-  function getTotalAndStatus_safe(s){
-    try{ return getTotalAndStatus(s); } catch{
-      const t=(s||[]).reduce((a,b)=>a+(parseInt(b)||0),0);
-      let st={label:"예비",desc:"조금만 다듬으면 더 좋아져요.",tone:"#f59e0b"};
-      if(t<30) st={label:"다시 쓰기",desc:"다음 시도에서 더 단단해질 거예요.",tone:"#ef4444"};
-      else if(t>=36) st={label:"합격",desc:"지금도 충분히 설득력 있어요!",tone:"#10b981"};
-      return { total:t, status:st };
-    }
+    // 3) 폰트/레이아웃 안정화 대기
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    await new Promise(r => requestAnimationFrame(r));
+
+    // 4) A4 / 다페이지 / CSS 분할 존중
+    const opt = {
+      margin: [10,12,10,12],
+      filename: `report_${(document.getElementById('studentName')?.value||'student')}_${new Date().toISOString().slice(0,10)}.pdf`,
+      image: { type: 'jpeg', quality: 0.95 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['css','legacy'] }
+    };
+
+    await html2pdf().set(opt).from(document.getElementById('pdfContainer')).save();
+
+  } catch(e){
+    console.error(e);
+    alert('PDF 생성 중 문제가 발생했습니다. 다시 시도해 주세요.');
+  } finally {
+    document.body.classList.remove('pdf-mode');
   }
-  const { total, status } = getTotalAndStatus_safe(scores);
+}
+</script>
 
-  const [barPng, donutPng] = await Promise.all([
-    __makeBarPNG(scores),
-    __makeDonutPNG(total)
-  ]);
+<!-- >>> PDF CONTAINER START (추가) -->
+<section id="pdfContainer" class="pdf-scope" style="display:none">
 
-  // 3) 카드/배지 템플릿
-  const W=1123, H=794; // A4 가로 @96dpi
-  const chip=t=>`<span style="display:inline-block;padding:2px 8px;font-size:11px;border:1px solid #e5e7eb;border-radius:999px;color:#2140B1;background:#EEF2FF">${t}</span>`;
-  const card=inner=>`<div class="pdf-card" style="background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:14px 16px;box-shadow:0 10px 28px rgba(17,24,39,.06);page-break-inside:avoid;break-inside:avoid;">${inner}</div>`;
-  const limitInfo = Number.isFinite(base) ? `글자 수: ${essayLen} · 기준 ${Math.max(0,base-range)}~${base+range}` : `글자 수: ${essayLen}`;
-
-  // 4) 페이지 DOM 생성
-  const page=document.createElement('div');
-  page.style.cssText=`
-    width:${W}px;min-height:${H}px;background:#fff;color:#111827;
-    font-family:'SUIT',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-    padding:18px 22px;box-sizing:border-box;line-height:1.6;
-  `;
-
-  // 헤더(로고/제품명 · 날짜/이름)
-  page.innerHTML=`
-    <div style="display:flex;align-items:center;justify-content:space-between;background:linear-gradient(180deg,#ffffff 0%,#f6f9ff 100%);border:1px solid #eef2ff;border-radius:12px;padding:8px 12px">
-      <div style="display:flex;align-items:center;gap:8px">
-        <img src="/static/academy_logo.png" alt="아카데미창" style="height:22px;object-fit:contain">
-        <div style="font-weight:900">다쓰 리포트</div>
-      </div>
-      <div style="display:flex;gap:10px;align-items:center">
-        <span style="font-size:12px;color:#6B7280">${dateStr}</span>
-        <span style="font-weight:800">${name}</span>
-      </div>
+  <!-- 1페이지: 표지 -->
+  <div class="page">
+    <div class="header">
+      <div>아카데미창 · 다쓰 리포트</div>
+      <div id="pdfHeaderStudent"></div>
     </div>
-    <div style="margin:8px 0 6px;font-size:18px;font-weight:900">원페이지 리포트 (가로)</div>
-  `;
 
-  // 상단 5카드 (총점/판정 + 4항목)
-  page.innerHTML+=`
-    <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1fr;gap:10px">
-      ${card(`
-        <div style="display:flex;align-items:center;gap:10px">
-          <img src="${donutPng}" alt="총점" style="width:62px;height:62px">
-          <div style="flex:1">
-            <div style="font-weight:900">총점 <span style="color:${status.tone}">${total}</span> / 40 · <span style="color:${status.tone}">${status.label}</span></div>
-            <div style="margin-top:6px;position:relative;height:8px;background:#EEF2FF;border-radius:999px;overflow:hidden">
-              <div style="width:${(total/40)*100}%;height:100%;background:${status.tone}"></div>
-              <div style="position:absolute;left:${(30/40)*100}%;top:0;bottom:0;width:2px;background:rgba(17,24,39,.15)"></div>
-              <div style="position:absolute;left:${(36/40)*100}%;top:0;bottom:0;width:2px;background:rgba(17,24,39,.25)"></div>
-            </div>
-            <div style="font-size:12px;color:#6B7280;margin-top:6px">${status.label==='합격'?'지금도 충분히 설득력 있어요!':(status.label==='예비'?'조금만 다듬으면 더 좋아져요.':'다음 시도에서 더 단단해질 거예요.')}</div>
-          </div>
+    <div class="card cover-hero">
+      <div>학생 리포트</div>
+      <div class="muted" id="pdfCoverQuestion"></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="section-title">학생 정보</div>
+        <div class="pdf-text">
+          이름: <span id="pdfStudentName"></span><br/>
+          작성일: <span id="pdfDate"></span><br/>
+          글자 수: <span id="pdfCharCount"></span>자
         </div>
-      `)}
-      ${['논리력','독해력','구성력','표현력'].map((k,i)=>card(`
-        <div style="font-weight:800;margin-bottom:4px">${k} (${scores[i]}점)</div>
-        <div style="font-size:12.2px;color:#374151">${(reasons[k]||'').replace(/\n/g,'<br>')}</div>
-      `)).join('')}
-    </div>
-  `;
-
-  // 중단: 좌(질문/차트/글자수) · 우(논술문)
-  page.innerHTML+=`
-    <div style="display:grid;grid-template-columns:1.1fr 1.9fr;gap:10px;margin-top:10px">
-      <div style="display:flex;flex-direction:column;gap:10px">
-        ${card(`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><div style="font-weight:900">질문</div>${chip('Prompt')}</div><div style="font-size:13px">${(question||'—').replace(/\n/g,'<br>')}</div>`)}
-        ${card(`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><div style="font-weight:900">항목별 점수</div>${chip('Score')}</div><img src="${barPng}" alt="항목별 점수" style="display:block;max-width:100%;height:auto">`)}
-        ${card(`<div style="font-weight:900;margin-bottom:4px">글자 수</div><div style="font-size:12.5px;color:#374151">${Number.isFinite(base)?`글자 수: ${essayLen} · 기준 ${Math.max(0,base-range)}~${base+range}`:`글자 수: ${essayLen}`}</div>`)}
       </div>
-      ${card(`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><div style="font-weight:900">학생 작성 논술문</div>${chip('Essay')}</div><div style="font-size:13.3px;line-height:1.6;max-height:300px;overflow:hidden">${(essay||'—').replace(/\n/g,'<br>')}</div>`)}
-    </div>
-  `;
-
-  // 하단: 예시 · 비교
-  page.innerHTML+=`
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
-      ${card(`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><div style="font-weight:900">예시답안</div>${chip('Model')}</div><div style="font-size:13.3px;line-height:1.6;max-height:210px;overflow:hidden">${(example||'—').replace(/\n/g,'<br>')}</div>`)}
-      ${card(`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><div style="font-weight:900">비교 분석</div>${chip('Comparison')}</div><div style="font-size:13.3px;line-height:1.6;max-height:210px;overflow:hidden">${(comparison||'—').replace(/\n/g,'<br>')}</div>`)}
-    </div>
-  `;
-
-  // 5) 한 페이지 고정: 자동 축소 + 카드 분할 방지
-  const SAFE=H-6;
-  document.body.appendChild(page);
-  const h=page.scrollHeight;
-  let root=page;
-  if(h>SAFE){
-    const scale=SAFE/h;
-    page.style.transformOrigin='top left';
-    page.style.transform=`scale(${scale})`;
-    const holder=document.createElement('div');
-    holder.style.cssText=`width:${W}px;height:${H}px;background:#fff;position:relative;overflow:hidden`;
-    page.parentNode.insertBefore(holder,page);
-    holder.appendChild(page);
-    page.style.position='absolute'; page.style.left='0'; page.style.top='0';
-    root=holder;
-  }
-
-  // 6) 저장
-  await html2pdf().set({
-    margin:[0,0],
-    filename:`${name}_${dateStr}_리포트.pdf`,
-    image:{type:'jpeg',quality:0.98},
-    html2canvas:{scale:2,backgroundColor:'#ffffff'},
-    jsPDF:{unit:'in',format:'a4',orientation:'landscape'},
-    pagebreak:{mode:['css','legacy'],avoid:['.pdf-card']}
-  }).from(root).save();
-
-  root.remove();
-}
-
-/* ===== AUTH ===== */
-function openAuth(){ document.getElementById('authWrap').classList.remove('hidden'); document.body.style.overflow='hidden'; }
-function closeAuth(){ document.getElementById('authWrap').classList.add('hidden'); document.body.style.overflow=''; }
-function switchTab(which){
-  document.getElementById('tabLogin').classList.toggle('active',which==='login');
-  document.getElementById('tabRegister').classList.toggle('active',which!=='login');
-  document.getElementById('loginPanel').classList.toggle('hidden',which!=='login');
-  document.getElementById('registerPanel').classList.toggle('hidden',which==='login');
-}
-async function register(){
-  const name=_v('regName'), email=_v('regEmail'), password=_v('regPassword');
-  const r=await fetch('/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,email,password})});
-  const d=await r.json();
-  if(d.ok){ currentUser=d.user; closeAuth(); onAuthed(); }
-  else{ const el=document.getElementById('registerError'); el.textContent=d.error||'오류'; el.style.display='block'; }
-}
-async function login(){
-  const email=_v('loginEmail'), password=_v('loginPassword');
-  const r=await fetch('/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
-  const d=await r.json();
-  if(d.ok){ currentUser=d.user; closeAuth(); onAuthed(); }
-  else{ const el=document.getElementById('loginError'); el.textContent=d.error||'오류'; el.style.display='block'; }
-}
-async function logout(){ await fetch('/auth/logout',{method:'POST'}); currentUser=null; onAuthed(); }
-function _v(id){ return (document.getElementById(id)?.value||'').trim(); }
-function onAuthed(){
-  const p=document.getElementById('profileArea');
-  const l=document.getElementById('loginBtn');
-  const nameEl=document.getElementById('profileName');
-  const av=document.getElementById('avatarInitial');
-  if(currentUser){
-    p.classList.remove('hidden'); l.classList.add('hidden');
-    nameEl.textContent=currentUser.name||'';
-    av.textContent=(currentUser.name||'A').slice(0,1).toUpperCase();
-    if(deferredAction==='goEditor'){ deferredAction=null; goToEditor(); }
-    if(deferredAction==='review'){ deferredAction=null; submitEssay(); }
-    if(deferredAction==='example'){ deferredAction=null; loadExample(); }
-  }else{
-    p.classList.add('hidden'); l.classList.remove('hidden');
-  }
-}
-
-/* ===== 초기 로그인 상태 확인 ===== */
-window.addEventListener('DOMContentLoaded', async()=>{
-  try{
-    const r=await fetch('/auth/me');
-    const d=await r.json();
-    if(d?.ok && d.user){ currentUser=d.user; }
-  }catch(e){ console.warn(e); }
-  onAuthed();
-});
-
-/* ===== 기록(더미) ===== */
-async function openRecords(){
-  const w=document.getElementById('recordsWrap'); w.classList.remove('hidden'); document.body.style.overflow='hidden';
-  const box=document.getElementById('recordsList');
-  try{
-    // (API 연동 예정) 더미 목록
-    const items=[{title:'리포트 예시', total:37, status:'합격', created_at:Date.now()}];
-    box.innerHTML = items.map(it=>`
-      <div class="panel" style="margin-top:8px">
-        <div style="font-weight:800">${it.title}</div>
-        <div class="muted" style="font-size:12px">${new Date(it.created_at).toLocaleString()}</div>
+      <div class="card">
+        <div class="section-title">한 줄 총평</div>
+        <div class="pdf-text" id="pdfSummary"></div>
       </div>
-    `).join('');
-  }catch{ box.textContent='네트워크 오류'; }
+    </div>
+
+    <div class="footer">
+      <div>Generated by 다쓰 리포트</div>
+      <div>Page 1 / <span id="pdfTotalPages1">3</span></div>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- 2페이지: 문제/제시문/학생 논술문/점수(그래프) -->
+  <div class="page">
+    <div class="header">
+      <div>문제 · 제시문 · 학생 논술문</div>
+      <div id="pdfHeaderStudent2"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">질문</div>
+      <div class="pdf-text" id="pdfQuestion"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">제시문 (전문)</div>
+      <div class="pdf-text" id="pdfPassages"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">학생 논술문</div>
+      <div class="pdf-text" id="pdfEssay"></div>
+      <div class="muted">글자 수: <span id="pdfCharCount2"></span>자</div>
+    </div>
+
+    <div class="card avoid-break">
+      <div class="section-title">평가 요약 (논리·독해·구성·표현)</div>
+      <div id="pdfScoreCards" class="pdf-text"></div>
+      <div style="text-align:center; margin-top:8px;">
+        <img id="pdfScoreChart" alt="Score Chart" style="max-width:260px; width:70%;"/>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div>아카데미창 · 다쓰 리포트</div>
+      <div>Page 2 / <span id="pdfTotalPages2">3</span></div>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- 3페이지: 예시답안 · 비교분석 -->
+  <div class="page">
+    <div class="header">
+      <div>예시답안 · 비교분석</div>
+      <div id="pdfHeaderStudent3"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">예시답안</div>
+      <div class="pdf-text" id="pdfExample"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">비교분석</div>
+      <div id="pdfComparison" class="pdf-text"></div>
+    </div>
+
+    <div class="footer">
+      <div>아카데미창 · 다쓰 리포트</div>
+      <div>Page 3 / <span id="pdfTotalPages3">3</span></div>
+    </div>
+  </div>
+</section>
+<!-- <<< PDF CONTAINER END -->
+<script>
+function updatePdfBtnState(){
+  const btn = document.getElementById('btnSavePDF');
+  if(!btn) return;
+  const ready =
+    Array.isArray(savedScores) && savedScores.length === 4 &&
+    !!savedReasons &&
+    !!savedSummary &&
+    !!savedExample &&
+    !!savedComparison;
+  btn.disabled = !ready;
+  btn.title = ready ? '' : '평가와 예시 생성 후 저장할 수 있어요';
 }
-function closeRecords(){ document.getElementById('recordsWrap').classList.add('hidden'); document.body.style.overflow=''; }
+document.addEventListener('DOMContentLoaded', updatePdfBtnState);
 </script>
 </body>
 </html>

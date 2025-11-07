@@ -298,6 +298,10 @@ def review():
 
 ❗ 다른 형식은 사용하지 말고 위와 같이 숫자 점수와 이유를 항목별로 분리해서 반드시 작성하세요.
 예시답안은 지금 작성하지 마세요.
+
+[총평]
+한 줄(40~90자)로 전체 인상을 요약하세요. 가장 미흡한 항목을 중심으로 구체적으로 적되, 1문장만 작성하세요.
+
             """.strip()
 
             resp = client.chat.completions.create(
@@ -311,6 +315,7 @@ def review():
             )
 
             content = resp.choices[0].message.content or ""
+            summary = ""  # ⬅ 요약 변수 준비
             print("🧾 REVIEW 원문:\n", content)  # (선택) 로그 확인용
 
             # 1) 혹시 JSON으로 올 때 먼저 시도
@@ -318,9 +323,13 @@ def review():
                 data_json = parse_json_safely(content)
                 scores = data_json.get("scores") or [0,0,0,0]
                 reasons = data_json.get("reasons") or {}
+                summary = _s(data_json.get("summary"))  # ⬅ JSON이면 summary 키에서
             except Exception:
                 # 2) 현재 프롬프트의 텍스트 형식([논리력]… 점수/이유) 파싱
                 scores, reasons = parse_review_text(content)
+                # ⬅ 텍스트에선 [총평] 블록에서 한 줄 추출
+                m = re.search(r"\[총평\]\s*(.+)", content, flags=re.IGNORECASE|re.DOTALL)
+                summary = _s(m.group(1)) if m else ""
 
         else:
             # OpenAI 키 없을 때 폴백
@@ -331,8 +340,8 @@ def review():
                 "구성력":"문단 전환과 연결이 자연스러워요.",
                 "표현력":"문법 오류가 거의 없고 어휘가 적절합니다."
             }
-
-        return jsonify({"scores": scores, "reasons": reasons})
+            summary = "전체적으로 안정적이지만, 제시문 근거를 더 명시하며 논리 전개를 강화해 보세요."
+        return jsonify({"scores": scores, "reasons": reasons, "summary": summary})
 
     except Exception as e:
         print("❗예외 발생 (review):", str(e), flush=True)
