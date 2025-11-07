@@ -154,6 +154,9 @@ canvas.demoChart{ height:140px !important; }
 .pdf-scope .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .pdf-scope .muted{color:#6B7280;font-size:12px;}
 /* <<< PDF SCOPE END */
+
+#loginBtn, #profileArea { display: none !important; }
+
 </style>
 </head>
 
@@ -479,7 +482,7 @@ function go(section){ location.hash = (section==='editor' ? '#editor' : '#home')
 function routeFromHash(){ const h=(location.hash||'').toLowerCase(); if(h==='#editor') show('editor'); else show('home'); }
 window.addEventListener('hashchange', routeFromHash);
 window.addEventListener('DOMContentLoaded', routeFromHash);
-function goToEditor(){ if(!currentUser){ deferredAction='goEditor'; openAuth(); return; } location.hash='#editor'; show('editor'); setTimeout(()=>{document.getElementById('studentName')?.focus({preventScroll:true});},0); }
+function goToEditor(){ location.hash='#editor'; show('editor'); setTimeout(()=>{document.getElementById('studentName')?.focus({preventScroll:true});},0); }
 
 /* ===== 실 화면 스케일: 1120px 1:1, 필요 시 축소 ===== */
 function scaleDemo(){
@@ -608,8 +611,6 @@ function getTotalAndStatus(scores){
 
 /* ===== 리뷰 ===== */
 async function submitEssay(){
-  if(!currentUser){ deferredAction='review'; openAuth(); return; }
-
   document.getElementById('loading').style.display='block';
   document.getElementById('error').style.display='none';
   try{
@@ -704,7 +705,6 @@ async function submitEssay(){
 
 /* ===== 예시 ===== */
 async function loadExample(){
-  if(!currentUser){ deferredAction='example'; openAuth(); return; }
   const btn=document.getElementById('btnExample');
   const note=document.getElementById('exampleNote');
   const errId='exampleInlineErr';
@@ -868,7 +868,7 @@ function syncPdfContainer() {
 
   // 그래프 이미지 (화면 캔버스를 PNG로)
   try {
-    const cv = document.querySelector('canvas#scoreChart, canvas#radarChart, canvas');
+    const cv = document.querySelector('#scoreChart') || document.querySelector('#radarChart');
     if (cv && cv.toDataURL) document.getElementById('pdfScoreChart').src = cv.toDataURL('image/png');
   } catch(e){ console.warn('chart toDataURL fail', e); }
 
