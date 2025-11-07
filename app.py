@@ -14,7 +14,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from passlib.hash import bcrypt
 
 # ---------------------------------------------------------------------
-# App & Config
+# App & Config                                                      
 # ---------------------------------------------------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app = Flask(
@@ -26,13 +26,11 @@ app = Flask(
 # 🔐 세션/쿠키 설정 (크로스 도메인에서 쿠키가 안 실리는 문제 해결)
 app.config.update(
     SECRET_KEY=os.environ.get("SECRET_KEY", "dev-secret-key"),
-    SESSION_COOKIE_SAMESITE="None",   # cross-site XHR에서도 쿠키 전송
-    SESSION_COOKIE_SECURE=True,       # HTTPS 환경 필수
-    # 프론트와 백이 서로 다른 (서브)도메인이라면 공통 루트 도메인으로 지정
-    # 예: api.example.com + app.example.com -> ".example.com"
-    # 같은 정확한 도메인이라면 아래 줄은 주석 그대로 두세요.
-    # SESSION_COOKIE_DOMAIN=".your-domain.com",
+    SESSION_COOKIE_SAMESITE="Lax",   # 교차사이트 아니면 Lax가 안전/단순
+    SESSION_COOKIE_SECURE=True,
+    # SESSION_COOKIE_DOMAIN 설정하지 말 것(같은 도메인이라 불필요)
 )
+
 
 # 🌐 CORS: 와일드카드(*) 금지, 실제 프론트 주소를 명시
 CORS(
@@ -41,7 +39,7 @@ CORS(
     resources={
         r"/*": {
             "origins": [
-                "https://앱프론트-도메인-여기에",  # 예: https://app.example.com
+                "https://flask-essay-review.onrender.com"
             ]
         }
     },
@@ -180,6 +178,10 @@ def _is_admin(user: User) -> bool:
 # ---------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------
+@app.get("/healthz")
+def healthz():
+    return "ok", 200
+
 @app.get("/")
 def index():
     resp = make_response(render_template("index.html"))
@@ -245,6 +247,32 @@ def auth_me():
         "name": current_user.name,
         "is_admin": _is_admin(current_user)
     }})
+# ---------- Response Header Sanitizer (must be right after auth routes) ----------
+@app.after_request
+def _sanitize_headers(resp):
+    """
+    - Duplicate headers(Set-Cookie 등) 보존
+    - 개행 제거
+    - latin-1 로 인코딩 불가한 문자 제거(무시)로 502 방지
+    """
+    try:
+        pairs = resp.headers.to_wsgi_list()  # [('Set-Cookie','...'), ...]
+        resp.headers.clear()
+        for k, v in pairs:
+            sv = str(v).replace("\r", "").replace("\n", " ")
+            try:
+                # 헤더는 RFC상 latin-1 이어야 함
+                sv.encode("latin-1", "strict")
+            except UnicodeEncodeError:
+                # 못 담는 문자는 드롭해서 안전하게
+                sv = sv.encode("latin-1", "ignore").decode("latin-1")
+            resp.headers.add(k, sv)
+        if "Vary" not in resp.headers:
+            resp.headers.add("Vary", "Origin")
+    except Exception:
+        pass
+    return resp
+
 
 # ---------- AI: Review ----------
 @app.post("/review")
