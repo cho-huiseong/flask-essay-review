@@ -247,32 +247,33 @@ def auth_me():
         "name": current_user.name,
         "is_admin": _is_admin(current_user)
     }})
-# ---------- Response Header Sanitizer (must be right after auth routes) ----------
+# ---------- Response Header Sanitizer (skip Set-Cookie) ----------
 @app.after_request
 def _sanitize_headers(resp):
     """
-    - Duplicate headers(Set-Cookie 등) 보존
-    - 개행 제거
-    - latin-1 로 인코딩 불가한 문자 제거(무시)로 502 방지
+    - Set-Cookie는 그대로 보존 (속성 깨짐 방지)
+    - 그 외 헤더만 개행 제거 + latin-1 안전화
+    - Duplicate headers 보존
     """
     try:
-        pairs = resp.headers.to_wsgi_list()  # [('Set-Cookie','...'), ...]
+        pairs = resp.headers.to_wsgi_list()  # [('Header','...'), ('Set-Cookie','...'), ...]
         resp.headers.clear()
         for k, v in pairs:
+            if k.lower() == "set-cookie":
+                # 쿠키 헤더는 원본 그대로 재추가 (속성과 인코딩 건드리지 않음)
+                resp.headers.add(k, v)
+                continue
             sv = str(v).replace("\r", "").replace("\n", " ")
             try:
-                # 헤더는 RFC상 latin-1 이어야 함
                 sv.encode("latin-1", "strict")
             except UnicodeEncodeError:
-                # 못 담는 문자는 드롭해서 안전하게
                 sv = sv.encode("latin-1", "ignore").decode("latin-1")
             resp.headers.add(k, sv)
-        if "Vary" not in resp.headers:
-            resp.headers.add("Vary", "Origin")
+        resp.headers.setdefault("Vary", "Origin")
     except Exception:
         pass
     return resp
-
+# ------------------------------------------------------------------
 
 # ---------- AI: Review ----------
 @app.post("/review")
