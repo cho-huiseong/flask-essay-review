@@ -830,7 +830,7 @@ function syncPdfContainer() {
   const charCount = essay.length;
   const dateStr = new Date().toISOString().split('T')[0];
 
-  // 준비 체크 – 전역 상태(saved*) 기준으로만 확인
+  // 준비 체크
   if (!(Array.isArray(savedScores) && savedScores.length === 4)) {
     alert('먼저 [리포트 생성]으로 점수를 만들어 주세요.');
     throw new Error('scores not ready');
@@ -878,12 +878,13 @@ function syncPdfContainer() {
     (essay || '').replace(/\n/g, '<br/>');
   document.getElementById('pdfCharCount2').textContent = charCount;
 
-  // 👉 여기부터가 아까 함수 밖으로 나가 있던 부분
+  // -------- 반드시 함수 안에 있어야 하는 PDF 구성 요소들 --------
 
   // 점수 카드 + 근거
   const labels = ['논리력','독해력','구성력','표현력'];
   const sc = savedScores;
   const rs = savedReasons;
+
   document.getElementById('pdfScoreCards').innerHTML =
     labels.map((k,idx)=>`
       <div class="card avoid-break">
@@ -891,7 +892,7 @@ function syncPdfContainer() {
         <span class="muted">${(rs && rs[k] ? rs[k] : '').replace(/\n/g,' ')}</span>
       </div>`).join('');
 
-  // 그래프 이미지 (화면 캔버스를 PNG로)
+  // 그래프 이미지 (canvas → PNG)
   try {
     const cv = document.querySelector('#scoreChart') || document.querySelector('#radarChart');
     if (cv && cv.toDataURL) {
@@ -901,11 +902,12 @@ function syncPdfContainer() {
     console.warn('chart toDataURL fail', e);
   }
 
-  // 페이지 수 표기(우선 고정)
+  // 페이지 수 표기
   document.getElementById('pdfTotalPages1').textContent = '3';
   document.getElementById('pdfTotalPages2').textContent = '3';
   document.getElementById('pdfTotalPages3').textContent = '3';
 }
+
 
 async function downloadPDF_dashboard_land(){
   if(!window.html2pdf || !window.Chart){
