@@ -838,7 +838,7 @@ function loadBookItems() {
         subStages.forEach(sub => {
           const opt = document.createElement('option');
           opt.value = sub;
-          opt.textContent = `${sub}단계`;
+          opt.textContent = `${sub}`;
           subStageSelect.appendChild(opt);
         });
       });
@@ -865,7 +865,7 @@ function loadBookItems() {
         pages.forEach(p => {
           const opt = document.createElement('option');
           opt.value = p;
-          opt.textContent = `${p}`;
+          opt.textContent = `${p}페이지`;
           pageSelect.appendChild(opt);
         });
       });
@@ -880,9 +880,13 @@ window.addEventListener('DOMContentLoaded', loadBookItems);
 
 /* 🔽 새로 추가: 교재 문제 적용 함수 */
 function applyBookProblem() {
-  const mainStage = document.getElementById('bookMainStageSelect').value;
-  const subStage  = document.getElementById('bookSubStageSelect').value;
-  const page      = document.getElementById('bookPageSelect').value;
+  const mainStageSelect = document.getElementById('bookMainStageSelect');
+  const subStageSelect  = document.getElementById('bookSubStageSelect');
+  const pageSelect      = document.getElementById('bookPageSelect');
+
+  const mainStage = mainStageSelect.value;
+  const subStage  = subStageSelect.value;
+  const page      = pageSelect.value;
 
   if (!mainStage || !subStage || !page) {
     alert("단계 / 교재 / 페이지를 모두 선택해 주세요.");
@@ -891,48 +895,46 @@ function applyBookProblem() {
 
   const stage = `${mainStage}-${subStage}`;
 
-  // 여기부터는 기존 코드 그대로 유지
-  if (!stage || !page){
-    alert('단계와 페이지를 모두 선택해 주세요.');
-    return;
-  }
-
+  // BOOK_ITEMS에서 해당 단계/페이지 찾기
   const item = BOOK_ITEMS.find(
     it => it.stage === stage && String(it.page) === String(page)
   );
 
-  if (!item){
+  if (!item) {
     alert('선택한 단계/페이지에 해당하는 교재 정보가 없습니다.');
     return;
   }
 
   // 1) 질문 채우기
   const qEl = document.getElementById('question');
-  if (qEl){
+  if (qEl) {
     qEl.value = item.question || '';
   }
 
   // 2) 제시문 textarea들 채우기
   const wrap = document.getElementById('passages');
-  if (wrap){
+  if (wrap) {
     let areas = wrap.querySelectorAll('.passage');
 
-    if (areas.length === 0){
+    // 제시문 칸이 하나도 없으면 최소 1개 생성
+    if (areas.length === 0) {
       window.addPassage();
       areas = wrap.querySelectorAll('.passage');
     }
 
+    // 기존 제시문은 첫 번째만 남기고 나머지는 제거 + 첫 번째에 1번 제시문 넣기
     areas.forEach((el, idx) => {
-      if (idx === 0){
+      if (idx === 0) {
         el.value = (item.passages && item.passages[0]) ? item.passages[0] : '';
         autoResize(el);
-      }else{
+      } else {
         el.remove();
       }
     });
 
-    if (Array.isArray(item.passages)){
-      for (let i = 1; i < item.passages.length; i++){
+    // 제시문이 2개 이상이면 나머지 추가 생성
+    if (Array.isArray(item.passages)) {
+      for (let i = 1; i < item.passages.length; i++) {
         const text = item.passages[i];
         window.addPassage();
         const newAreas = wrap.querySelectorAll('.passage');
@@ -944,16 +946,16 @@ function applyBookProblem() {
   }
 
   // 3) 글자 수 기준/범위 채우기
-  if (typeof item.charBase === 'number'){
+  if (typeof item.charBase === 'number') {
     const limitEl = document.getElementById('charLimit');
     if (limitEl) limitEl.value = item.charBase;
   }
-  if (typeof item.charRange === 'number'){
+  if (typeof item.charRange === 'number') {
     const rangeEl = document.getElementById('charRange');
     if (rangeEl) rangeEl.value = item.charRange;
   }
 
-  // 4) 화면 정리
+  // 화면 정리
   refreshAutosize();
   updateCharCount();
 }
