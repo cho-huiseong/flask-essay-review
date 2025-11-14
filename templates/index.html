@@ -112,10 +112,11 @@ canvas.demoChart{ height:140px !important; }
   padding:18mm 18mm 16mm;
   display:flex;
   flex-direction:column;
-  gap:10mm;
+  gap:8mm;
   page-break-after:always;
   break-after:page;
 }
+
 
 /* 수동 페이지 브레이크용 */
 .pdf-scope .page-break{
@@ -1338,7 +1339,7 @@ document.addEventListener('DOMContentLoaded', refreshMe);
      <div class="section-title">점수 그래프</div>
      <div style="text-align:center">
        <img id="pdfScoreChartCover" alt="Score Chart"
-            style="max-width:100%; width:100%;" />
+            style="max-width:100%; width:100%; max-height:55mm; object-fit:contain;" />
      </div>
    </div>
 
@@ -1363,12 +1364,12 @@ document.addEventListener('DOMContentLoaded', refreshMe);
       <div class="pdf-text" id="pdfQuestion"></div>
     </div>
 
-    <div class="card">
+    <div class="card avoid-break">
       <div class="section-title">제시문 (전문)</div>
       <div class="pdf-text" id="pdfPassages"></div>
     </div>
 
-    <div class="card">
+    <div class="card avoid-break">
       <div class="section-title">학생 논술문</div>
       <div class="pdf-text" id="pdfEssay"></div>
       <div class="muted" style="margin-top:4px;">
@@ -1406,7 +1407,7 @@ document.addEventListener('DOMContentLoaded', refreshMe);
       <div id="pdfHeaderStudent3"></div>
     </div>
 
-    <div class="card">
+    <div class="card avoid-break">
       <div class="section-title">예시답안</div>
       <div class="muted" style="margin-bottom:4px;">
         ※ 이 예시답안은 학생 글의 문체와 수준을 참고하여 작성된 참고용 예시입니다.
@@ -1414,7 +1415,7 @@ document.addEventListener('DOMContentLoaded', refreshMe);
       <div class="pdf-text" id="pdfExample"></div>
     </div>
 
-    <div class="card">
+    <div class="card avoid-break">
       <div class="section-title">비교분석</div>
       <div id="pdfComparison" class="pdf-text"></div>
     </div>
