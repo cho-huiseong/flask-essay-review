@@ -1038,6 +1038,10 @@ function syncPdfContainer() {
   let statusDisplay = status.label;
   if (statusDisplay === '예비') statusDisplay = '보류';  // PDF에서는 '보류'로 표기
 
+  const emoji = status.emoji || '';
+  const statusWithEmoji = emoji ? `${emoji} ${statusDisplay}` : statusDisplay;
+
+
   // 4) 표지(1페이지) 채우기
   document.getElementById('pdfHeaderStudent').textContent  = name;
   document.getElementById('pdfHeaderStudent2').textContent = name;
@@ -1046,18 +1050,37 @@ function syncPdfContainer() {
   document.getElementById('pdfStudentName').textContent = name;
   document.getElementById('pdfDate').textContent        = dateStr;
   document.getElementById('pdfCharCount').textContent   = charCount;
-  document.getElementById('pdfCoverQuestion').textContent = question || '질문이 입력되지 않았습니다.';
-  document.getElementById('pdfSummary').textContent     = savedSummary || '';
+
+  // ▼ 표지 타이틀: OOO 리포트
+  const coverTitleEl = document.getElementById('pdfCoverTitle');
+  if (coverTitleEl) {
+    coverTitleEl.textContent = name && name !== '이름 미입력'
+      ? `${name} 리포트`
+      : '학생 리포트';
+  }
+
+  // ▼ 질문 레이블 + 내용
+  const coverQEl = document.getElementById('pdfCoverQuestion');
+   if (coverQEl) {
+    if (question) {
+     coverQEl.innerHTML = `<span class="muted">질문</span><br>${question}`;
+    } else {
+      coverQEl.innerHTML = `<span class="muted">질문이 입력되지 않았습니다.</span>`;
+    }
+  }
+
+  document.getElementById('pdfSummary').textContent = savedSummary || '';
 
   // 상태/총점(표지)
   const badgeEl = document.getElementById('pdfStatusBadge');
-  if (badgeEl) badgeEl.textContent = statusDisplay;
+  if (badgeEl) badgeEl.textContent = statusWithEmoji;
 
   const totalEl = document.getElementById('pdfTotalScore');
   if (totalEl) totalEl.textContent = total.toString();
 
   const statusLabel2 = document.getElementById('pdfStatusLabel2');
-  if (statusLabel2) statusLabel2.textContent = statusDisplay;
+  if (statusLabel2) statusLabel2.textContent = statusWithEmoji;
+
 
   const statusDesc = document.getElementById('pdfStatusDesc');
   if (statusDesc) statusDesc.textContent = status.desc || '';
@@ -1103,7 +1126,8 @@ function syncPdfContainer() {
   if (totalDetailEl) totalDetailEl.textContent = total.toString();
 
   const statusLabelDetail = document.getElementById('pdfStatusLabelDetail');
-  if (statusLabelDetail) statusLabelDetail.textContent = statusDisplay;
+  if (statusLabelDetail) statusLabelDetail.textContent = statusWithEmoji;
+
 
   const statusDescDetail = document.getElementById('pdfStatusDescDetail');
   if (statusDescDetail) statusDescDetail.textContent = status.desc || '';
@@ -1272,7 +1296,7 @@ document.addEventListener('DOMContentLoaded', refreshMe);
     <div class="card cover-hero avoid-break">
       <div class="cover-title-row">
         <div>
-          <div class="cover-title-main">학생 리포트</div>
+          <div class="cover-title-main" id="pdfCoverTitle">학생 리포트</div>
           <div class="muted cover-sub" id="pdfCoverQuestion"></div>
         </div>
         <div id="pdfStatusBadge" class="status-badge"></div>
