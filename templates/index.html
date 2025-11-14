@@ -818,19 +818,35 @@ async function __makeDonutPNG(total){
   }, 120, 120);
 }
 function syncPdfContainer() {
-  document.getElementById('pdfExample').innerHTML    = (window.savedExample||'').replace(/\n/g,'<br/>');
-  document.getElementById('pdfComparison').innerHTML = (window.savedComparison||'').replace(/\n/g,'<br/>');
-  const name  = (document.getElementById('studentName')?.value||'').trim() || '이름 미입력';
-  const question = (document.getElementById('question')?.value||'').trim();
-  const essay    = (document.getElementById('essay')?.value||'').trim();
+  // 예시답안 / 비교분석 텍스트
+  document.getElementById('pdfExample').innerHTML =
+    (savedExample || '').replace(/\n/g, '<br/>');
+  document.getElementById('pdfComparison').innerHTML =
+    (savedComparison || '').replace(/\n/g, '<br/>');
+
+  const name  = (document.getElementById('studentName')?.value || '').trim() || '이름 미입력';
+  const question = (document.getElementById('question')?.value || '').trim();
+  const essay    = (document.getElementById('essay')?.value || '').trim();
   const charCount = essay.length;
   const dateStr = new Date().toISOString().split('T')[0];
 
-  // 준비 체크 (임의 폴백 금지)
-  if (!(Array.isArray(window.savedScores) && window.savedScores.length===4)) { alert('먼저 [평가하기]로 점수를 생성해 주세요.'); throw new Error('scores not ready'); }
-  if (!window.savedReasons) { alert('평가 근거가 준비되지 않았습니다.'); throw new Error('reasons not ready'); }
-  if (!window.savedExample || !window.savedComparison) { alert('먼저 [예시답안 만들기]로 예시/비교를 생성해 주세요.'); throw new Error('example/comparison not ready'); }
-  if (!window.savedSummary) {window.savedSummary = '한 줄 총평: (생성되지 않음)';}
+  // 준비 체크 – 전역 상태(saved*) 기준으로만 확인
+  if (!(Array.isArray(savedScores) && savedScores.length === 4)) {
+    alert('먼저 [리포트 생성]으로 점수를 만들어 주세요.');
+    throw new Error('scores not ready');
+  }
+  if (!savedReasons) {
+    alert('평가 근거가 준비되지 않았습니다.');
+    throw new Error('reasons not ready');
+  }
+  if (!savedExample || !savedComparison) {
+    alert('먼저 [예시답안 보기]로 예시/비교를 생성해 주세요.');
+    throw new Error('example/comparison not ready');
+  }
+  if (!savedSummary) {
+    savedSummary = '한 줄 총평: (생성되지 않았습니다.)';
+  }
+
   // 헤더/표지
   document.getElementById('pdfHeaderStudent').textContent  = name;
   document.getElementById('pdfHeaderStudent2').textContent = name;
@@ -840,41 +856,57 @@ function syncPdfContainer() {
   document.getElementById('pdfDate').textContent = dateStr;
   document.getElementById('pdfCharCount').textContent = charCount;
   document.getElementById('pdfCoverQuestion').textContent = question;
-  document.getElementById('pdfSummary').textContent = window.savedSummary || '';
+  document.getElementById('pdfSummary').textContent = savedSummary || '';
 
   // 페이지2 — 질문/제시문/학생문
   document.getElementById('pdfQuestion').textContent = question;
 
-  const passages = Array.isArray(window.savedPassages) ? window.savedPassages
-    : (document.getElementById('passages')?.value ? [document.getElementById('passages').value] : []);
-  document.getElementById('pdfPassages').innerHTML =
-    passages.map((p,i)=>`<div class="card pdf-text"><div class="muted">[제시문 ${i+1}]</div><div>${(p||'').replace(/\n/g,'<br/>')}</div></div>`).join('');
+  const passages = Array.isArray(window.savedPassages)
+    ? window.savedPassages
+    : (document.getElementById('passages')?.value
+        ? [document.getElementById('passages').value]
+        : []);
 
-  document.getElementById('pdfEssay').innerHTML = (essay||'').replace(/\n/g,'<br/>');
+  document.getElementById('pdfPassages').innerHTML =
+    passages.map((p, i) => `
+      <div>
+        <b>[제시문 ${i + 1}]</b><br/>
+        ${(p || '').replace(/\n/g, '<br/>')}
+      </div>`).join('');
+
+  document.getElementById('pdfEssay').innerHTML =
+    (essay || '').replace(/\n/g, '<br/>');
   document.getElementById('pdfCharCount2').textContent = charCount;
+
+  // 👉 여기부터가 아까 함수 밖으로 나가 있던 부분
 
   // 점수 카드 + 근거
   const labels = ['논리력','독해력','구성력','표현력'];
-  const sc = window.savedScores;
-  const rs = window.savedReasons;
+  const sc = savedScores;
+  const rs = savedReasons;
   document.getElementById('pdfScoreCards').innerHTML =
     labels.map((k,idx)=>`
       <div class="card avoid-break">
-        <b>${k}</b> — <b>${sc[idx]}점</b><br/>
-        <span class="muted">${(rs[k]||'').replace(/\n/g,' ')}</span>
+        <b>${k}</b> — <b>${sc && sc[idx] != null ? sc[idx] : '-'}점</b><br/>
+        <span class="muted">${(rs && rs[k] ? rs[k] : '').replace(/\n/g,' ')}</span>
       </div>`).join('');
 
   // 그래프 이미지 (화면 캔버스를 PNG로)
   try {
     const cv = document.querySelector('#scoreChart') || document.querySelector('#radarChart');
-    if (cv && cv.toDataURL) document.getElementById('pdfScoreChart').src = cv.toDataURL('image/png');
-  } catch(e){ console.warn('chart toDataURL fail', e); }
+    if (cv && cv.toDataURL) {
+      document.getElementById('pdfScoreChart').src = cv.toDataURL('image/png');
+    }
+  } catch(e){
+    console.warn('chart toDataURL fail', e);
+  }
 
   // 페이지 수 표기(우선 고정)
   document.getElementById('pdfTotalPages1').textContent = '3';
   document.getElementById('pdfTotalPages2').textContent = '3';
   document.getElementById('pdfTotalPages3').textContent = '3';
 }
+
 async function downloadPDF_dashboard_land(){
   if(!window.html2pdf || !window.Chart){
     alert('Chart.js 또는 html2pdf 로드 실패'); return;
