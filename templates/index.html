@@ -537,13 +537,17 @@ canvas.demoChart{ height:140px !important; }
           <div style="display:flex; align-items:center; gap:6px; font-size:13px;">
             <span class="muted">교재에서 불러오기</span>
 
-            <select id="bookStageSelect" class="input" style="width:auto; min-width:90px;">
-              <option value="">단계 선택</option>
-              <!-- JS에서 1-1, 1-2, 3-8 이런 옵션 자동으로 채움 -->
+            <select id="bookMainStageSelect" class="input" style="width:auto; min-width:90px;">
+              <option value="">단계</option>
+            </select>
+
+            <select id="bookSubStageSelect" class="input" style="width:auto; min-width:90px;">
+              <option value="">교재</option>
             </select>
 
             <select id="bookPageSelect" class="input" style="width:auto; min-width:90px;">
               <option value="">페이지</option>
+
               <!-- JS에서 해당 단계의 페이지 목록 자동 채움 -->
             </select>
 
@@ -788,47 +792,86 @@ document.addEventListener('DOMContentLoaded', ()=>{ document.getElementById('btn
 /* ===== 교재 문제(단계/페이지) 로딩 ===== */
 let BOOK_ITEMS = [];
 
-function loadBookItems(){
+function loadBookItems() {
   fetch('/static/book_items.json', { cache: 'no-store' })
     .then(res => res.json())
     .then(data => {
       BOOK_ITEMS = Array.isArray(data) ? data : [];
 
-      const stageSelect = document.getElementById('bookStageSelect');
-      const pageSelect  = document.getElementById('bookPageSelect');
-      if (!stageSelect || !pageSelect) return;
+      const mainStageSelect = document.getElementById('bookMainStageSelect');
+      const subStageSelect  = document.getElementById('bookSubStageSelect');
+      const pageSelect      = document.getElementById('bookPageSelect');
 
-      // 단계 목록 추출 (1-1, 1-2, 3-8, 9-12 등)
-      const stages = [...new Set(BOOK_ITEMS.map(item => item.stage))].sort();
-      stages.forEach(stage => {
+      if (!mainStageSelect || !subStageSelect || !pageSelect) return;
+
+      /* ---------------------------------------------------------
+         ① 단계 목록 생성 (stage: "1-1" → mainStage = "1")
+      --------------------------------------------------------- */
+      const mainStages = [...new Set(
+        BOOK_ITEMS.map(item => item.stage.split('-')[0])
+      )].sort((a, b) => Number(a) - Number(b));
+
+      mainStages.forEach(main => {
         const opt = document.createElement('option');
-        opt.value = stage;
-        opt.textContent = stage + ' 단계';
-        stageSelect.appendChild(opt);
+        opt.value = main;
+        opt.textContent = `${main}단계`;
+        mainStageSelect.appendChild(opt);
       });
 
-      // 단계 선택 시, 해당 단계의 페이지 목록 채우기
-      stageSelect.addEventListener('change', () => {
-        const stage = stageSelect.value;
+      /* ---------------------------------------------------------
+         ② 단계 선택 → 교재(소단계) 목록 생성 (stage: "1-1" → subStage = "1")
+      --------------------------------------------------------- */
+      mainStageSelect.addEventListener('change', () => {
+        const mainValue = mainStageSelect.value;
+
+        subStageSelect.innerHTML = '<option value="">교재</option>';
+        pageSelect.innerHTML     = '<option value="">페이지</option>';
+
+        if (!mainValue) return;
+
+        const subStages = [...new Set(
+          BOOK_ITEMS
+            .filter(item => item.stage.split('-')[0] === mainValue)
+            .map(item => item.stage.split('-')[1])
+        )].sort((a, b) => Number(a) - Number(b));
+
+        subStages.forEach(sub => {
+          const opt = document.createElement('option');
+          opt.value = sub;
+          opt.textContent = `${sub}단계`;
+          subStageSelect.appendChild(opt);
+        });
+      });
+
+      /* ---------------------------------------------------------
+         ③ 교재 선택 → 페이지 목록 생성
+      --------------------------------------------------------- */
+      subStageSelect.addEventListener('change', () => {
+        const mainValue = mainStageSelect.value;
+        const subValue  = subStageSelect.value;
+
         pageSelect.innerHTML = '<option value="">페이지</option>';
-        if (!stage) return;
+
+        if (!mainValue || !subValue) return;
 
         const pages = BOOK_ITEMS
-          .filter(item => item.stage === stage)
+          .filter(item => {
+            const [m, s] = item.stage.split('-');
+            return m === mainValue && s === subValue;
+          })
           .map(item => item.page)
-          .filter((v, i, arr) => arr.indexOf(v) === i)  // 중복 제거
-          .sort((a, b) => a - b);
+          .sort((a, b) => Number(a) - Number(b));
 
         pages.forEach(p => {
           const opt = document.createElement('option');
-          opt.value = String(p);
-          opt.textContent = p + '쪽';
+          opt.value = p;
+          opt.textContent = `${p}`;
           pageSelect.appendChild(opt);
         });
       });
     })
     .catch(err => {
-      console.error('book_items.json 로드 실패:', err);
+      console.error("book_items.json 로드 실패:", err);
     });
 }
 
@@ -836,20 +879,24 @@ function loadBookItems(){
 window.addEventListener('DOMContentLoaded', loadBookItems);
 
 /* 🔽 새로 추가: 교재 문제 적용 함수 */
-function applyBookProblem(){
-  const stageSelect = document.getElementById('bookStageSelect');
-  const pageSelect  = document.getElementById('bookPageSelect');
-  if (!stageSelect || !pageSelect) return;
+function applyBookProblem() {
+  const mainStage = document.getElementById('bookMainStageSelect').value;
+  const subStage  = document.getElementById('bookSubStageSelect').value;
+  const page      = document.getElementById('bookPageSelect').value;
 
-  const stage = stageSelect.value;
-  const page  = pageSelect.value;
+  if (!mainStage || !subStage || !page) {
+    alert("단계 / 교재 / 페이지를 모두 선택해 주세요.");
+    return;
+  }
 
+  const stage = `${mainStage}-${subStage}`;
+
+  // 여기부터는 기존 코드 그대로 유지
   if (!stage || !page){
     alert('단계와 페이지를 모두 선택해 주세요.');
     return;
   }
 
-  // BOOK_ITEMS에서 해당 단계/페이지 찾기
   const item = BOOK_ITEMS.find(
     it => it.stage === stage && String(it.page) === String(page)
   );
@@ -870,13 +917,11 @@ function applyBookProblem(){
   if (wrap){
     let areas = wrap.querySelectorAll('.passage');
 
-    // 제시문 칸이 하나도 없으면 최소 1개 생성
     if (areas.length === 0){
       window.addPassage();
       areas = wrap.querySelectorAll('.passage');
     }
 
-    // 기존 제시문은 첫 번째만 남기고 나머지는 제거 + 첫 번째에 1번 제시문 넣기
     areas.forEach((el, idx) => {
       if (idx === 0){
         el.value = (item.passages && item.passages[0]) ? item.passages[0] : '';
@@ -886,7 +931,6 @@ function applyBookProblem(){
       }
     });
 
-    // 제시문이 2개 이상이면 나머지 추가 생성
     if (Array.isArray(item.passages)){
       for (let i = 1; i < item.passages.length; i++){
         const text = item.passages[i];
