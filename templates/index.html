@@ -527,22 +527,60 @@ canvas.demoChart{ height:140px !important; }
         <h2 style="margin:0 0 12px; font-weight:900">✨ 너의 글, 오늘 더 멀리 날아가게.</h2>
         <p class="muted" style="margin-top:0">정성껏 쓴 문장 위에 필요한 피드백만 얹어, 목표에 닿도록 부드럽게 이끌어 드릴게요.</p>
 
-        <label class="form-label">학생 이름</label>
+                <label class="form-label">학생 이름</label>
         <input id="studentName" class="input" placeholder="예: 홍길동" />
 
-        <label class="form-label">질문</label>
-        <textarea id="question" class="textarea" rows="2" placeholder="질문을 여기에 작성해 주세요."></textarea>
+        <!-- 🔽 질문 + 교재 불러오기 영역 -->
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+          <label class="form-label" style="margin:0">질문</label>
 
+          <div style="display:flex; align-items:center; gap:6px; font-size:13px;">
+            <span class="muted">교재에서 불러오기</span>
+
+            <select id="bookStageSelect" class="input" style="width:auto; min-width:90px;">
+              <option value="">단계 선택</option>
+              <!-- JS에서 1-1, 1-2, 3-8 이런 옵션 자동으로 채움 -->
+            </select>
+
+            <select id="bookPageSelect" class="input" style="width:auto; min-width:90px;">
+              <option value="">페이지</option>
+              <!-- JS에서 해당 단계의 페이지 목록 자동 채움 -->
+            </select>
+
+            <button type="button" class="btn btn-ghost" onclick="applyBookProblem()">
+              불러오기
+            </button>
+          </div>
+        </div>
+
+        <textarea
+          id="question"
+          class="textarea"
+          rows="2"
+          placeholder="질문을 여기에 작성해 주세요."></textarea>
+          
+        <!-- 🔽 여기부터 새로 추가: 제시문 영역 -->
         <label class="form-label">제시문 <span class="muted">(최소 1개)</span></label>
         <div id="passages">
-          <textarea class="passage textarea" rows="3" placeholder="제시문을 그대로 적어 주세요."></textarea>
+          <textarea
+            class="passage textarea"
+            rows="3"
+            placeholder="제시문을 그대로 적어 주세요."></textarea>
         </div>
         <div style="display:flex; justify-content:flex-end; margin-top:8px">
-          <button type="button" id="btnAddPassage" class="btn btn-ghost">➕ 제시문 더 추가</button>
+          <button type="button" id="btnAddPassage" class="btn btn-ghost">
+            ➕ 제시문 더 추가
+          </button>
         </div>
 
+        <!-- 🔼 제시문 영역 끝 -->
         <label class="form-label">논술문 <span class="muted">(학생 작성 글)</span></label>
-        <textarea id="essay" class="textarea" rows="6" placeholder="제시문만 근거로, 배경지식 없이 작성해 주세요." oninput="updateCharCount()"></textarea>
+        <textarea
+          id="essay"
+          class="textarea"
+          rows="6"
+          placeholder="제시문만 근거로, 배경지식 없이 작성해 주세요."
+          oninput="updateCharCount()"></textarea>
         <div id="charCount" class="muted" style="margin-top:6px"></div>
 
         <label class="form-label">글자 수 제한</label>
@@ -747,6 +785,134 @@ window.addPassage = function(){
   autoResize(t); t.focus();
 };
 document.addEventListener('DOMContentLoaded', ()=>{ document.getElementById('btnAddPassage')?.addEventListener('click', ()=>window.addPassage()); });
+/* ===== 교재 문제(단계/페이지) 로딩 ===== */
+let BOOK_ITEMS = [];
+
+function loadBookItems(){
+  fetch('/static/book_items.json', { cache: 'no-store' })
+    .then(res => res.json())
+    .then(data => {
+      BOOK_ITEMS = Array.isArray(data) ? data : [];
+
+      const stageSelect = document.getElementById('bookStageSelect');
+      const pageSelect  = document.getElementById('bookPageSelect');
+      if (!stageSelect || !pageSelect) return;
+
+      // 단계 목록 추출 (1-1, 1-2, 3-8, 9-12 등)
+      const stages = [...new Set(BOOK_ITEMS.map(item => item.stage))].sort();
+      stages.forEach(stage => {
+        const opt = document.createElement('option');
+        opt.value = stage;
+        opt.textContent = stage + ' 단계';
+        stageSelect.appendChild(opt);
+      });
+
+      // 단계 선택 시, 해당 단계의 페이지 목록 채우기
+      stageSelect.addEventListener('change', () => {
+        const stage = stageSelect.value;
+        pageSelect.innerHTML = '<option value="">페이지</option>';
+        if (!stage) return;
+
+        const pages = BOOK_ITEMS
+          .filter(item => item.stage === stage)
+          .map(item => item.page)
+          .filter((v, i, arr) => arr.indexOf(v) === i)  // 중복 제거
+          .sort((a, b) => a - b);
+
+        pages.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = String(p);
+          opt.textContent = p + '쪽';
+          pageSelect.appendChild(opt);
+        });
+      });
+    })
+    .catch(err => {
+      console.error('book_items.json 로드 실패:', err);
+    });
+}
+
+// 페이지 로딩 시 교재 데이터 먼저 불러오기
+window.addEventListener('DOMContentLoaded', loadBookItems);
+
+/* 🔽 새로 추가: 교재 문제 적용 함수 */
+function applyBookProblem(){
+  const stageSelect = document.getElementById('bookStageSelect');
+  const pageSelect  = document.getElementById('bookPageSelect');
+  if (!stageSelect || !pageSelect) return;
+
+  const stage = stageSelect.value;
+  const page  = pageSelect.value;
+
+  if (!stage || !page){
+    alert('단계와 페이지를 모두 선택해 주세요.');
+    return;
+  }
+
+  // BOOK_ITEMS에서 해당 단계/페이지 찾기
+  const item = BOOK_ITEMS.find(
+    it => it.stage === stage && String(it.page) === String(page)
+  );
+
+  if (!item){
+    alert('선택한 단계/페이지에 해당하는 교재 정보가 없습니다.');
+    return;
+  }
+
+  // 1) 질문 채우기
+  const qEl = document.getElementById('question');
+  if (qEl){
+    qEl.value = item.question || '';
+  }
+
+  // 2) 제시문 textarea들 채우기
+  const wrap = document.getElementById('passages');
+  if (wrap){
+    let areas = wrap.querySelectorAll('.passage');
+
+    // 제시문 칸이 하나도 없으면 최소 1개 생성
+    if (areas.length === 0){
+      window.addPassage();
+      areas = wrap.querySelectorAll('.passage');
+    }
+
+    // 기존 제시문은 첫 번째만 남기고 나머지는 제거 + 첫 번째에 1번 제시문 넣기
+    areas.forEach((el, idx) => {
+      if (idx === 0){
+        el.value = (item.passages && item.passages[0]) ? item.passages[0] : '';
+        autoResize(el);
+      }else{
+        el.remove();
+      }
+    });
+
+    // 제시문이 2개 이상이면 나머지 추가 생성
+    if (Array.isArray(item.passages)){
+      for (let i = 1; i < item.passages.length; i++){
+        const text = item.passages[i];
+        window.addPassage();
+        const newAreas = wrap.querySelectorAll('.passage');
+        const el = newAreas[newAreas.length - 1];
+        el.value = text || '';
+        autoResize(el);
+      }
+    }
+  }
+
+  // 3) 글자 수 기준/범위 채우기
+  if (typeof item.charBase === 'number'){
+    const limitEl = document.getElementById('charLimit');
+    if (limitEl) limitEl.value = item.charBase;
+  }
+  if (typeof item.charRange === 'number'){
+    const rangeEl = document.getElementById('charRange');
+    if (rangeEl) rangeEl.value = item.charRange;
+  }
+
+  // 4) 화면 정리
+  refreshAutosize();
+  updateCharCount();
+}
 
 /* ===== 상태 ===== */
 let scoreChart, savedScores=[], savedReasons={}, savedExample="", savedComparison="", savedSummary="";
