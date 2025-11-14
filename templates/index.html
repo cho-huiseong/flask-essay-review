@@ -854,7 +854,7 @@ if (!r.ok) { throw new Error(data.error || '오류'); }
         `).join('')}
       </div>
 
-      <div class="panel" style="margin-top:14px"><canvas id="scoreChart" height="140"></canvas></div>
+      <div class="panel" style="margin-top:14px; width:70%; margin-left:auto; margin-right:auto;"><canvas id="scoreChart" height="140" style="width:100%"></canvas></div>
 
       <div id="exampleCTA" style="text-align:right;margin-top:12px">
         <button id="btnExample" class="btn btn-primary" onclick="loadExample()">예시답안 보기</button>
@@ -1334,14 +1334,16 @@ document.addEventListener('DOMContentLoaded', refreshMe);
         </div>
        </div>
       </div>
-    </div>
-    <div class="card avoid-break">
-     <div class="section-title">점수 그래프</div>
-     <div style="text-align:center">
-       <img id="pdfScoreChartCover" alt="Score Chart"
-            style="max-width:100%; width:100%; max-height:55mm; object-fit:contain;" />
-     </div>
-   </div>
+
+
+      <div class="card avoid-break">
+       <div class="section-title">점수 그래프</div>
+       <div style="text-align:center">
+         <img id="pdfScoreChartCover"
+              alt="Score Chart"
+              style="max-width:70%; width:70%; margin:0 auto; display:block;" />
+       </div>
+      </div>
 
 
     <div class="footer">
@@ -1349,8 +1351,6 @@ document.addEventListener('DOMContentLoaded', refreshMe);
       <div>Page 1 / <span id="pdfTotalPages1">3</span></div>
     </div>
   </div>
-
-  <div class="page-break"></div>
 
   <!-- 2페이지: 문제/제시문/학생 논술문/세부 점수 -->
   <div class="page">
@@ -1397,8 +1397,6 @@ document.addEventListener('DOMContentLoaded', refreshMe);
       <div>Page 2 / <span id="pdfTotalPages2">3</span></div>
     </div>
   </div>
-
-  <div class="page-break"></div>
 
   <!-- 3페이지: 예시답안 · 비교분석 -->
   <div class="page">
