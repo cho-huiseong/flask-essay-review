@@ -376,6 +376,91 @@ canvas.demoChart{ height:140px !important; }
   border-radius: 4px;
   cursor: pointer;
 }
+/* ===== 글로벌 로딩 오버레이 ===== */
+.loading-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,0.18);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+
+.loading-card{
+  min-width:260px;
+  max-width:320px;
+  background:rgba(255,255,255,0.98);
+  border-radius:20px;
+  border:1px solid rgba(148,163,184,0.45);
+  box-shadow:0 24px 60px rgba(15,23,42,0.25);
+  padding:18px 18px 16px;
+  display:flex;
+  gap:14px;
+  align-items:flex-start;
+}
+
+.loading-main{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+.loading-title{
+  font-weight:800;
+  font-size:14px;
+  color:#111827;
+}
+.loading-sub{
+  font-size:12px;
+  color:#6B7280;
+}
+
+/* 페이퍼 스피너 */
+.paper-spinner{
+  width:40px;
+  height:40px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  perspective:600px;
+}
+
+.paper{
+  width:30px;
+  height:38px;
+  border-radius:8px;
+  background:#ffffff;
+  border:1px solid rgba(148,163,184,0.7);
+  box-shadow:0 10px 22px rgba(15,23,42,0.22);
+  padding:5px 6px;
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  transform-origin:center center;
+  animation:spinPaper 1.15s linear infinite;
+}
+
+.paper-line{
+  height:3px;
+  border-radius:999px;
+  background:rgba(148,163,184,0.8);
+}
+.paper-header{
+  width:72%;
+  background:rgba(37,99,235,0.95);
+}
+.paper-line.short{
+  width:60%;
+}
+
+@keyframes spinPaper{
+  0%   { transform:rotateY(0deg) translateY(0); opacity:1; }
+  45%  { transform:rotateY(180deg) translateY(-1px); opacity:0.9; }
+  100% { transform:rotateY(360deg) translateY(0); opacity:1; }
+}
 </style>
 </head>
 
@@ -713,6 +798,26 @@ canvas.demoChart{ height:140px !important; }
     </div>
   </section>
 </main>
+
+<!-- GLOBAL LOADING OVERLAY -->
+<div id="globalLoading" class="loading-overlay hidden">
+  <div class="loading-card">
+    <div class="paper-spinner">
+      <div class="paper">
+        <div class="paper-line paper-header"></div>
+        <div class="paper-line"></div>
+        <div class="paper-line"></div>
+        <div class="paper-line short"></div>
+      </div>
+    </div>
+    <div class="loading-main">
+      <div id="loadingMessage" class="loading-title">글을 읽고 있어요</div>
+      <div id="loadingSubMessage" class="loading-sub">
+        논리와 근거를 한 줄씩 따라가고 있어요.
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- AUTH MODAL -->
 <div id="authWrap" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="authTitle">
@@ -1061,6 +1166,11 @@ function resetReport(){
     if (i === 0) p.value = '';
     else p.remove();
   });
+  
+  // 제시문 이미지 프리뷰도 함께 리셋
+  document.querySelectorAll('.passage-preview').forEach(preview => {
+    preview.remove();
+  });
 
   document.getElementById('essay').value = '';
   document.getElementById('charLimit').value = '';
@@ -1099,6 +1209,8 @@ function getTotalAndStatus(scores){
 async function submitEssay(){
   document.getElementById('loading').style.display='block';
   document.getElementById('error').style.display='none';
+  showGlobalLoading('review');
+  
   try{
     const name=document.getElementById('studentName').value;
     const question=document.getElementById('question').value;
@@ -1107,17 +1219,17 @@ async function submitEssay(){
     const essay=document.getElementById('essay').value;
 
     const r = await fetch('/api/review', {
-     method: 'POST',
-     headers: { 'Content-Type': 'application/json' },
-     body: JSON.stringify({ name, question, passages, essay }),
-     credentials: 'include' // 이 줄은 있어도/없어도 동작엔 영향 없음
-});
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, question, passages, essay }),
+      credentials: 'include' // 이 줄은 있어도/없어도 동작엔 영향 없음
+    });
 
-const data = await r.json();
-if (!r.ok) { throw new Error(data.error || '오류'); }
+    const data = await r.json();
+    if (!r.ok) { throw new Error(data.error || '오류'); }
 
-
-    savedScores=data.scores; savedReasons=data.reasons;
+    savedScores=data.scores; 
+    savedReasons=data.reasons;
     const { total, status } = getTotalAndStatus(savedScores);
     savedSummary = data.summary; // ✅ 한 줄 총평 저장
 
@@ -1186,6 +1298,9 @@ if (!r.ok) { throw new Error(data.error || '오류'); }
     console.error(e);
     document.getElementById('loading').style.display='none';
     document.getElementById('error').style.display='block';
+  }finally{
+    // 🔵 토스 스타일 전체 로딩 오버레이는 여기서 반드시 끔
+    hideGlobalLoading();
   }
 }
 
@@ -1204,6 +1319,7 @@ async function loadExample(){
   err.textContent='';
 
   btn.disabled=true; const old=btn.textContent; btn.textContent='생성 중...';
+  showGlobalLoading('example');
 
   try{
     const name=document.getElementById('studentName').value;
@@ -1251,9 +1367,10 @@ async function loadExample(){
     console.error(e);
     err.textContent='생성 중 문제가 있었어요. 잠시 뒤 다시 시도해 주세요.';
     btn.textContent=old; btn.disabled=false;
+  }finally{
+    hideGlobalLoading();
   }
 }
-
 /* ===== PDF ===== */
 window.__pdf_version = 'v3.0-2025-10-24';
 
@@ -1815,6 +1932,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     clearError();
     setLoading('📸 논술문을 읽고 있어요…');
+    showGlobalLoading('ocr');
 
     try{
       const res  = await fetch('/api/ocr', {
@@ -1840,8 +1958,10 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Essay OCR error:', err);
       setLoading(null);
       setError('사진에서 글자를 읽는 중 문제가 발생했어요. 다시 시도해 주세요.');
-    }
+    }finally{
+    hideGlobalLoading();       // 🟦 추가
   }
+}
 
   // 버튼 → 파일 선택
   if (essayOcrBtn && essayOcrInput && essayArea) {
@@ -1955,7 +2075,70 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
+<script>
+// ===== 글로벌 로딩 문구 & 컨트롤 =====
+const loadingPhrases = {
+  review: [
+    '글의 숨은 근거들을 하나씩 꺼내보는 중이에요.',
+    '논리·독해·구성·표현을 네 방향에서 훑어보고 있어요.',
+    '선생님이라면 뭐라고 말할지 조심스럽게 적어보고 있어요.'
+  ],
+  example: [
+    '네가 쓴 문장을 살리면서 더 단단한 버전을 고민하고 있어요.',
+    '예시답안이 학생 글을 밀어내지 않도록 거리감을 맞추는 중이에요.'
+  ],
+  ocr: [
+    '사진 속 글자를 한 글자씩 더듬어 읽는 중이에요.',
+    '줄바꿈과 띄어쓰기도 가능한 한 그대로 가져오려고 해요.'
+  ]
+};
 
+let loadingPhraseTimer = null;
+
+function showGlobalLoading(kind = 'review'){
+  const wrap   = document.getElementById('globalLoading');
+  const mainEl = document.getElementById('loadingMessage');
+  const subEl  = document.getElementById('loadingSubMessage');
+  if(!wrap || !mainEl || !subEl) return;
+
+  const list = loadingPhrases[kind] || loadingPhrases.review;
+  let idx = 0;
+
+  // 타이틀은 상황별로 약간 다르게
+  if(kind === 'review'){
+    mainEl.textContent = '리포트를 만들고 있어요';
+  }else if(kind === 'example'){
+    mainEl.textContent = '예시답안을 준비하고 있어요';
+  }else if(kind === 'ocr'){
+    mainEl.textContent = '사진 속 글자를 읽고 있어요';
+  }else{
+    mainEl.textContent = '글을 읽고 있어요';
+  }
+
+  subEl.textContent  = list[0] || '';
+
+  if(loadingPhraseTimer){
+    clearInterval(loadingPhraseTimer);
+    loadingPhraseTimer = null;
+  }
+
+  loadingPhraseTimer = setInterval(()=>{
+    idx = (idx + 1) % list.length;
+    subEl.textContent = list[idx];
+  }, 1900);
+
+  wrap.classList.remove('hidden');
+}
+
+function hideGlobalLoading(){
+  const wrap = document.getElementById('globalLoading');
+  if(wrap) wrap.classList.add('hidden');
+  if(loadingPhraseTimer){
+    clearInterval(loadingPhraseTimer);
+    loadingPhraseTimer = null;
+  }
+}
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', updatePdfBtnState);
 </script>
