@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template, make_response
 from flask_cors import CORS
 from openai import OpenAI
-import os, json, re  # ← re 추가
+import os, json, re, base64
 from datetime import datetime
 
 # ==== Auth/DB ====
@@ -274,7 +274,61 @@ def _sanitize_headers(resp):
         pass
     return resp
 # ------------------------------------------------------------------
+@app.post("/api/ocr")
+def ocr_image():
+    """
+    이미지(그래프/도표/필기)를 받아 텍스트로만 추출해서 돌려주는 엔드포인트.
+    - 입력: multipart/form-data, field name 'image'
+    - 출력: { ok: bool, text: str, error?: str }
+    """
+    if not client:
+        return jsonify({"ok": False, "error": "OpenAI API 키가 설정되어 있지 않습니다."}), 500
 
+    if "image" not in request.files:
+        return jsonify({"ok": False, "error": "image 파일이 필요합니다.(field name: image)"}), 400
+
+    file = request.files["image"]
+    data = file.read()
+    if not data:
+        return jsonify({"ok": False, "error": "비어 있는 파일입니다."}), 400
+
+    try:
+        # 이미지 → base64 data URL 로 인코딩
+        b64 = base64.b64encode(data).decode("utf-8")
+        mime = file.mimetype or "image/png"
+        image_url = f"data:{mime};base64,{b64}"
+
+        # GPT-4-turbo 비전 기능 사용해서 OCR
+        resp = client.chat.completions.create(
+            model="gpt-4-turbo",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": (
+                                "이 이미지 안에 있는 글을 그대로 텍스트로 추출해 주세요. "
+                                "줄바꿈과 문단 구분을 최대한 유지해 주세요. "
+                                "설명이나 요약을 덧붙이지 말고, 보이는 글자만 출력합니다."
+                            ),
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": image_url},
+                        },
+                    ],
+                }
+            ],
+            temperature=0,
+            max_tokens=2048,
+        )
+
+        text = resp.choices[0].message.content or ""
+        return jsonify({"ok": True, "text": text.strip()})
+    except Exception as e:
+        print("❗ OCR 실패:", e, flush=True)
+        return jsonify({"ok": False, "error": str(e)}), 500
 # ---------- AI: Review ----------
 @app.post("/api/review")
 def review_open():

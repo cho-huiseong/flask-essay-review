@@ -586,7 +586,19 @@ canvas.demoChart{ height:140px !important; }
           placeholder="제시문만 근거로, 배경지식 없이 작성해 주세요."
           oninput="updateCharCount()"></textarea>
         <div id="charCount" class="muted" style="margin-top:6px"></div>
-
+        
+        <!-- 🆕 사진에서 글 가져오기 버튼 + 숨겨진 파일 입력 -->
+        <div style="margin-top:6px; display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" id="btnEssayOcr" class="btn btn-ghost">
+            📸 사진에서 글 가져오기
+          </button>
+        </div>
+        <input
+          id="essayImageInput"
+          type="file"
+          accept="image/*"
+         
+          style="display:none" />
         <label class="form-label">글자 수 제한</label>
         <div class="row">
           <input id="charLimit" class="input" placeholder="예: 700" />
@@ -1650,12 +1662,77 @@ function updatePdfBtnState(){
   btn.title = ready ? '' : '평가(리포트 생성)와 예시답안까지 생성 후 저장할 수 있어요';
 }
 
-  function openRecords(){
-    document.getElementById('recordsWrap').classList.remove('hidden');
-  }
-  function closeRecords(){
-    document.getElementById('recordsWrap').classList.add('hidden');
-  }
+function openRecords(){
+  document.getElementById('recordsWrap').classList.remove('hidden');
+}
+function closeRecords(){
+  document.getElementById('recordsWrap').classList.add('hidden');
+}
+</script>
+
+<!-- 🆕 여기 OCR용 스크립트 하나 끼워 넣기 -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const ocrBtn    = document.getElementById('btnEssayOcr');
+  const ocrInput  = document.getElementById('essayImageInput');
+  const essayArea = document.getElementById('essay');
+  const loadingEl = document.getElementById('loading');
+  const errorEl   = document.getElementById('error');
+
+  if (!ocrBtn || !ocrInput || !essayArea) return;
+
+  // 버튼 클릭 → 파일 선택창 열기
+  ocrBtn.addEventListener('click', () => {
+    if (errorEl) errorEl.style.display = 'none';
+    ocrInput.value = '';
+    ocrInput.click();
+  });
+
+  // 파일 선택 후 → /api/ocr로 전송
+  ocrInput.addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    if (loadingEl) {
+      loadingEl.textContent = '📸 사진에서 글을 읽고 있어요…';
+      loadingEl.style.display = 'block';
+    }
+    if (errorEl) {
+      errorEl.style.display = 'none';
+    }
+
+    try {
+      const res = await fetch('/api/ocr', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      const data = await res.json();
+
+      if (!data.ok) {
+        throw new Error(data.error || 'OCR 실패');
+      }
+
+      // 인식된 텍스트를 논술문 칸에 채우기
+      essayArea.value = data.text || '';
+      if (typeof updateCharCount === 'function') {
+        updateCharCount();
+      }
+
+      if (loadingEl) loadingEl.style.display = 'none';
+    } catch (err) {
+      console.error('OCR error:', err);
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (errorEl) {
+        errorEl.textContent = '사진에서 글을 읽는 중 문제가 발생했어요. 다시 시도해 주세요.';
+        errorEl.style.display = 'block';
+      }
+    }
+  });
+});
 </script>
 
 <script>
