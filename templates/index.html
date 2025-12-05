@@ -80,7 +80,10 @@ header{
 .input,.textarea{ width:100%; padding:14px 16px; border:1px solid #e5e7eb; border-radius:12px; font-size:16px; line-height:1.6; resize:none }
 .input:focus,.textarea:focus{ outline:none; border-color:var(--brand); box-shadow:0 0 0 3px rgba(33,64,177,.18) }
 .textarea::placeholder,.input::placeholder{ color:#9CA3AF }
-#passages{ display:grid; grid-template-columns:1fr 1fr; gap:14px }
+#passages,
+#passagesDemo{
+  display:grid; grid-template-columns:1fr 1fr; gap:14px;
+}
 @media (max-width:680px){ #passages{ grid-template-columns:1fr } }
 .kpi{ display:grid; grid-template-columns:1fr 1fr; gap:12px }
 @media (max-width:900px){ .kpi{ grid-template-columns:1fr } }
@@ -343,6 +346,20 @@ canvas.demoChart{ height:140px !important; }
 
 #loginBtn, #profileArea { display: none !important; }
 
+/* 제시문 이미지 프리뷰 */
+.passage-preview{
+  margin-top:6px;
+  border-radius:12px;
+  border:1px solid rgba(148,163,184,0.35);
+  padding:6px;
+  background:#f9fafb;
+}
+.passage-preview img{
+  max-width:100%;
+  display:block;
+  border-radius:8px;
+}
+
 </style>
 </head>
 
@@ -403,13 +420,23 @@ canvas.demoChart{ height:140px !important; }
               <label class="form-label">질문</label>
               <div class="panel" style="padding:12px" data-demo-question>제시문을 바탕으로 '공정'의 의미를 정의하고, 사회적 약자 보호의 관점에서 그 정당성을 논하시오.</div>
 
-              <label class="form-label">제시문 <span class="muted">(최소 1개)</span></label>
-              <div id="demoPassages" class="row" style="flex-wrap:wrap">
-                <div class="panel" style="padding:12px;flex:1;min-width:300px" data-demo-passage>“공정은 누구나 경쟁에 참여할 수 있도록 동등한 출발선을 보장하려는 사회의 약속이다.”</div>
-                <div class="panel" style="padding:12px;flex:1;min-width:300px" data-demo-passage>“성과에 따른 차등 보상은 동기를 높이지만, 출발선이 기울어져 있으면 불평등을 확대할 수 있다.”</div>
-                <div class="panel" style="padding:12px;flex:1;min-width:300px" data-demo-passage>“약자를 보호하는 정책은 경쟁을 약화시키는 예외가 아니라 참여 능력을 회복시키는 조건이다.”</div>
-                <div class="panel" style="padding:12px;flex:1;min-width:300px" data-demo-passage>“제도는 기회의 불균형을 완화하기 위해 투명한 기준과 명확한 종료 조건을 갖추어야 한다.”</div>
+              <label class="form-label">
+                제시문 <span class="muted">(최소 1개)</span>
+              </label>
+              <p class="muted" style="margin:4px 0 6px;">
+                제시문은 <b>텍스트를 그대로 붙여넣어</b> 주시면 돼요.<br>
+                필요하다면 <b>사진 파일을 추가해서 원본 이미지를 함께 보관</b>할 수도 있지만,
+                사진은 글자로 바꾸지 않고 그대로 보여드려요.
+              </p>
+
+              <div id="passagesDemo">
+                <textarea
+                  class="passage textarea"
+                  rows="3"
+                  placeholder="제시문을 그대로 적어 주세요. (복사한 글을 붙여넣어도 돼요.)"></textarea>
               </div>
+
+
 
               <label class="form-label">논술문</label>
               <div class="panel" style="padding:12px">
@@ -563,41 +590,74 @@ canvas.demoChart{ height:140px !important; }
           rows="2"
           placeholder="질문을 여기에 작성해 주세요."></textarea>
           
-        <!-- 🔽 여기부터 새로 추가: 제시문 영역 -->
-        <label class="form-label">제시문 <span class="muted">(최소 1개)</span></label>
+                <!-- 🔽 여기부터 새로 추가: 제시문 영역 -->
+        <label class="form-label">
+          제시문 <span class="muted">(최소 1개)</span>
+        </label>
+        <p class="muted" style="margin:4px 0 6px;">
+          제시문은 <b>텍스트를 그대로 붙여넣어</b> 주시면 돼요.<br>
+          필요하다면 <b>사진 파일을 추가해서 원본 이미지를 함께 보관</b>할 수도 있지만,
+          사진은 글자로 바꾸지 않고 그대로 보여드려요.
+        </p>
+
         <div id="passages">
           <textarea
             class="passage textarea"
             rows="3"
-            placeholder="제시문을 그대로 적어 주세요."></textarea>
+            placeholder="제시문을 그대로 적어 주세요. (복사한 글을 붙여넣어도 돼요.)"></textarea>
         </div>
-        <div style="display:flex; justify-content:flex-end; margin-top:8px">
+
+        <!-- 🔽 제시문: 사진에서 가져오기 + 제시문 추가 버튼 -->
+        <div style="display:flex; justify-content:space-between; margin-top:8px; gap:8px;">
+          <button type="button" id="btnPassageOcr" class="btn btn-ghost">
+            📸 제시문 사진 파일 추가
+          </button>
           <button type="button" id="btnAddPassage" class="btn btn-ghost">
             ➕ 제시문 더 추가
           </button>
         </div>
+        <p class="muted" style="margin:4px 0 0; font-size:13px;">
+          제시문 사진은 <b>파일에서 선택하거나, 제시문 칸에 그대로 붙여넣기</b> 하셔도 돼요.<br>
+          사진은 글자로 바꾸지 않고 <b>원본 이미지 그대로</b> 참고용으로 보관됩니다.
+        </p>
+
+
+
+<!-- 제시문용 숨은 파일 입력 -->
+<input
+  id="passageImageInput"
+  type="file"
+  accept="image/*"
+  style="display:none" />
+
 
         <!-- 🔼 제시문 영역 끝 -->
-        <label class="form-label">논술문 <span class="muted">(학생 작성 글)</span></label>
+        <label class="form-label">
+          논술문 <span class="muted">(학생 작성 글)</span>
+        </label>
+        <p class="muted" style="margin:4px 0 6px;">
+          학생이 종이에 쓴 답안은 <b>사진을 붙여넣거나 파일로 올리면</b>
+          자동으로 <b>텍스트로 변환</b>해 드릴게요.<br>
+          제시문에 없는 배경지식은 최대한 줄이고, 제시문만 근거로 써 주세요.
+        </p>
         <textarea
           id="essay"
           class="textarea"
           rows="6"
-          placeholder="제시문만 근거로, 배경지식 없이 작성해 주세요."
+          placeholder="제시문만 근거로, 배경지식 없이 작성해 주세요. (종이에 쓴 답안은 사진을 붙여넣으면 글자로 바뀝니다.)"
           oninput="updateCharCount()"></textarea>
         <div id="charCount" class="muted" style="margin-top:6px"></div>
         
         <!-- 🆕 사진에서 글 가져오기 버튼 + 숨겨진 파일 입력 -->
         <div style="margin-top:6px; display:flex; justify-content:flex-end; gap:8px;">
           <button type="button" id="btnEssayOcr" class="btn btn-ghost">
-            📸 사진에서 글 가져오기
+            📸 사진에서 글 → 글자로 변환
           </button>
         </div>
         <input
           id="essayImageInput"
           type="file"
           accept="image/*"
-         
           style="display:none" />
         <label class="form-label">글자 수 제한</label>
         <div class="row">
@@ -1669,43 +1729,79 @@ function closeRecords(){
   document.getElementById('recordsWrap').classList.add('hidden');
 }
 </script>
+<script>
+// 🔹 제시문 OCR 대상 textarea를 기억하는 전역 변수
+let currentPassageTarget = null;
+
+// 🔹 어떤 제시문 칸이 포커스를 받았는지 추적
+document.addEventListener('focusin', (e) => {
+  if (e.target.classList && e.target.classList.contains('passage')) {
+    currentPassageTarget = e.target;
+  }
+});
+</script>
 
 <!-- 🆕 여기 OCR용 스크립트 하나 끼워 넣기 -->
+ 
+<!-- 🆕 제시문 / 논술문 OCR 및 이미지 처리 스크립트 -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  const ocrBtn    = document.getElementById('btnEssayOcr');
-  const ocrInput  = document.getElementById('essayImageInput');
-  const essayArea = document.getElementById('essay');
-  const loadingEl = document.getElementById('loading');
-  const errorEl   = document.getElementById('error');
+  const essayOcrBtn   = document.getElementById('btnEssayOcr');
+  const essayOcrInput = document.getElementById('essayImageInput');
+  const essayArea     = document.getElementById('essay');
+  const loadingEl     = document.getElementById('loading');
+  const errorEl       = document.getElementById('error');
 
-  if (!ocrBtn || !ocrInput || !essayArea) return;
+  const passageOcrBtn   = document.getElementById('btnPassageOcr');
+  const passageOcrInput = document.getElementById('passageImageInput');
 
-  // 버튼 클릭 → 파일 선택창 열기
-  ocrBtn.addEventListener('click', () => {
-    if (errorEl) errorEl.style.display = 'none';
-    ocrInput.value = '';
-    ocrInput.click();
-  });
+  // ---------- 공통: 에러 / 로딩 헬퍼 ----------
+  function clearError(){
+    if (errorEl) {
+      errorEl.style.display = 'none';
+      errorEl.textContent = '';
+    }
+  }
+  function setError(msg){
+    if (errorEl) {
+      errorEl.textContent = msg;
+      errorEl.style.display = 'block';
+    }
+  }
+  function setLoading(msg){
+    if (!loadingEl) return;
+    if (msg) {
+      loadingEl.textContent = msg;
+      loadingEl.style.display = 'block';
+    } else {
+      loadingEl.style.display = 'none';
+    }
+  }
 
-  // 파일 선택 후 → /api/ocr로 전송
-  ocrInput.addEventListener('change', async (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
+  // ---------- 제시문 이미지 프리뷰 컨테이너 ----------
+  function ensurePassagePreview(targetTextarea){
+    if (!targetTextarea) return null;
+    let preview = targetTextarea.nextElementSibling;
+    if (!preview || !preview.classList.contains('passage-preview')) {
+      preview = document.createElement('div');
+      preview.className = 'passage-preview';
+      targetTextarea.insertAdjacentElement('afterend', preview);
+    }
+    return preview;
+  }
+
+  // ========== 1) 논술문: 파일 업로드 → OCR → 텍스트로 변환 ==========
+  async function runEssayOcrWithFile(file){
+    if (!file || !essayArea) return;
 
     const formData = new FormData();
     formData.append('image', file);
 
-    if (loadingEl) {
-      loadingEl.textContent = '📸 사진에서 글을 읽고 있어요…';
-      loadingEl.style.display = 'block';
-    }
-    if (errorEl) {
-      errorEl.style.display = 'none';
-    }
+    clearError();
+    setLoading('📸 논술문을 읽고 있어요…');
 
-    try {
-      const res = await fetch('/api/ocr', {
+    try{
+      const res  = await fetch('/api/ocr', {
         method: 'POST',
         body: formData,
         credentials: 'include',
@@ -1716,21 +1812,121 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error(data.error || 'OCR 실패');
       }
 
-      // 인식된 텍스트를 논술문 칸에 채우기
-      essayArea.value = data.text || '';
-      if (typeof updateCharCount === 'function') {
-        updateCharCount();
+      const text = data.text || '';
+      const prefix = essayArea.value ? '\n' : '';
+      essayArea.value = essayArea.value + prefix + text;
+
+      if (typeof autoResize === 'function') autoResize(essayArea);
+      if (typeof updateCharCount === 'function') updateCharCount();
+
+      setLoading(null);
+    }catch(err){
+      console.error('Essay OCR error:', err);
+      setLoading(null);
+      setError('사진에서 글자를 읽는 중 문제가 발생했어요. 다시 시도해 주세요.');
+    }
+  }
+
+  // 버튼 → 파일 선택
+  if (essayOcrBtn && essayOcrInput && essayArea) {
+    essayOcrBtn.addEventListener('click', () => {
+      clearError();
+      essayOcrInput.value = '';
+      essayOcrInput.click();
+    });
+
+    // 파일 선택 후 OCR 실행
+    essayOcrInput.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      runEssayOcrWithFile(file);
+    });
+
+    // 논술문 textarea에 직접 "붙여넣기" 했을 때, 이미지가 있으면 OCR 실행
+    essayArea.addEventListener('paste', (e) => {
+      const cd = e.clipboardData;
+      if (!cd || !cd.items) return;
+
+      // 이미지가 없으면 기본 동작(텍스트 붙여넣기) 유지
+      const items = Array.from(cd.items);
+      const imageItem = items.find(it => it.type && it.type.startsWith('image/'));
+      if (!imageItem) return;
+
+      e.preventDefault(); // 이미지를 그대로 붙여넣는 기본 동작 막기
+
+      const file = imageItem.getAsFile();
+      if (!file) return;
+      runEssayOcrWithFile(file);
+    });
+  }
+
+  // ========== 2) 제시문: 파일 / 붙여넣기 → 이미지 "그대로" 추가 ==========
+  function addImageToCurrentPassage(file){
+    if (!file || !currentPassageTarget) return;
+    const preview = ensurePassagePreview(currentPassageTarget);
+    if (!preview) return;
+
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(file);
+    img.onload = () => {
+      // 메모리 누수 방지
+      URL.revokeObjectURL(img.src);
+    };
+
+    // 기존 이미지가 있다면 덮어쓰기 (여러 장 쌓고 싶으면 appendChild로 바꾸면 됨)
+    preview.innerHTML = '';
+    preview.appendChild(img);
+  }
+
+  // 버튼 → 파일 선택 (제시문 사진 "원본" 추가)
+  if (passageOcrBtn && passageOcrInput) {
+    passageOcrBtn.addEventListener('click', () => {
+      clearError();
+
+      // 포커스된 제시문이 없으면 첫 번째 칸을 기본 대상으로
+      if (!currentPassageTarget) {
+        const first = document.querySelector('.passage');
+        if (first) currentPassageTarget = first;
       }
 
-      if (loadingEl) loadingEl.style.display = 'none';
-    } catch (err) {
-      console.error('OCR error:', err);
-      if (loadingEl) loadingEl.style.display = 'none';
-      if (errorEl) {
-        errorEl.textContent = '사진에서 글을 읽는 중 문제가 발생했어요. 다시 시도해 주세요.';
-        errorEl.style.display = 'block';
+      if (!currentPassageTarget) {
+        alert('제시문 칸을 하나 만들어 주세요.');
+        return;
       }
+
+      passageOcrInput.value = '';
+      passageOcrInput.click();
+    });
+
+    passageOcrInput.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file || !currentPassageTarget) return;
+      // 👉 OCR 없이, 이미지 그대로 프리뷰만 추가
+      addImageToCurrentPassage(file);
+    });
+  }
+
+  // 제시문 textarea에 "붙여넣기" 했을 때, 이미지가 있으면 프리뷰로만 추가
+  document.addEventListener('paste', (e) => {
+    const active = document.activeElement;
+    if (!active || !active.classList || !active.classList.contains('passage')) {
+      return;
     }
+    const cd = e.clipboardData;
+    if (!cd || !cd.items) return;
+
+    const items = Array.from(cd.items);
+    const imageItem = items.find(it => it.type && it.type.startsWith('image/'));
+    if (!imageItem) return; // 이미지 없으면 그대로 텍스트 붙여넣기
+
+    // 이미지가 있으면, 텍스트 붙여넣기 대신 이미지 프리뷰만 추가
+    e.preventDefault();
+
+    const file = imageItem.getAsFile();
+    if (!file) return;
+
+    currentPassageTarget = active;
+    addImageToCurrentPassage(file);
   });
 });
 </script>
