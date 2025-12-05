@@ -359,7 +359,23 @@ canvas.demoChart{ height:140px !important; }
   display:block;
   border-radius:8px;
 }
+/* 제시문 이미지 삭제 버튼 */
+.passage-preview {
+  position: relative;
+}
 
+.passage-preview .remove-img-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  border: none;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
 </style>
 </head>
 
@@ -1862,21 +1878,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ========== 2) 제시문: 파일 / 붙여넣기 → 이미지 "그대로" 추가 ==========
   function addImageToCurrentPassage(file){
-    if (!file || !currentPassageTarget) return;
-    const preview = ensurePassagePreview(currentPassageTarget);
-    if (!preview) return;
+  if (!file || !currentPassageTarget) return;
+  const preview = ensurePassagePreview(currentPassageTarget);
+  if (!preview) return;
 
-    const img = document.createElement('img');
-    img.src = URL.createObjectURL(file);
-    img.onload = () => {
-      // 메모리 누수 방지
-      URL.revokeObjectURL(img.src);
-    };
+  // 이미지 태그
+  const img = document.createElement('img');
+  img.src = URL.createObjectURL(file);
+  img.onload = () => {
+    URL.revokeObjectURL(img.src);
+  };
 
-    // 기존 이미지가 있다면 덮어쓰기 (여러 장 쌓고 싶으면 appendChild로 바꾸면 됨)
-    preview.innerHTML = '';
-    preview.appendChild(img);
-  }
+  // 삭제 버튼 생성
+  const removeBtn = document.createElement('button');
+  removeBtn.textContent = '✕';
+  removeBtn.className = 'remove-img-btn';
+  removeBtn.addEventListener('click', () => {
+    preview.innerHTML = ''; // 이미지 + 버튼 전부 제거
+  });
+
+  // 기존 내용 초기화 후 넣기
+  preview.innerHTML = '';
+  preview.appendChild(img);
+  preview.appendChild(removeBtn);
+}
 
   // 버튼 → 파일 선택 (제시문 사진 "원본" 추가)
   if (passageOcrBtn && passageOcrInput) {
