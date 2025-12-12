@@ -390,7 +390,7 @@ def ocr_image():
         return jsonify({"ok": False, "error": str(e)}), 500
 # ---------- AI: Review ----------
 @app.post("/api/review")
-def review():
+def review_open():
     data = request.get_json(force=True)
     student = _s(data.get("student") or data.get("name"))
     question = _s(data.get("question"))
