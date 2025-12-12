@@ -22,6 +22,7 @@ app = Flask(
     template_folder=os.path.join(BASE_DIR, "templates"),
     static_folder=os.path.join(BASE_DIR, "static"),
 )
+app.config["MAX_CONTENT_LENGTH"] = 6 * 1024 * 1024  # 6MB
 
 # 🔐 세션/쿠키 설정 (크로스 도메인에서 쿠키가 안 실리는 문제 해결)
 app.config.update(
@@ -133,6 +134,64 @@ def _coerce_passages(raw):
     if isinstance(raw, list):
         return [x for x in raw if isinstance(x, str)]
     return [str(raw)]
+
+def _coerce_passages_images(raw):
+    """
+    passagesImages:
+      - 기대 형태: [[dataURL, dataURL, ...], [dataURL, ...], ...]
+      - 문자열/None/섞인 타입이 와도 안전하게 정규화
+    """
+    if raw is None:
+        return []
+    if isinstance(raw, str):
+        # 잘못 온 경우라도 "전체 1개 이미지"로 처리
+        return [[raw]]
+    if isinstance(raw, list):
+        out = []
+        for item in raw:
+            if item is None:
+                out.append([])
+            elif isinstance(item, str):
+                out.append([item])
+            elif isinstance(item, list):
+                arr = [x for x in item if isinstance(x, str)]
+                out.append(arr)
+            else:
+                out.append([str(item)])
+        return out
+    return [[str(raw)]]
+
+def _format_passages_block(passages, passages_images):
+    """
+    프롬프트 안에서 제시문 텍스트 + 이미지 첨부 수를 사람이 읽기 좋게 구성.
+    """
+    lines = []
+    for i, txt in enumerate(passages or []):
+        imgs = []
+        if isinstance(passages_images, list) and i < len(passages_images):
+            imgs = passages_images[i] or []
+        img_note = f"(이미지 {len(imgs)}장 첨부)" if imgs else "(이미지 없음)"
+        body = (txt or "").strip()
+        if not body:
+            body = "(텍스트 없음)"
+        lines.append(f"[제시문 {i+1}] {img_note}\n{body}")
+    if not lines:
+        return "(제시문이 없습니다.)"
+    return "\n\n".join(lines)
+
+def _flatten_images(passages_images):
+    """
+    [[img,img],[img]] -> [img,img,img]
+    """
+    flat = []
+    if not isinstance(passages_images, list):
+        return flat
+    for arr in passages_images:
+        if isinstance(arr, list):
+            for x in arr:
+                if isinstance(x, str) and x.startswith("data:image/"):
+                    flat.append(x)
+    return flat
 
 CRITERIA_KEYS = ["논리력","독해력","구성력","표현력"]
 
@@ -331,15 +390,21 @@ def ocr_image():
         return jsonify({"ok": False, "error": str(e)}), 500
 # ---------- AI: Review ----------
 @app.post("/api/review")
-def review_open():
+def review():
     data = request.get_json(force=True)
     student = _s(data.get("student") or data.get("name"))
     question = _s(data.get("question"))
     essay = _s(data.get("essay"))
     passages = _coerce_passages(data.get("passages"))
 
+    # ✅ 제시문 이미지(여러 장) 수신
+    passages_images = _coerce_passages_images(data.get("passagesImages"))
+
     try:
         if client:
+            # ✅ 텍스트+이미지 첨부 수까지 사람이 읽기 좋게 구성
+            passages_block = _format_passages_block(passages, passages_images)
+            
             prompt = f"""
 당신은 초등학생을 가르치는 논술 선생님입니다.
 
@@ -370,8 +435,8 @@ def review_open():
 
 ---
 
-제시문:
-{passages}
+제시문(텍스트 + 첨부 이미지):
+{passages_block}
 
 질문:
 {question}
@@ -406,11 +471,16 @@ def review_open():
 한 줄(50~100자)로 전체 인상을 요약하세요. 학생글을 기반으로 잘한 점과, 가장 미흡한 항목을 중심으로 구체적어주세요. 1문장만 작성하세요.
 """.strip()
 
+            # ✅ 멀티모달: 텍스트 + 이미지들을 "같은 요청"에 같이 붙임
+            user_content = [{"type": "text", "text": prompt}]
+            for img_url in _flatten_images(passages_images):
+                user_content.append({"type": "image_url", "image_url": {"url": img_url}})
+
             resp = client.chat.completions.create(
                 model="gpt-4-turbo",
                 messages=[
-                    {"role": "system", "content": "너는 초등 논술 첨삭 선생님이야. 평가 기준에 따라 평가만 작성해."},
-                    {"role": "user", "content": prompt}
+                    {"role": "system", "content": "너는 초등 논술 첨삭 선생님이야. 제시문은 텍스트와 첨부 이미지 모두이며, 둘 다 근거로 삼아 평가만 작성해."},
+                    {"role": "user", "content": user_content}
                 ],
                 temperature=0.7,
                 max_tokens=1500
@@ -438,6 +508,7 @@ def review_open():
             summary = "전체적으로 안정적이지만, 제시문 근거를 더 명시하며 논리 전개를 강화해 보세요."
 
         return jsonify({"scores": scores, "reasons": reasons, "summary": summary})
+
     except Exception as e:
         print("❗예외 발생 (review_open):", str(e), flush=True)
         return jsonify({"error": str(e)}), 500
@@ -451,8 +522,13 @@ def review():
     essay = _s(data.get("essay"))
     passages = _coerce_passages(data.get("passages"))
 
+    # ✅ 제시문 이미지(여러 장) 수신
+    passages_images = _coerce_passages_images(data.get("passagesImages"))
+
     try:
         if client:
+            passages_block = _format_passages_block(passages, passages_images)
+
             prompt = f"""
 당신은 초등학생을 가르치는 논술 선생님입니다.
 
@@ -483,8 +559,8 @@ def review():
 
 ---
 
-제시문:
-{passages}
+제시문(텍스트 + 첨부 이미지):
+{passages_block}
 
 질문:
 {question}
@@ -520,15 +596,21 @@ def review():
 
             """.strip()
 
+            # prompt 안의 {passages}도 {passages_block}로 교체
+            user_content = [{"type": "text", "text": prompt}]
+            for img_url in _flatten_images(passages_images):
+                user_content.append({"type": "image_url", "image_url": {"url": img_url}})
+
             resp = client.chat.completions.create(
                 model="gpt-4-turbo",
                 messages=[
-                    {"role": "system", "content": "너는 초등 논술 첨삭 선생님이야. 평가 기준에 따라 평가만 작성해."},
-                    {"role": "user", "content": prompt}
+                    {"role": "system", "content": "너는 초등 논술 첨삭 선생님이야. 제시문 텍스트와 첨부 이미지를 함께 근거로 평가만 작성해."},
+                    {"role": "user", "content": user_content}
                 ],
                 temperature=0.7,
                 max_tokens=1500
             )
+
 
             content = resp.choices[0].message.content or ""
             summary = ""  # ⬅ 요약 변수 준비
@@ -569,16 +651,25 @@ def review():
 def example():
     data = request.json or {}
     passages = _coerce_passages(data.get('passages'))
+    # ✅ 제시문 이미지(여러 장) 수신
+    passages_images = _coerce_passages_images(data.get("passagesImages"))
+
     question = _s(data.get('question'))
     essay = _s(data.get('essay'))
     retry = bool(data.get('retryConfirmed'))
+
+    # ✅ client 없으면 여기서 바로 종료(현재 코드는 client 없으면 루프에서 터질 수 있음)
+    if not client:
+        return jsonify({"error": "OpenAI API 키가 설정되어 있지 않습니다."}), 500
 
     try:
         char_base = int(data.get('charBase')) if data.get('charBase') is not None else 600
         char_range = int(data.get('charRange')) if data.get('charRange') is not None else 100
     except Exception:
         char_base = 600
-    # 위 except에서 char_range가 안 잡힐 수 있으니 보정
+        char_range = 100
+
+    # 보정
     char_range = char_range if isinstance(char_range, int) else 100
 
     min_chars = max(0, char_base - char_range)
@@ -586,12 +677,15 @@ def example():
     if retry:
         min_chars += 100
 
+    # ✅ 텍스트+이미지 첨부 정보 포함 블록
+    passages_block = _format_passages_block(passages, passages_images)
+
     initial_prompt = f"""
 아래는 학생이 작성한 논술문입니다. 이 글을 바탕으로 다음 작업을 수행해 주십시오.
 
 1. 학생의 논술문을 기반으로, 평가 기준을 고려하여 예시답안을 작성하십시오.
 - 문체는 고등학교 논술 평가에 적합하게 단정하고 객관적인 서술을 유지하십시오.
-- 예시답안은 반드시 제시문에 포함된 정보와 주장 흐름만으로 구성하십시오.
+- 예시답안은 반드시 제시문(텍스트 + 첨부 이미지)에 포함된 정보와 주장 흐름만으로 구성하십시오.
 - 제시문 정보를 해석·조합하여 논지를 전개해야 합니다.
 - ❗ 제시문 밖의 배경지식, 상식, 사례, 정의 등을 활용하면 오답으로 간주합니다. (즉시 무효 처리)
 - 모든 주장과 근거는 반드시 제시문에서만 취해야 합니다.
@@ -610,8 +704,8 @@ def example():
   "comparison": "비교 설명을 여기에 작성하십시오. 반드시 500~700자 분량."
 }}
 
-제시문:
-{chr(10).join(passages)}
+제시문(텍스트 + 첨부 이미지):
+{passages_block}
 
 질문:
 {question}
@@ -620,14 +714,19 @@ def example():
 {essay}
 """.strip()
 
+    # ✅ 멀티모달 user content: 텍스트 + 이미지들
+    user_content = [{"type": "text", "text": initial_prompt}]
+    for img_url in _flatten_images(passages_images):
+        user_content.append({"type": "image_url", "image_url": {"url": img_url}})
+
     messages = [
         {"role": "system", "content":
          "너는 고등학생 논술 첨삭 선생님이다. "
          "예시답안과 비교설명 작성 시 제시문 밖의 배경지식/사실/사례 사용은 절대 금지다. "
-         "모든 주장과 근거는 반드시 입력된 제시문에서만 취한다. "
+         "모든 주장과 근거는 반드시 입력된 제시문(텍스트+이미지)에서만 취한다. "
          "출력은 반드시 JSON만 사용한다."
         },
-        {"role": "user", "content": initial_prompt}
+        {"role": "user", "content": user_content}
     ]
 
     parsed = {}
@@ -642,12 +741,12 @@ def example():
                 messages=messages,
                 temperature=0.7,
                 max_tokens=2000,
-                response_format={"type": "json_object"}  # ← JSON 모드 강제
+                response_format={"type": "json_object"}
             )
             content = res.choices[0].message.content
             print("🧾 GPT 응답 원문:\n", content)
 
-            parsed = parse_json_safely(content)  # ← 안전 파싱 적용
+            parsed = parse_json_safely(content)
             new_example = parsed.get("example", "")
             new_comparison = parsed.get("comparison", "")
 
@@ -675,14 +774,12 @@ def example():
             print("❗예외 발생 (example):", str(e), flush=True)
             return jsonify({"error": str(e)}), 500
 
-    # 길이 기준 안내 + 최종 폴백(빈 값 방지)
     length_valid = (len(example_text) >= min_chars and len(example_text) <= max_chars)
     length_note = "" if length_valid else (
         f"※ 본 예시는 권장 글자수 범위({min_chars}~{max_chars}자)와 "
         f"{abs(len(example_text) - char_base)}자 차이가 있습니다. 제시문 내에서 최대한 근접하게 생성했어요."
     )
 
-    # 최종 폴백: 파싱이 끝까지 안 되었을 때라도 원문을 노출
     if not example_text and 'content' in locals() and content:
         example_text = content.strip()
         comparison_text = comparison_text or ""
@@ -692,8 +789,9 @@ def example():
         "comparison": comparison_text,
         "length_valid": length_valid,
         "length_actual": len(example_text),
-        "length_note": length_note  # (프런트에서 선택적으로 노출 가능)
+        "length_note": length_note
     })
+
 
 # ---------- Reports ----------
 @app.post("/reports")
