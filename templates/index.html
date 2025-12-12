@@ -729,6 +729,7 @@ canvas.demoChart{ height:140px !important; }
   id="passageImageInput"
   type="file"
   accept="image/*"
+  multiple
   style="display:none" />
 
 
@@ -1157,20 +1158,20 @@ function applyBookProblem() {
 let scoreChart, savedScores=[], savedReasons={}, savedExample="", savedComparison="", savedSummary="";
 let exampleGenerated=false; let currentUser=null; let deferredAction=null;
 
+/** 각 제시문 textarea DOM 요소별로 이미지 dataURL 배열 저장 */
+const passageImageMap = new Map();
+
 function resetReport(){
   document.getElementById('studentName').value = '';
   document.getElementById('question').value = '';
 
-  // 첫 번째 제시문만 비우고 나머지는 제거
-  document.querySelectorAll('.passage').forEach((p, i) => {
-    if (i === 0) p.value = '';
-    else p.remove();
-  });
-  
-  // 제시문 이미지 프리뷰도 함께 리셋
+ // 제시문 이미지 프리뷰도 함께 리셋
   document.querySelectorAll('.passage-preview').forEach(preview => {
     preview.remove();
   });
+
+  // 제시문 이미지 상태도 리셋
+  passageImageMap.clear();
 
   document.getElementById('essay').value = '';
   document.getElementById('charLimit').value = '';
@@ -1214,16 +1215,24 @@ async function submitEssay(){
   try{
     const name=document.getElementById('studentName').value;
     const question=document.getElementById('question').value;
-    const passages=[...document.querySelectorAll('.passage')].map(p=>p.value);
+    const passageEls = [...document.querySelectorAll('.passage')];
+    const passages = passageEls.map(p => p.value);
+
+    // ✅ 각 제시문 textarea에 연결된 이미지 dataURL 배열을 "같은 순서"로 맞춰서 보냄
+    const passagesImages = passageEls.map(p => passageImageMap.get(p) || []);
+
     window.savedPassages = passages; // (선택) PDF에서도 동일 제시문 사용
+    window.savedPassagesImages = passagesImages; // (선택) PDF에서 이미지도 쓰려면 나중에 사용 가능
+
     const essay=document.getElementById('essay').value;
 
     const r = await fetch('/api/review', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, question, passages, essay }),
-      credentials: 'include' // 이 줄은 있어도/없어도 동작엔 영향 없음
+      body: JSON.stringify({ name, question, passages, passagesImages, essay }),
+      credentials: 'include'
     });
+
 
     const data = await r.json();
     if (!r.ok) { throw new Error(data.error || '오류'); }
@@ -1324,12 +1333,17 @@ async function loadExample(){
   try{
     const name=document.getElementById('studentName').value;
     const question=document.getElementById('question').value;
-    const passages=[...document.querySelectorAll('.passage')].map(p=>p.value);
+    const passageEls = [...document.querySelectorAll('.passage')];
+    const passages = passageEls.map(p => p.value);
+
+    // ✅ 예시 생성에도 동일하게 이미지 같이 전송
+    const passagesImages = passageEls.map(p => passageImageMap.get(p) || []);
+
     const essay=document.getElementById('essay').value;
     const limit=document.getElementById('charLimit').value;
     const range=document.getElementById('charRange').value;
 
-    const payload={ name, question, passages, essay };
+    const payload={ name, question, passages, passagesImages, essay };
     const base=parseInt(limit), rng=parseInt(range);
     if(!Number.isNaN(base)) payload.charBase=base;
     if(!Number.isNaN(rng))  payload.charRange=rng;
@@ -1878,6 +1892,8 @@ document.addEventListener('focusin', (e) => {
  
 <!-- 🆕 제시문 / 논술문 OCR 및 이미지 처리 스크립트 -->
 <script>
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // ✅ 5MB 제한 (분석용 이미지 기준)
+
 document.addEventListener('DOMContentLoaded', () => {
   const essayOcrBtn   = document.getElementById('btnEssayOcr');
   const essayOcrInput = document.getElementById('essayImageInput');
@@ -1925,14 +1941,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ========== 1) 논술문: 파일 업로드 → OCR → 텍스트로 변환 ==========
   async function runEssayOcrWithFile(file){
-    if (!file || !essayArea) return;
+  if (!file || !essayArea) return;
 
-    const formData = new FormData();
-    formData.append('image', file);
+  if (file.size > MAX_IMAGE_SIZE) {
+    setError('사진 파일은 5MB 이하만 업로드할 수 있어요.');
+    return;
+  }
 
-    clearError();
-    setLoading('📸 논술문을 읽고 있어요…');
-    showGlobalLoading('ocr');
+  const formData = new FormData();
+  formData.append('image', file);
+
+  clearError();
+  setLoading('📸 논술문을 읽고 있어요…');
+  showGlobalLoading('ocr');
+
 
     try{
       const res  = await fetch('/api/ocr', {
@@ -1996,60 +2018,144 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ========== 2) 제시문: 파일 / 붙여넣기 → 이미지 "그대로" 추가 ==========
-  function addImageToCurrentPassage(file){
-  if (!file || !currentPassageTarget) return;
-  const preview = ensurePassagePreview(currentPassageTarget);
-  if (!preview) return;
-
-  // 이미지 태그
-  const img = document.createElement('img');
-  img.src = URL.createObjectURL(file);
-  img.onload = () => {
-    URL.revokeObjectURL(img.src);
-  };
-
-  // 삭제 버튼 생성
-  const removeBtn = document.createElement('button');
-  removeBtn.textContent = '✕';
-  removeBtn.className = 'remove-img-btn';
-  removeBtn.addEventListener('click', () => {
-    preview.innerHTML = ''; // 이미지 + 버튼 전부 제거
-  });
-
-  // 기존 내용 초기화 후 넣기
-  preview.innerHTML = '';
-  preview.appendChild(img);
-  preview.appendChild(removeBtn);
-}
-
-  // 버튼 → 파일 선택 (제시문 사진 "원본" 추가)
+  // ========== 2-0) 제시문: 버튼 클릭 → 파일 선택 열기 ==========
   if (passageOcrBtn && passageOcrInput) {
     passageOcrBtn.addEventListener('click', () => {
       clearError();
-
-      // 포커스된 제시문이 없으면 첫 번째 칸을 기본 대상으로
-      if (!currentPassageTarget) {
-        const first = document.querySelector('.passage');
-        if (first) currentPassageTarget = first;
-      }
-
-      if (!currentPassageTarget) {
-        alert('제시문 칸을 하나 만들어 주세요.');
-        return;
-      }
-
       passageOcrInput.value = '';
       passageOcrInput.click();
     });
 
+    // 여러 장 선택 가능
     passageOcrInput.addEventListener('change', (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (!file || !currentPassageTarget) return;
-      // 👉 OCR 없이, 이미지 그대로 프리뷰만 추가
-      addImageToCurrentPassage(file);
+      const files = (e.target.files ? Array.from(e.target.files) : []);
+      if (files.length === 0) return;
+
+      // 포커스된 제시문이 없으면 첫 칸으로
+      if(!currentPassageTarget){
+        const first = document.querySelector('.passage');
+        if(first) currentPassageTarget = first;
+      }
+
+      files.forEach(f => addImageToCurrentPassage(f));
     });
   }
+
+  // ========== 2) 제시문: 파일 / 붙여넣기 → 이미지 "그대로" 추가 ==========
+function addImageToCurrentPassage(file){
+  if (file.size > MAX_IMAGE_SIZE) {
+    alert('이미지 파일은 5MB 이하만 업로드할 수 있어요.');
+    return;
+  }
+
+  // ✅ 포커스된 제시문이 없으면 첫 번째 제시문을 대상으로
+  if(!currentPassageTarget){
+    const first = document.querySelector('.passage');
+    if(!first) return;
+    currentPassageTarget = first;
+  }
+
+
+  // ✅ preview는 "해당 textarea 바로 다음"에 붙이는 방식으로 안정화
+  const preview = ensurePassagePreview(currentPassageTarget);
+
+  // ✅ 이 textarea에 이미 연결된 이미지 배열(없으면 새로)
+  const prevArr = passageImageMap.get(currentPassageTarget) || [];
+
+  if (prevArr.length >= 3) {
+    alert('제시문당 이미지는 최대 3장까지 추가할 수 있어요.');
+    return;
+  }
+
+const reader = new FileReader();
+reader.onload = () => {
+
+    const dataUrl = reader.result; // "data:image/png;base64,...."
+
+    // ✅ 배열에 추가 (여러 장 지원)
+    prevArr.push(dataUrl);
+    passageImageMap.set(currentPassageTarget, prevArr);
+
+    // ✅ 프리뷰 다시 그리기(여러 장 썸네일 + 개별 삭제)
+    preview.innerHTML = '';
+    prevArr.forEach((url, idx) => {
+      const item = document.createElement('div');
+      item.style.cssText = 'display:inline-block; position:relative; margin:6px;';
+
+      const img = document.createElement('img');
+      img.src = url;
+      img.style.cssText = 'max-width:160px; border-radius:8px; display:block;';
+      item.appendChild(img);
+
+      const rm = document.createElement('button');
+      rm.type = 'button';
+      rm.className = 'remove-img-btn';
+      rm.textContent = '삭제';
+      rm.style.cssText = 'position:absolute; top:6px; right:6px;';
+      rm.onclick = () => {
+        const arr = passageImageMap.get(currentPassageTarget) || [];
+        arr.splice(idx, 1);
+        if(arr.length === 0){
+          passageImageMap.delete(currentPassageTarget);
+          preview.remove();
+        }else{
+          passageImageMap.set(currentPassageTarget, arr);
+          // 재귀적으로 다시 렌더
+          preview.innerHTML = '';
+          arr.forEach((u, j) => {
+            const it = document.createElement('div');
+            it.style.cssText = 'display:inline-block; position:relative; margin:6px;';
+            const im = document.createElement('img');
+            im.src = u;
+            im.style.cssText = 'max-width:160px; border-radius:8px; display:block;';
+            it.appendChild(im);
+
+            const b = document.createElement('button');
+            b.type='button';
+            b.className='remove-img-btn';
+            b.textContent='삭제';
+            b.style.cssText='position:absolute; top:6px; right:6px;';
+            b.onclick = () => {
+              const a2 = passageImageMap.get(currentPassageTarget) || [];
+              a2.splice(j,1);
+              if(a2.length===0){
+                passageImageMap.delete(currentPassageTarget);
+                preview.remove();
+              }else{
+                passageImageMap.set(currentPassageTarget, a2);
+                // 다시 렌더
+                preview.innerHTML='';
+                a2.forEach((uu, jj)=>{
+                  const it2=document.createElement('div');
+                  it2.style.cssText='display:inline-block; position:relative; margin:6px;';
+                  const im2=document.createElement('img');
+                  im2.src=uu;
+                  im2.style.cssText='max-width:160px; border-radius:8px; display:block;';
+                  it2.appendChild(im2);
+                  const bb=document.createElement('button');
+                  bb.type='button';
+                  bb.className='remove-img-btn';
+                  bb.textContent='삭제';
+                  bb.style.cssText='position:absolute; top:6px; right:6px;';
+                  bb.onclick=()=>{/* (중첩 삭제 방지) */};
+                  it2.appendChild(bb);
+                  preview.appendChild(it2);
+                });
+              }
+            };
+            it.appendChild(b);
+            preview.appendChild(it);
+          });
+        }
+      };
+
+      item.appendChild(rm);
+      preview.appendChild(item);
+    });
+  };
+
+  reader.readAsDataURL(file);
+}
 
   // 제시문 textarea에 "붙여넣기" 했을 때, 이미지가 있으면 프리뷰로만 추가
   document.addEventListener('paste', (e) => {
