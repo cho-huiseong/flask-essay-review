@@ -1110,19 +1110,25 @@ async function fetchAsDataUrl(imageUrl){
 }
 
 // (C) passage 엔트리를 표준 형태로 정규화
-//  - 문자열이면: {type:"text", content:"..."}
+//  - 문자열이면: {type:"text", content:"..."} 또는 {type:"image", content:[...], textContent:"..."}
 //  - 객체면: {type, content} 우선 사용
-//  - 문자열 안에 [IMAGE:...]가 있으면 image로 추정
+//  - 문자열 안에 [IMAGE:...]가 있으면 "여러 개" 전부 추출
 function normalizePassageEntry(p){
   // 1) 문자열
   if (typeof p === "string") {
     const s = p.trim();
 
-    // [IMAGE:/static/....png] 패턴 지원
-    const m = s.match(/\[IMAGE:(.+?)\]/i);
-    if (m && m[1]) {
-      return { type: "image", content: m[1].trim() };
+    // [IMAGE: ... ] 여러 개 추출
+    const matches = [...s.matchAll(/\[IMAGE:(.+?)\]/gi)];
+    if (matches.length > 0) {
+      const paths = matches.map(m => (m && m[1] ? m[1].trim() : "")).filter(Boolean);
+
+      // 이미지 태그를 텍스트에서 제거 → 남은 텍스트(예: "(나)")는 textarea에 남길 수 있게
+      const textOnly = s.replace(/\[IMAGE:(.+?)\]/gi, "").replace(/\n{3,}/g, "\n\n").trim();
+
+      return { type: "image", content: paths, textContent: textOnly };
     }
+
     return { type: "text", content: s };
   }
 
@@ -1134,11 +1140,17 @@ function normalizePassageEntry(p){
       (p.content ?? p.text ?? p.path ?? p.url ?? p.image ?? "");
 
     // type이 명시되어 있으면 존중
-    if (typeRaw) return { type: typeRaw, content: String(content || "") };
+    if (typeRaw) {
+      // 객체인데 이미지가 배열로 들어올 수도 있어서 그대로 지원
+      if (typeRaw === "image" && Array.isArray(content)) {
+        return { type: "image", content: content.map(x => String(x || "").trim()).filter(Boolean), textContent: "" };
+      }
+      return { type: typeRaw, content: String(content || "") };
+    }
 
     // type이 없으면 확장자로 추정
     const c = String(content || "");
-    if (/\.(png|jpg|jpeg|webp|gif)$/i.test(c)) return { type: "image", content: c };
+    if (/\.(png|jpg|jpeg|webp|gif)$/i.test(c)) return { type: "image", content: [c], textContent: "" };
     return { type: "text", content: c };
   }
 
@@ -1230,22 +1242,33 @@ async function applyBookProblem() {
       const firstEntry = normalized[0];
 
       if (firstEntry.type === "image") {
-        // 텍스트 칸은 비워두고, 이미지를 프리뷰 + passageImageMap에 연결
-        first.value = "";
+        // ✅ 텍스트가 남아있으면 textarea에 넣고, 이미지는 프리뷰 + passageImageMap에 연결
+        first.value = (firstEntry.textContent || "").trim();
         autoResize(first);
 
-        const imgUrl = toStaticImageUrl(firstEntry.content);
+        const paths = Array.isArray(firstEntry.content) ? firstEntry.content : [firstEntry.content];
         const preview = ensurePassagePreviewAfter(first);
+
+        // 프리뷰 렌더링(여러 장)
+        const imgTags = paths.map(p => {
+          const imgUrl = toStaticImageUrl(p);
+          return `<img src="${imgUrl}" style="max-width:100%;border-radius:12px;border:1px solid rgba(17,24,39,.10);margin-top:8px" />`;
+        }).join("");
 
         preview.innerHTML = `
           <div style="font-size:12px;color:#6B7280;margin-bottom:6px">첨부된 이미지 제시문</div>
-          <img src="${imgUrl}" style="max-width:100%;border-radius:12px;border:1px solid rgba(17,24,39,.10)" />
+          ${imgTags}
         `;
 
         try {
-          const dataUrl = await fetchAsDataUrl(imgUrl);
-          // ✅ submitEssay()/loadExample()가 textarea 순서대로 passageImageMap을 읽어서 보냄
-          passageImageMap.set(first, [dataUrl]);
+          const dataUrls = [];
+          for (const p of paths) {
+            const imgUrl = toStaticImageUrl(p);
+            const dataUrl = await fetchAsDataUrl(imgUrl);
+            dataUrls.push(dataUrl);
+          }
+          // ✅ 여러 장을 한 textarea에 배열로 저장
+          passageImageMap.set(first, dataUrls);
         } catch (e) {
           console.error(e);
         }
@@ -1263,20 +1286,30 @@ async function applyBookProblem() {
         const el = newAreas[newAreas.length - 1];
 
         if (entry.type === "image") {
-          el.value = "";
+          el.value = (entry.textContent || "").trim();
           autoResize(el);
 
-          const imgUrl = toStaticImageUrl(entry.content);
+          const paths = Array.isArray(entry.content) ? entry.content : [entry.content];
           const preview = ensurePassagePreviewAfter(el);
+
+          const imgTags = paths.map(p => {
+            const imgUrl = toStaticImageUrl(p);
+            return `<img src="${imgUrl}" style="max-width:100%;border-radius:12px;border:1px solid rgba(17,24,39,.10);margin-top:8px" />`;
+          }).join("");
 
           preview.innerHTML = `
             <div style="font-size:12px;color:#6B7280;margin-bottom:6px">첨부된 이미지 제시문</div>
-            <img src="${imgUrl}" style="max-width:100%;border-radius:12px;border:1px solid rgba(17,24,39,.10)" />
+            ${imgTags}
           `;
 
           try {
-            const dataUrl = await fetchAsDataUrl(imgUrl);
-            passageImageMap.set(el, [dataUrl]);
+            const dataUrls = [];
+            for (const p of paths) {
+              const imgUrl = toStaticImageUrl(p);
+              const dataUrl = await fetchAsDataUrl(imgUrl);
+              dataUrls.push(dataUrl);
+            }
+            passageImageMap.set(el, dataUrls);
           } catch (e) {
             console.error(e);
           }
