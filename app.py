@@ -179,19 +179,44 @@ def _format_passages_block(passages, passages_images):
         return "(제시문이 없습니다.)"
     return "\n\n".join(lines)
 
-def _flatten_images(passages_images):
+def _build_multimodal_passages(passages, passages_images):
     """
-    [[img,img],[img]] -> [img,img,img]
+    제시문 순서에 맞춰
+    텍스트 → 해당 이미지들을 바로 뒤에 붙이는
+    멀티모달 content 배열 생성
     """
-    flat = []
-    if not isinstance(passages_images, list):
-        return flat
-    for arr in passages_images:
-        if isinstance(arr, list):
-            for x in arr:
-                if isinstance(x, str) and x.startswith("data:image/"):
-                    flat.append(x)
-    return flat
+    content = []
+
+    for i, txt in enumerate(passages):
+        # 1) 제시문 텍스트
+        content.append({
+            "type": "text",
+            "text": f"[제시문 {i+1}]\n{(txt or '').strip()}"
+        })
+
+        # 2) 해당 제시문의 이미지들
+        imgs = []
+        if isinstance(passages_images, list) and i < len(passages_images):
+            imgs = passages_images[i] or []
+
+        for img in imgs:
+            if not isinstance(img, str):
+                continue
+
+            # dataURL이면 그대로
+            if img.startswith("data:image/"):
+                content.append({
+                    "type": "image_url",
+                    "image_url": {"url": img}
+                })
+            # /static 경로면 base64 변환 필요 → ❗ 여기선 일단 막아둠
+            elif img.startswith("/static/"):
+                content.append({
+                    "type": "text",
+                    "text": "(제시문 이미지가 첨부됨)"
+                })
+
+    return content
 
 CRITERIA_KEYS = ["논리력","독해력","구성력","표현력"]
 
@@ -472,9 +497,11 @@ def review_open():
 """.strip()
 
             # ✅ 멀티모달: 텍스트 + 이미지들을 "같은 요청"에 같이 붙임
-            user_content = [{"type": "text", "text": prompt}]
-            for img_url in _flatten_images(passages_images):
-                user_content.append({"type": "image_url", "image_url": {"url": img_url}})
+            user_content = [
+                {"type": "text", "text": prompt},
+                * _build_multimodal_passages(passages, passages_images)
+            ]
+
 
             resp = client.chat.completions.create(
                 model="gpt-4-turbo",
@@ -597,9 +624,11 @@ def review():
             """.strip()
 
             # prompt 안의 {passages}도 {passages_block}로 교체
-            user_content = [{"type": "text", "text": prompt}]
-            for img_url in _flatten_images(passages_images):
-                user_content.append({"type": "image_url", "image_url": {"url": img_url}})
+            user_content = [
+                {"type": "text", "text": prompt},
+                * _build_multimodal_passages(passages, passages_images)
+            ]
+
 
             resp = client.chat.completions.create(
                 model="gpt-4-turbo",
@@ -715,9 +744,11 @@ def example():
 """.strip()
 
     # ✅ 멀티모달 user content: 텍스트 + 이미지들
-    user_content = [{"type": "text", "text": initial_prompt}]
-    for img_url in _flatten_images(passages_images):
-        user_content.append({"type": "image_url", "image_url": {"url": img_url}})
+    user_content = [
+        {"type": "text", "text": initial_prompt},
+        * _build_multimodal_passages(passages, passages_images)
+    ]
+
 
     messages = [
         {"role": "system", "content":
