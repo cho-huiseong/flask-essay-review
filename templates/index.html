@@ -864,6 +864,7 @@ canvas.demoChart{ height:140px !important; }
 </div>
 
 <script>
+  
 /* ===== 데모 데이터 ===== */
 const demoSet = {
   student: "김다움",
@@ -1072,8 +1073,97 @@ function loadBookItems() {
 // 페이지 로딩 시 교재 데이터 먼저 불러오기
 window.addEventListener('DOMContentLoaded', loadBookItems);
 
-/* 🔽 새로 추가: 교재 문제 적용 함수 */
-function applyBookProblem() {
+/* =========================
+   ✅ 교재 passages(문자열/객체) 모두 지원 + 이미지 자동 연결 버전
+   ========================= */
+
+// (A) "/static/..." 혹은 "passages/..." 같은 값을 안전하게 실제 URL로 바꿔줌
+function toStaticImageUrl(pathOrUrl){
+  if (!pathOrUrl) return "";
+  const s = String(pathOrUrl).trim();
+
+  // 이미 절대 URL이면 그대로
+  if (/^https?:\/\//i.test(s)) return s;
+
+  // "/static/..." 형태
+  if (s.startsWith("/static/")) return `${location.origin}${s}`;
+
+  // "static/..." 형태
+  if (s.startsWith("static/")) return `${location.origin}/${s}`;
+
+  // 그 외는 "static/" 아래라고 가정: "passages/5-2/22/na_1.png"
+  return `${location.origin}/static/${s.replace(/^\/+/, "")}`;
+}
+
+// (B) 이미지 URL을 dataURL로 바꿔서 passageImageMap에 넣기 위함
+async function fetchAsDataUrl(imageUrl){
+  const res = await fetch(imageUrl, { cache: "no-cache" });
+  if (!res.ok) throw new Error(`이미지 fetch 실패: ${res.status} ${imageUrl}`);
+  const blob = await res.blob();
+
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);      // data:*/*;base64,...
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+// (C) passage 엔트리를 표준 형태로 정규화
+//  - 문자열이면: {type:"text", content:"..."}
+//  - 객체면: {type, content} 우선 사용
+//  - 문자열 안에 [IMAGE:...]가 있으면 image로 추정
+function normalizePassageEntry(p){
+  // 1) 문자열
+  if (typeof p === "string") {
+    const s = p.trim();
+
+    // [IMAGE:/static/....png] 패턴 지원
+    const m = s.match(/\[IMAGE:(.+?)\]/i);
+    if (m && m[1]) {
+      return { type: "image", content: m[1].trim() };
+    }
+    return { type: "text", content: s };
+  }
+
+  // 2) 객체
+  if (p && typeof p === "object") {
+    const typeRaw = (p.type || p.kind || "").toLowerCase();
+
+    const content =
+      (p.content ?? p.text ?? p.path ?? p.url ?? p.image ?? "");
+
+    // type이 명시되어 있으면 존중
+    if (typeRaw) return { type: typeRaw, content: String(content || "") };
+
+    // type이 없으면 확장자로 추정
+    const c = String(content || "");
+    if (/\.(png|jpg|jpeg|webp|gif)$/i.test(c)) return { type: "image", content: c };
+    return { type: "text", content: c };
+  }
+
+  // 3) 그 외
+  return { type: "text", content: "" };
+}
+
+// (D) 이미지 프리뷰 DOM 생성/재사용
+function ensurePassagePreviewAfter(textareaEl){
+  const next = textareaEl.nextElementSibling;
+  if (next && next.classList && next.classList.contains("passage-preview")) {
+    return next;
+  }
+
+  const preview = document.createElement("div");
+  preview.className = "passage-preview";
+  preview.style.marginTop = "10px";
+  preview.style.marginBottom = "18px";
+
+  textareaEl.insertAdjacentElement("afterend", preview);
+  return preview;
+}
+
+/* ✅ 교체 대상: 교재 문제 적용 함수 (비동기) */
+async function applyBookProblem() {
   const mainStageSelect = document.getElementById('bookMainStageSelect');
   const subStageSelect  = document.getElementById('bookSubStageSelect');
   const pageSelect      = document.getElementById('bookPageSelect');
@@ -1101,11 +1191,15 @@ function applyBookProblem() {
 
   // 1) 질문 채우기
   const qEl = document.getElementById('question');
-  if (qEl) {
-    qEl.value = item.question || '';
+  if (qEl) qEl.value = item.question || '';
+
+  // ✅ 교재 불러오기 재실행 대비: 기존 프리뷰 제거 + 이미지맵 초기화
+  document.querySelectorAll('.passage-preview').forEach(preview => preview.remove());
+  if (typeof passageImageMap !== "undefined" && passageImageMap && passageImageMap.clear) {
+    passageImageMap.clear();
   }
 
-  // 2) 제시문 textarea들 채우기
+  // 2) 제시문 textarea들 채우기 (+ 이미지면 자동 연결)
   const wrap = document.getElementById('passages');
   if (wrap) {
     let areas = wrap.querySelectorAll('.passage');
@@ -1116,25 +1210,80 @@ function applyBookProblem() {
       areas = wrap.querySelectorAll('.passage');
     }
 
-    // 기존 제시문은 첫 번째만 남기고 나머지는 제거 + 첫 번째에 1번 제시문 넣기
+    // 기존 제시문은 첫 번째만 남기고 나머지는 제거
     areas.forEach((el, idx) => {
-      if (idx === 0) {
-        el.value = (item.passages && item.passages[0]) ? item.passages[0] : '';
-        autoResize(el);
-      } else {
-        el.remove();
-      }
+      if (idx !== 0) el.remove();
     });
 
-    // 제시문이 2개 이상이면 나머지 추가 생성
-    if (Array.isArray(item.passages)) {
-      for (let i = 1; i < item.passages.length; i++) {
-        const text = item.passages[i];
+    // item.passages 정규화
+    const raw = Array.isArray(item.passages) ? item.passages : [];
+    const normalized = raw.map(normalizePassageEntry);
+
+    // normalized가 비어있으면 최소 1칸은 비워둠
+    if (normalized.length === 0) {
+      const first = wrap.querySelectorAll('.passage')[0];
+      first.value = '';
+      autoResize(first);
+    } else {
+      // 첫 번째 textarea 세팅
+      const first = wrap.querySelectorAll('.passage')[0];
+      const firstEntry = normalized[0];
+
+      if (firstEntry.type === "image") {
+        // 텍스트 칸은 비워두고, 이미지를 프리뷰 + passageImageMap에 연결
+        first.value = "";
+        autoResize(first);
+
+        const imgUrl = toStaticImageUrl(firstEntry.content);
+        const preview = ensurePassagePreviewAfter(first);
+
+        preview.innerHTML = `
+          <div style="font-size:12px;color:#6B7280;margin-bottom:6px">첨부된 이미지 제시문</div>
+          <img src="${imgUrl}" style="max-width:100%;border-radius:12px;border:1px solid rgba(17,24,39,.10)" />
+        `;
+
+        try {
+          const dataUrl = await fetchAsDataUrl(imgUrl);
+          // ✅ submitEssay()/loadExample()가 textarea 순서대로 passageImageMap을 읽어서 보냄
+          passageImageMap.set(first, [dataUrl]);
+        } catch (e) {
+          console.error(e);
+        }
+      } else {
+        // text
+        first.value = firstEntry.content || "";
+        autoResize(first);
+      }
+
+      // 나머지 엔트리 처리
+      for (let i = 1; i < normalized.length; i++) {
+        const entry = normalized[i];
         window.addPassage();
         const newAreas = wrap.querySelectorAll('.passage');
         const el = newAreas[newAreas.length - 1];
-        el.value = text || '';
-        autoResize(el);
+
+        if (entry.type === "image") {
+          el.value = "";
+          autoResize(el);
+
+          const imgUrl = toStaticImageUrl(entry.content);
+          const preview = ensurePassagePreviewAfter(el);
+
+          preview.innerHTML = `
+            <div style="font-size:12px;color:#6B7280;margin-bottom:6px">첨부된 이미지 제시문</div>
+            <img src="${imgUrl}" style="max-width:100%;border-radius:12px;border:1px solid rgba(17,24,39,.10)" />
+          `;
+
+          try {
+            const dataUrl = await fetchAsDataUrl(imgUrl);
+            passageImageMap.set(el, [dataUrl]);
+          } catch (e) {
+            console.error(e);
+          }
+        } else {
+          el.value = entry.content || "";
+          autoResize(el);
+        }
       }
     }
   }
@@ -1154,10 +1303,6 @@ function applyBookProblem() {
   updateCharCount();
 }
 
-/* ===== 상태 ===== */
-let scoreChart, savedScores=[], savedReasons={}, savedExample="", savedComparison="", savedSummary="";
-let exampleGenerated=false; let currentUser=null; let deferredAction=null;
-
 /** 각 제시문 textarea DOM 요소별로 이미지 dataURL 배열 저장 */
 const passageImageMap = new Map();
 
@@ -1165,6 +1310,9 @@ function resetReport(){
   document.getElementById('studentName').value = '';
   document.getElementById('question').value = '';
 
+/* ===== 상태 ===== */
+let scoreChart, savedScores=[], savedReasons={}, savedExample="", savedComparison="", savedSummary="";
+let exampleGenerated=false; let currentUser=null; let deferredAction=null;
  // 제시문 이미지 프리뷰도 함께 리셋
   document.querySelectorAll('.passage-preview').forEach(preview => {
     preview.remove();
