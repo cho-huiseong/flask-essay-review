@@ -1399,21 +1399,54 @@ async function submitEssay(){
     const passageEls = [...document.querySelectorAll('.passage')];
     const passages = passageEls.map(p => p.value);
 
-    // ✅ 각 제시문 textarea에 연결된 이미지 dataURL 배열을 "같은 순서"로 맞춰서 보냄
-    const passagesImages = passageEls.map(p => passageImageMap.get(p) || []);
+    window.savedPassages = passages;
 
-    window.savedPassages = passages; // (선택) PDF에서도 동일 제시문 사용
-    window.savedPassagesImages = passagesImages; // (선택) PDF에서 이미지도 쓰려면 나중에 사용 가능
+    /* ===============================
+       STEP 1: 이미지 언어화 (한 번만)
+    =============================== */
+    const passagesImages = passageEls.map(p => passageImageMap.get(p) || []);
+    let hasImages = false;
+    for(const group of passagesImages){
+      if(group && group.length > 0){
+        hasImages = true;
+        break;
+      }
+    }
+
+    if(hasImages){
+      showGlobalLoading('image-desc');
+
+      const rImg = await fetch('/api/image-desc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question,
+          passagesImages
+        }),
+        credentials: 'include'
+      });
+
+      const imgData = await rImg.json();
+      if(!imgData.ok){
+        throw new Error(imgData.error || '이미지 분석 실패');
+      }
+
+      window.imageDesc = imgData.image_desc;
+    }else{
+      window.imageDesc = '';
+    }
+
+    hideGlobalLoading('image-desc');
+    /* ===== STEP 1 끝 ===== */
 
     const essay=document.getElementById('essay').value;
 
     const r = await fetch('/api/review', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, question, passages, passagesImages, essay }),
+      body: JSON.stringify({ name, question, passages, essay }),
       credentials: 'include'
     });
-
 
     const data = await r.json();
     if (!r.ok) { throw new Error(data.error || '오류'); }
@@ -1463,17 +1496,34 @@ async function submitEssay(){
       </div>
     `;
 
-    const ctx=document.getElementById('scoreChart').getContext('2d');
-    if(scoreChart) scoreChart.destroy();
-    scoreChart=new Chart(ctx,{
+    const ctx = document.getElementById('scoreChart').getContext('2d');
+
+    if (scoreChart && typeof scoreChart.destroy === 'function') {
+      scoreChart.destroy();
+    }
+
+    scoreChart = new Chart(ctx,{
       type:'bar',
-      data:{ labels:['논리력','독해력','구성력','표현력'],
-        datasets:[{ data:savedScores, backgroundColor:"rgba(33,64,177,.75)", borderRadius:8, barThickness:28, categoryPercentage:0.65 }]},
-      options:{ animation:{duration:600,easing:'easeOutQuart'},
-        scales:{ x:{grid:{display:false},ticks:{color:'#6B7280',font:{size:12}}},
-                 y:{beginAtZero:true,max:10,ticks:{stepSize:1,color:'#9CA3AF',font:{size:11}},grid:{color:'rgba(17,24,39,.06)'}}},
-        plugins:{legend:{display:false}}}
+      data:{
+        labels:['논리력','독해력','구성력','표현력'],
+        datasets:[{
+          data:savedScores,
+          backgroundColor:"rgba(33,64,177,.75)",
+          borderRadius:8,
+          barThickness:28,
+          categoryPercentage:0.65
+        }]
+      },
+      options:{
+        animation:{duration:600,easing:'easeOutQuart'},
+        scales:{
+          x:{grid:{display:false},ticks:{color:'#6B7280',font:{size:12}}},
+          y:{beginAtZero:true,max:10,ticks:{stepSize:1,color:'#9CA3AF',font:{size:11}},grid:{color:'rgba(17,24,39,.06)'}}
+        },
+        plugins:{legend:{display:false}}
+      }
     });
+
 
     document.getElementById('loading').style.display='none';
     document.getElementById('resultCard').classList.remove('hidden');
@@ -1517,14 +1567,12 @@ async function loadExample(){
     const passageEls = [...document.querySelectorAll('.passage')];
     const passages = passageEls.map(p => p.value);
 
-    // ✅ 예시 생성에도 동일하게 이미지 같이 전송
-    const passagesImages = passageEls.map(p => passageImageMap.get(p) || []);
-
+    // ✅ 예시 생성 단계에서도 이미지 전송 제거
     const essay=document.getElementById('essay').value;
     const limit=document.getElementById('charLimit').value;
     const range=document.getElementById('charRange').value;
 
-    const payload={ name, question, passages, passagesImages, essay };
+    const payload={ name, question, passages, essay };
     const base=parseInt(limit), rng=parseInt(range);
     if(!Number.isNaN(base)) payload.charBase=base;
     if(!Number.isNaN(rng))  payload.charRange=rng;
@@ -1533,8 +1581,9 @@ async function loadExample(){
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(payload),
-      credentials:'include'   // ★ 세션 쿠키 동봉
-});
+      credentials:'include'
+    });
+
     const data=await r.json();
     if(!r.ok){ throw new Error(data.error||'오류'); }
 
