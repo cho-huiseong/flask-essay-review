@@ -22,7 +22,7 @@ app = Flask(
     template_folder=os.path.join(BASE_DIR, "templates"),
     static_folder=os.path.join(BASE_DIR, "static"),
 )
-app.config["MAX_CONTENT_LENGTH"] = 6 * 1024 * 1024  # 6MB
+app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
 # 🔐 세션/쿠키 설정 (크로스 도메인에서 쿠키가 안 실리는 문제 해결)
 app.config.update(
