@@ -2306,6 +2306,41 @@ function addImageToCurrentPassage(file){
     return;
   }
 
+  if (!currentPassageTarget) return;
+
+  // 1️⃣ 현재 제시문 래퍼
+  const passageWrapper = currentPassageTarget.closest('.passage-wrap') || currentPassageTarget.parentElement;
+
+  // 2️⃣ 이미지 표시 컨테이너 (없으면 생성)
+  let imageBox = passageWrapper.querySelector('.passage-images');
+  if (!imageBox) {
+    imageBox = document.createElement('div');
+    imageBox.className = 'passage-images';
+    passageWrapper.appendChild(imageBox);
+  }
+
+  // 3️⃣ img 엘리먼트 생성
+  const img = document.createElement('img');
+  img.src = URL.createObjectURL(file);
+  img.style.maxWidth = '100%';
+  img.style.display = 'block';
+  img.style.marginTop = '8px';
+
+  // 4️⃣ 화면에 추가 (⭐ 이 줄이 핵심)
+  imageBox.appendChild(img);
+
+  // 5️⃣ 상태 저장
+  if (!passageImageMap.has(currentPassageTarget)) {
+    passageImageMap.set(currentPassageTarget, []);
+  }
+
+  passageImageMap.get(currentPassageTarget).push({
+    file,
+    confirmed: false,
+    desc: ''
+  });
+}
+
   // ✅ 포커스된 제시문이 없으면 첫 번째 제시문을 대상으로
   if(!currentPassageTarget){
     const first = document.querySelector('.passage');
