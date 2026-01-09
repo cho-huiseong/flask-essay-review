@@ -2590,34 +2590,41 @@ function hideGlobalLoading(){
 </script>
 <script>
 document.addEventListener('DOMContentLoaded', updatePdfBtnState);
+</script>
 <!-- ===== 제시문 이미지 확정 안내 모달 ===== -->
 <div id="imageConfirmModal" class="modal-backdrop hidden">
   <div class="modal">
-    <h3 style="margin:0 0 8px;font-weight:900">
+    <h3 style="margin: 0 0 8px; font-weight: 900;">
       아직 확정되지 않은 제시문 이미지가 있어요
     </h3>
 
-    <p class="muted" style="line-height:1.6">
+    <p class="muted" style="line-height: 1.6;">
       이 제시문 이미지는 아직 해석이 확정되지 않았어요.<br><br>
       지금 진행하면 <b>확정된 제시문만</b>을 근거로<br>
       리포트가 만들어져요.
     </p>
 
-    <div style="display:flex; gap:10px; margin-top:18px">
+    <div style="display: flex; gap: 10px; margin-top: 18px;">
       <button
         id="btnProceedWithoutImage"
         class="btn btn-primary"
-        style="flex:1">
+        style="flex: 1;"
+      >
         이대로 리포트 생성
       </button>
 
       <button
         id="btnGoConfirmImage"
         class="btn btn-ghost"
-        style="flex:1">
+        style="flex: 1;"
+      >
         사진 확정하러 가기
       </button>
     </div>
   </div>
 </div>
+
+</body>
+</html>
+
 
