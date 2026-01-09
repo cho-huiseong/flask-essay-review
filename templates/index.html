@@ -2479,9 +2479,10 @@ renderPassageImagePreview(currentPassageTarget);
 
     preview.appendChild(item);
   });
+  reader.readAsDataURL(file);
+
 };
 
-  reader.readAsDataURL(file);
 
   // 제시문 textarea에 "붙여넣기" 했을 때, 이미지가 있으면 프리뷰로만 추가
 document.addEventListener('paste', (e) => {
