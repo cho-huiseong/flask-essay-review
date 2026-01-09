@@ -864,7 +864,17 @@ canvas.demoChart{ height:140px !important; }
 </div>
 
 <script>
-  
+  // ===== 전역 상태 (리뷰/예시/PDF 공용) =====
+let scoreChart = null;
+let savedScores = [];
+let savedReasons = {};
+let savedExample = '';
+let savedComparison = '';
+let savedSummary = '';
+let exampleGenerated = false;
+let currentUser = null;
+let deferredAction = null;
+
 /* ===== 데모 데이터 ===== */
 const demoSet = {
   student: "김다움",
@@ -1358,9 +1368,6 @@ function resetReport(){
   document.getElementById('studentName').value = '';
   document.getElementById('question').value = '';
 
-/* ===== 상태 ===== */
-let scoreChart, savedScores=[], savedReasons={}, savedExample="", savedComparison="", savedSummary="";
-let exampleGenerated=false; let currentUser=null; let deferredAction=null;
  // 제시문 이미지 프리뷰도 함께 리셋
   document.querySelectorAll('.passage-preview').forEach(preview => {
     preview.remove();
