@@ -2386,6 +2386,8 @@ reader.onload = () => {
     });
 
 passageImageMap.set(currentPassageTarget, prevArr);
+renderPassageImagePreview(currentPassageTarget);
+
 
     // ✅ 프리뷰 다시 그리기(여러 장 썸네일 + 개별 삭제)
     preview.innerHTML = '';
