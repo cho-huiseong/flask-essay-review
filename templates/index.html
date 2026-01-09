@@ -1527,166 +1527,109 @@ async function continueSubmitEssay() {
 }
 
 
-    /* 결과 카드 그리기 (예시 버튼만 노출) */
-    document.getElementById('evalSummary').innerHTML=`
-      <div class="panel" style="display:flex;align-items:center;gap:14px">
-        <div style="font-size:30px">${status.emoji}</div>
-        <div style="flex:1">
-          <div style="font-weight:900">총점 <span style="color:${status.tone}">${total}</span> / 40 ·
-            <span style="color:${status.tone}">${status.label}</span></div>
-          <div class="muted" style="margin-top:4px">${status.desc}</div>
-          <div style="margin-top:8px;position:relative;height:10px;background:#eef2ff;border-radius:999px;overflow:hidden">
-            <div style="width:${(total/40)*100}%;height:100%;background:${status.tone};transition:width .5s"></div>
-            <div style="position:absolute;left:${(30/40)*100}%;top:0;bottom:0;width:2px;background:rgba(17,24,39,.15)"></div>
-            <div style="position:absolute;left:${(36/40)*100}%;top:0;bottom:0;width:2px;background:rgba(17,24,39,.25)"></div>
-          </div>
+    function renderResult(savedScores, savedReasons, total, status, savedSummary) {
+  /* ===== 결과 카드 그리기 (예시 버튼만 노출) ===== */
+  document.getElementById('evalSummary').innerHTML = `
+    <div class="panel" style="display:flex;align-items:center;gap:14px">
+      <div style="font-size:30px">${status.emoji}</div>
+      <div style="flex:1">
+        <div style="font-weight:900">
+          총점 <span style="color:${status.tone}">${total}</span> / 40 ·
+          <span style="color:${status.tone}">${status.label}</span>
         </div>
-        <div style="position:relative; width:110px; height:110px">
-          <svg width="110" height="110">
-            <circle r="52" cx="55" cy="55" fill="transparent" stroke="#eef2ff" stroke-width="10"></circle>
-            <circle r="52" cx="55" cy="55" fill="transparent" stroke="${status.tone}" stroke-width="10"
-              stroke-dasharray="327" stroke-dashoffset="${327-(327*(total/40))}"></circle>
-          </svg>
-          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-weight:900">${total}</div>
+        <div class="muted" style="margin-top:4px">${status.desc}</div>
+        <div style="margin-top:8px;position:relative;height:10px;background:#eef2ff;border-radius:999px;overflow:hidden">
+          <div style="width:${(total / 40) * 100}%;height:100%;background:${status.tone};transition:width .5s"></div>
+          <div style="position:absolute;left:${(30 / 40) * 100}%;top:0;bottom:0;width:2px;background:rgba(17,24,39,.15)"></div>
+          <div style="position:absolute;left:${(36 / 40) * 100}%;top:0;bottom:0;width:2px;background:rgba(17,24,39,.25)"></div>
         </div>
       </div>
-
-      <div class="kpi" style="margin-top:14px">
-        ${['논리력','독해력','구성력','표현력'].map((k,i)=>`
-          <div class="panel">
-            <div style="font-weight:800">${k} (${savedScores[i]}점)</div>
-            <div class="muted" style="margin-top:6px">${savedReasons[k]}</div>
-          </div>
-        `).join('')}
+      <div style="position:relative; width:110px; height:110px">
+        <svg width="110" height="110">
+          <circle r="52" cx="55" cy="55" fill="transparent" stroke="#eef2ff" stroke-width="10"></circle>
+          <circle
+            r="52"
+            cx="55"
+            cy="55"
+            fill="transparent"
+            stroke="${status.tone}"
+            stroke-width="10"
+            stroke-dasharray="327"
+            stroke-dashoffset="${327 - (327 * (total / 40))}">
+          </circle>
+        </svg>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-weight:900">
+          ${total}
+        </div>
       </div>
+    </div>
 
-      <div class="panel" style="margin-top:14px; width:70%; margin-left:auto; margin-right:auto;"><canvas id="scoreChart" height="140" style="width:100%"></canvas></div>
+    <div class="kpi" style="margin-top:14px">
+      ${['논리력','독해력','구성력','표현력'].map((k, i) => `
+        <div class="panel">
+          <div style="font-weight:800">${k} (${savedScores[i]}점)</div>
+          <div class="muted" style="margin-top:6px">${savedReasons[k]}</div>
+        </div>
+      `).join('')}
+    </div>
 
-      <div id="exampleCTA" style="text-align:right;margin-top:12px">
-        <button id="btnExample" class="btn btn-primary" onclick="loadExample()">예시답안 보기</button>
-      </div>
-    `;
+    <div class="panel" style="margin-top:14px; width:70%; margin-left:auto; margin-right:auto;">
+      <canvas id="scoreChart" height="140" style="width:100%"></canvas>
+    </div>
 
-    const ctx = document.getElementById('scoreChart').getContext('2d');
+    <div id="exampleCTA" style="text-align:right;margin-top:12px">
+      <button id="btnExample" class="btn btn-primary" onclick="loadExample()">예시답안 보기</button>
+    </div>
+  `;
 
-    if (scoreChart && typeof scoreChart.destroy === 'function') {
-      scoreChart.destroy();
-    }
+  const ctx = document.getElementById('scoreChart').getContext('2d');
 
-    scoreChart = new Chart(ctx,{
-      type:'bar',
-      data:{
-        labels:['논리력','독해력','구성력','표현력'],
-        datasets:[{
-          data:savedScores,
-          backgroundColor:"rgba(33,64,177,.75)",
-          borderRadius:8,
-          barThickness:28,
-          categoryPercentage:0.65
-        }]
-      },
-      options:{
-        animation:{duration:600,easing:'easeOutQuart'},
-        scales:{
-          x:{grid:{display:false},ticks:{color:'#6B7280',font:{size:12}}},
-          y:{beginAtZero:true,max:10,ticks:{stepSize:1,color:'#9CA3AF',font:{size:11}},grid:{color:'rgba(17,24,39,.06)'}}
+  if (window.scoreChart && typeof window.scoreChart.destroy === 'function') {
+    window.scoreChart.destroy();
+  }
+
+  window.scoreChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['논리력', '독해력', '구성력', '표현력'],
+      datasets: [{
+        data: savedScores,
+        backgroundColor: "rgba(33,64,177,.75)",
+        borderRadius: 8,
+        barThickness: 28,
+        categoryPercentage: 0.65
+      }]
+    },
+    options: {
+      animation: { duration: 600, easing: 'easeOutQuart' },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: '#6B7280', font: { size: 12 } }
         },
-        plugins:{legend:{display:false}}
+        y: {
+          beginAtZero: true,
+          max: 10,
+          ticks: { stepSize: 1, color: '#9CA3AF', font: { size: 11 } },
+          grid: { color: 'rgba(17,24,39,.06)' }
+        }
+      },
+      plugins: {
+        legend: { display: false }
       }
-    });
+    }
+  });
 
+  document.getElementById('resultCard').classList.remove('hidden');
+  document.getElementById('exampleSection').classList.add('hidden'); // 예시 사전 노출 방지
+  document.getElementById('exampleNote').style.display = 'none';
+  document.getElementById('exampleOutput').innerHTML = '';
+  document.getElementById('comparisonOutput').innerHTML = '';
+  window.exampleGenerated = false;
 
-    document.getElementById('loading').style.display='none';
-    document.getElementById('resultCard').classList.remove('hidden');
-    document.getElementById('exampleSection').classList.add('hidden'); // ✅ 사전 노출 금지
-    document.getElementById('exampleNote').style.display='none';
-    document.getElementById('exampleOutput').innerHTML='';
-    document.getElementById('comparisonOutput').innerHTML='';
-    exampleGenerated=false;
-
-    updatePdfBtnState();
-  }catch(e){
-    console.error(e);
-    document.getElementById('loading').style.display='none';
-    document.getElementById('error').style.display='block';
-  }finally{
-    // 🔵 토스 스타일 전체 로딩 오버레이는 여기서 반드시 끔
-    hideGlobalLoading();
-  }
+  updatePdfBtnState();
 }
 
-/* ===== 예시 ===== */
-async function loadExample(){
-  const btn=document.getElementById('btnExample');
-  const note=document.getElementById('exampleNote');
-  const errId='exampleInlineErr';
-  let err=document.getElementById(errId);
-  if(!err){
-    err=document.createElement('div');
-    err.id=errId; err.className='muted';
-    err.style.cssText='margin-top:6px;color:#dc2626;text-align:right';
-    document.getElementById('exampleCTA')?.appendChild(err);
-  }
-  err.textContent='';
-
-  btn.disabled=true; const old=btn.textContent; btn.textContent='생성 중...';
-  showGlobalLoading('example');
-
-  try{
-    const name=document.getElementById('studentName').value;
-    const question=document.getElementById('question').value;
-    const passageEls = [...document.querySelectorAll('#passages .passage')];
-    const passages = passageEls.map(p => p.value);
-
-// ✅ 예시 생성 단계에서도 이미지 전송 제거
-    const essay=document.getElementById('essay').value;
-    const limit=document.getElementById('charLimit').value;
-    const range=document.getElementById('charRange').value;
-
-    const payload={ name, question, passages, essay };
-
-    const base=parseInt(limit), rng=parseInt(range);
-    if(!Number.isNaN(base)) payload.charBase=base;
-    if(!Number.isNaN(rng))  payload.charRange=rng;
-
-    const r=await fetch('/example',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(payload),
-      credentials:'include'
-    });
-
-    const data=await r.json();
-    if(!r.ok){ throw new Error(data.error||'오류'); }
-
-    savedExample=data.example||''; savedComparison=data.comparison||'';
-    if (data.length_note) {
-  note.style.display = 'block';
-  note.textContent = data.length_note;
-} else if (data.length_valid === false) {
-  note.style.display = 'block';
-  note.textContent = '✍️ 권장 글자수 범위를 벗어났지만, 참고용 예시는 표시합니다.';
-} else {
-  note.style.display = 'none';
-}
-
-
-    document.getElementById('exampleOutput').innerHTML=(savedExample||'').replace(/\n/g,'<br>');
-    document.getElementById('comparisonOutput').innerHTML=(savedComparison||'').replace(/\n/g,'<br>');
-
-    document.getElementById('exampleSection').classList.remove('hidden'); // ✅ 이때만 열기
-    document.getElementById('exampleSection').scrollIntoView({behavior:'smooth',block:'start'});
-    btn.textContent='예시답안 생성됨';
-
-   updatePdfBtnState();
-  }catch(e){
-    console.error(e);
-    err.textContent='생성 중 문제가 있었어요. 잠시 뒤 다시 시도해 주세요.';
-    btn.textContent=old; btn.disabled=false;
-  }finally{
-    hideGlobalLoading();
-  }
-}
 /* ===== PDF ===== */
 window.__pdf_version = 'v3.0-2025-10-24';
 
