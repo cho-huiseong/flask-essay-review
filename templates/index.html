@@ -1261,14 +1261,21 @@ async function applyBookProblem() {
         `;
 
         try {
-          const dataUrls = [];
+          const imageObjs = [];
+
           for (const p of paths) {
             const imgUrl = toStaticImageUrl(p);
             const dataUrl = await fetchAsDataUrl(imgUrl);
-            dataUrls.push(dataUrl);
+
+            imageObjs.push({
+              src: dataUrl,
+              confirmed: false,
+              desc: null
+            });
           }
-          // ✅ 여러 장을 한 textarea에 배열로 저장
-          passageImageMap.set(first, dataUrls);
+
+// ✅ 항상 이 형태로만 저장
+          passageImageMap.set(first, imageObjs);
         } catch (e) {
           console.error(e);
         }
@@ -1303,13 +1310,21 @@ async function applyBookProblem() {
           `;
 
           try {
-            const dataUrls = [];
+            const imageObjs = [];
+
             for (const p of paths) {
               const imgUrl = toStaticImageUrl(p);
               const dataUrl = await fetchAsDataUrl(imgUrl);
-              dataUrls.push(dataUrl);
+
+              imageObjs.push({
+                src: dataUrl,
+                confirmed: false,
+                desc: null
+              });
             }
-            passageImageMap.set(el, dataUrls);
+
+            passageImageMap.set(el, imageObjs);
+            
           } catch (e) {
             console.error(e);
           }
@@ -1388,73 +1403,129 @@ function getTotalAndStatus(scores){
 }
 
 /* ===== 리뷰 ===== */
-async function submitEssay(){
-  document.getElementById('loading').style.display='block';
-  document.getElementById('error').style.display='none';
+async function submitEssay() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('error').style.display = 'none';
+
   showGlobalLoading('review');
-  
-  try{
-    const name=document.getElementById('studentName').value;
-    const question=document.getElementById('question').value;
-    const passageEls = [...document.querySelectorAll('.passage')];
-    const passages = passageEls.map(p => p.value);
+
+  // ✅ 미확정 이미지 존재 여부 체크
+  const hasUnconfirmedImage = [...document.querySelectorAll('#passages .passage')]
+    .some(p => {
+      const imgs = passageImageMap.get(p) || [];
+      return imgs.some(img => !img.confirmed);
+    });
+
+  // 🚨 미확정 이미지가 있으면 모달 표시 후 중단
+  if (hasUnconfirmedImage) {
+    hideGlobalLoading();
+    document.getElementById('loading').style.display = 'none';
+
+    const modal = document.getElementById('imageConfirmModal');
+    const btnProceed = document.getElementById('btnProceedWithoutImage');
+    const btnGoConfirm = document.getElementById('btnGoConfirmImage');
+
+    modal.classList.remove('hidden');
+
+    // 👉 이대로 제출
+    btnProceed.onclick = () => {
+      modal.classList.add('hidden');
+      continueSubmitEssay();
+    };
+
+    // 👉 이미지 확정하러 이동
+    btnGoConfirm.onclick = () => {
+      modal.classList.add('hidden');
+
+      const target = [...document.querySelectorAll('#passages .passage')]
+        .find(p => {
+          const imgs = passageImageMap.get(p) || [];
+          return imgs.some(img => !img.confirmed);
+        });
+
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        target.focus({ preventScroll: true });
+      }
+    };
+
+    return; // ⛔ 여기서 반드시 종료
+  }
+
+  // ✅ 문제 없으면 바로 제출
+  continueSubmitEssay();
+}
+
+
+/* ===== 실제 리뷰 요청 ===== */
+async function continueSubmitEssay() {
+  try {
+    showGlobalLoading('review');
+    document.getElementById('loading').style.display = 'block';
+
+    const name = document.getElementById('studentName').value;
+    const question = document.getElementById('question').value;
+    const essay = document.getElementById('essay').value;
+
+    const passageEls = [...document.querySelectorAll('#passages .passage')];
+
+    const passages = passageEls.map(p => {
+      const baseText = p.value || '';
+      const imgs = passageImageMap.get(p) || [];
+
+      // ✅ 확정된 이미지 설명만 사용
+      const confirmedDescs = imgs
+        .filter(img => img.confirmed && img.desc)
+        .map((img, i) => `[이미지 ${i + 1}] ${img.desc}`);
+
+      if (confirmedDescs.length === 0) {
+        return baseText;
+      }
+
+      return [
+        baseText,
+        '',
+        confirmedDescs.join('\n')
+      ].join('\n');
+    });
 
     window.savedPassages = passages;
-
-    /* ===============================
-       STEP 1: 이미지 언어화 (한 번만)
-    =============================== */
-    const passagesImages = passageEls.map(p => passageImageMap.get(p) || []);
-    let hasImages = false;
-    for(const group of passagesImages){
-      if(group && group.length > 0){
-        hasImages = true;
-        break;
-      }
-    }
-
-    if(hasImages){
-      showGlobalLoading('image-desc');
-
-      const rImg = await fetch('/api/image-desc', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question,
-          passagesImages
-        }),
-        credentials: 'include'
-      });
-
-      const imgData = await rImg.json();
-      if(!imgData.ok){
-        throw new Error(imgData.error || '이미지 분석 실패');
-      }
-
-      window.imageDesc = imgData.image_desc;
-    }else{
-      window.imageDesc = '';
-    }
-
-    hideGlobalLoading('image-desc');
-    /* ===== STEP 1 끝 ===== */
-
-    const essay=document.getElementById('essay').value;
 
     const r = await fetch('/api/review', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, question, passages, essay }),
-      credentials: 'include'
+      credentials: 'include',
+      body: JSON.stringify({
+        name,
+        question,
+        passages,
+        essay
+      })
     });
 
     const data = await r.json();
-    if (!r.ok) { throw new Error(data.error || '오류'); }
+    if (!r.ok) {
+      throw new Error(data.error || '리뷰 요청 실패');
+    }
 
-    savedScores=data.scores; 
-    savedReasons=data.reasons;
+    savedScores = data.scores;
+    savedReasons = data.reasons;
+    savedSummary = data.summary;
+
     const { total, status } = getTotalAndStatus(savedScores);
-    savedSummary = data.summary; // ✅ 한 줄 총평 저장
+
+    renderResult(savedScores, savedReasons, total, status, savedSummary);
+
+  } catch (err) {
+    console.error(err);
+    document.getElementById('error').textContent = err.message;
+    document.getElementById('error').style.display = 'block';
+  } finally {
+    hideGlobalLoading();
+    document.getElementById('loading').style.display = 'none';
+  }
+}
+
 
     /* 결과 카드 그리기 (예시 버튼만 노출) */
     document.getElementById('evalSummary').innerHTML=`
@@ -1564,15 +1635,16 @@ async function loadExample(){
   try{
     const name=document.getElementById('studentName').value;
     const question=document.getElementById('question').value;
-    const passageEls = [...document.querySelectorAll('.passage')];
+    const passageEls = [...document.querySelectorAll('#passages .passage')];
     const passages = passageEls.map(p => p.value);
 
-    // ✅ 예시 생성 단계에서도 이미지 전송 제거
+// ✅ 예시 생성 단계에서도 이미지 전송 제거
     const essay=document.getElementById('essay').value;
     const limit=document.getElementById('charLimit').value;
     const range=document.getElementById('charRange').value;
 
     const payload={ name, question, passages, essay };
+
     const base=parseInt(limit), rng=parseInt(range);
     if(!Number.isNaN(base)) payload.charBase=base;
     if(!Number.isNaN(rng))  payload.charRange=rng;
@@ -2112,10 +2184,16 @@ let currentPassageTarget = null;
 
 // 🔹 어떤 제시문 칸이 포커스를 받았는지 추적
 document.addEventListener('focusin', (e) => {
-  if (e.target.classList && e.target.classList.contains('passage')) {
-    currentPassageTarget = e.target;
+  const t = e.target;
+  if (t && t.classList && t.classList.contains('passage')) {
+    // ✅ 데모(#passagesDemo) 제외, 실제 입력 영역(#passages)만 인정
+    if (t.closest && t.closest('#passages')) {
+      currentPassageTarget = t;
+    }
   }
 });
+
+
 </script>
 
 <!-- 🆕 여기 OCR용 스크립트 하나 끼워 넣기 -->
@@ -2263,7 +2341,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 포커스된 제시문이 없으면 첫 칸으로
       if(!currentPassageTarget){
-        const first = document.querySelector('.passage');
+        const first = document.querySelector('#passages .passage');
         if(first) currentPassageTarget = first;
       }
 
@@ -2290,7 +2368,20 @@ function addImageToCurrentPassage(file){
   const preview = ensurePassagePreview(currentPassageTarget);
 
   // ✅ 이 textarea에 이미 연결된 이미지 배열(없으면 새로)
-  const prevArr = passageImageMap.get(currentPassageTarget) || [];
+  let prevArr = passageImageMap.get(currentPassageTarget) || [];
+
+  // ✅ 혹시 예전 데이터(string)가 섞여 있으면 정규화
+  prevArr = prevArr.map(item => {
+    if (typeof item === 'string') {
+      return {
+        src: item,
+        confirmed: false,
+        desc: null
+      };
+    }
+    return item;
+  });
+
 
   if (prevArr.length >= 3) {
     alert('제시문당 이미지는 최대 3장까지 추가할 수 있어요.');
@@ -2303,96 +2394,118 @@ reader.onload = () => {
     const dataUrl = reader.result; // "data:image/png;base64,...."
 
     // ✅ 배열에 추가 (여러 장 지원)
-    prevArr.push(dataUrl);
-    passageImageMap.set(currentPassageTarget, prevArr);
+    prevArr.push({
+      src: dataUrl,
+      confirmed: false,
+      desc: null
+    });
+
+passageImageMap.set(currentPassageTarget, prevArr);
 
     // ✅ 프리뷰 다시 그리기(여러 장 썸네일 + 개별 삭제)
     preview.innerHTML = '';
-    prevArr.forEach((url, idx) => {
-      const item = document.createElement('div');
-      item.style.cssText = 'display:inline-block; position:relative; margin:6px;';
+    prevArr.forEach((imageObj, idx) => {
+    const item = document.createElement('div');
+    item.style.cssText = 'display:inline-block; position:relative; margin:6px;';
 
-      const img = document.createElement('img');
-      img.src = url;
-      img.style.cssText = 'max-width:160px; border-radius:8px; display:block;';
-      item.appendChild(img);
+    // 이미지
+    const img = document.createElement('img');
+    img.src = imageObj.src;
+    img.style.cssText = 'max-width:160px; border-radius:8px; display:block;';
+    item.appendChild(img);
+  
+    // 🆕 사진 확정 버튼
+    const confirmBtn = document.createElement('button');
+    confirmBtn.type = 'button';
+    confirmBtn.textContent = imageObj.confirmed ? '확정됨' : '사진 확정하기';
+    confirmBtn.style.cssText = `
+      margin-top:4px;
+      width:100%;
+      font-size:12px;
+      padding:4px 6px;
+      border-radius:6px;
+      border:1px solid #d1d5db;
+      background:${imageObj.confirmed ? '#e5e7eb' : '#fff'};
+      cursor:${imageObj.confirmed ? 'default' : 'pointer'};
+    `;
+    confirmBtn.disabled = imageObj.confirmed;
 
-      const rm = document.createElement('button');
-      rm.type = 'button';
-      rm.className = 'remove-img-btn';
-      rm.textContent = '삭제';
-      rm.style.cssText = 'position:absolute; top:6px; right:6px;';
-      rm.onclick = () => {
-        const arr = passageImageMap.get(currentPassageTarget) || [];
-        arr.splice(idx, 1);
-        if(arr.length === 0){
-          passageImageMap.delete(currentPassageTarget);
-          preview.remove();
-        }else{
-          passageImageMap.set(currentPassageTarget, arr);
-          // 재귀적으로 다시 렌더
-          preview.innerHTML = '';
-          arr.forEach((u, j) => {
-            const it = document.createElement('div');
-            it.style.cssText = 'display:inline-block; position:relative; margin:6px;';
-            const im = document.createElement('img');
-            im.src = u;
-            im.style.cssText = 'max-width:160px; border-radius:8px; display:block;';
-            it.appendChild(im);
+    confirmBtn.onclick = async () => {
+      if (imageObj.confirmed) return;
 
-            const b = document.createElement('button');
-            b.type='button';
-            b.className='remove-img-btn';
-            b.textContent='삭제';
-            b.style.cssText='position:absolute; top:6px; right:6px;';
-            b.onclick = () => {
-              const a2 = passageImageMap.get(currentPassageTarget) || [];
-              a2.splice(j,1);
-              if(a2.length===0){
-                passageImageMap.delete(currentPassageTarget);
-                preview.remove();
-              }else{
-                passageImageMap.set(currentPassageTarget, a2);
-                // 다시 렌더
-                preview.innerHTML='';
-                a2.forEach((uu, jj)=>{
-                  const it2=document.createElement('div');
-                  it2.style.cssText='display:inline-block; position:relative; margin:6px;';
-                  const im2=document.createElement('img');
-                  im2.src=uu;
-                  im2.style.cssText='max-width:160px; border-radius:8px; display:block;';
-                  it2.appendChild(im2);
-                  const bb=document.createElement('button');
-                  bb.type='button';
-                  bb.className='remove-img-btn';
-                  bb.textContent='삭제';
-                  bb.style.cssText='position:absolute; top:6px; right:6px;';
-                  bb.onclick=()=>{/* (중첩 삭제 방지) */};
-                  it2.appendChild(bb);
-                  preview.appendChild(it2);
-                });
-              }
-            };
-            it.appendChild(b);
-            preview.appendChild(it);
-          });
-        }
-      };
+      confirmBtn.textContent = '확정 중...';
+      confirmBtn.disabled = true;
 
-      item.appendChild(rm);
-      preview.appendChild(item);
-    });
+      try {
+        const res = await fetch('/api/image-confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: imageObj.src })
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error();
+
+        imageObj.confirmed = true;
+        imageObj.desc = data.image_desc;
+
+        confirmBtn.textContent = '확정됨';
+        confirmBtn.style.background = '#e5e7eb';
+      } catch (e) {
+        alert('사진 확정에 실패했어요.');
+        confirmBtn.textContent = '사진 확정하기';
+        confirmBtn.disabled = false;
+      }
+    };
+
+    item.appendChild(confirmBtn);
+
+    // 삭제 버튼 (기존 그대로)
+    const rm = document.createElement('button');
+    rm.className = 'img-remove';
+    rm.textContent = '삭제';
+
+    rm.onclick = () => {
+      const imgs = passageImageMap.get(textarea) || [];
+      const target = imgs[idx];
+
+      // ✅ 확정된 이미지면 경고
+      if (target && target.confirmed) {
+        const ok = confirm(
+          '이 이미지는 이미 확정되었습니다.\n삭제하면 분석 기준에서 완전히 제거됩니다.\n삭제하시겠습니까?'
+        );
+        if (!ok) return;
+      }
+
+      // ✅ 배열에서 제거
+      imgs.splice(idx, 1);
+      passageImageMap.set(textarea, imgs);
+
+      if (imgs.length === 0) {
+        passageImageMap.delete(textarea);
+      }
+
+      // ✅ 프리뷰 다시 렌더
+      renderPassageImagePreview(textarea);
+    };
+
+    wrap.appendChild(rm);
+
+    preview.appendChild(item);
+  });
   };
 
   reader.readAsDataURL(file);
 }
 
   // 제시문 textarea에 "붙여넣기" 했을 때, 이미지가 있으면 프리뷰로만 추가
-  document.addEventListener('paste', (e) => {
-    const active = document.activeElement;
-    if (!active || !active.classList || !active.classList.contains('passage')) {
+document.addEventListener('paste', (e) => {
+  const active = document.activeElement;
+
+  // ✅ 데모(#passagesDemo) 제외, 실제 입력 영역(#passages)만 허용
+    if (!active || !active.classList || !active.classList.contains('passage') || !(active.closest && active.closest('#passages'))) {
       return;
     }
+
     const cd = e.clipboardData;
     if (!cd || !cd.items) return;
 
@@ -2400,7 +2513,7 @@ reader.onload = () => {
     const imageItem = items.find(it => it.type && it.type.startsWith('image/'));
     if (!imageItem) return; // 이미지 없으면 그대로 텍스트 붙여넣기
 
-    // 이미지가 있으면, 텍스트 붙여넣기 대신 이미지 프리뷰만 추가
+  // 이미지가 있으면, 텍스트 붙여넣기 대신 이미지 프리뷰만 추가
     e.preventDefault();
 
     const file = imageItem.getAsFile();
@@ -2477,6 +2590,34 @@ function hideGlobalLoading(){
 </script>
 <script>
 document.addEventListener('DOMContentLoaded', updatePdfBtnState);
-</script>
-</body>
-</html>
+<!-- ===== 제시문 이미지 확정 안내 모달 ===== -->
+<div id="imageConfirmModal" class="modal-backdrop hidden">
+  <div class="modal">
+    <h3 style="margin:0 0 8px;font-weight:900">
+      아직 확정되지 않은 제시문 이미지가 있어요
+    </h3>
+
+    <p class="muted" style="line-height:1.6">
+      이 제시문 이미지는 아직 해석이 확정되지 않았어요.<br><br>
+      지금 진행하면 <b>확정된 제시문만</b>을 근거로<br>
+      리포트가 만들어져요.
+    </p>
+
+    <div style="display:flex; gap:10px; margin-top:18px">
+      <button
+        id="btnProceedWithoutImage"
+        class="btn btn-primary"
+        style="flex:1">
+        이대로 리포트 생성
+      </button>
+
+      <button
+        id="btnGoConfirmImage"
+        class="btn btn-ghost"
+        style="flex:1">
+        사진 확정하러 가기
+      </button>
+    </div>
+  </div>
+</div>
+
