@@ -2465,39 +2465,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
   });
-
-
-      input.disabled = true;
-      e.target.disabled = true;
-      e.target.textContent = '확정됨';
-
-      // 🆕 다시 수정하기 버튼
-      let editBtn = block.querySelector('.btn-edit-interpretation');
-      if (!editBtn) {
-        editBtn = document.createElement('button');
-        editBtn.type = 'button';
-        editBtn.className = 'btn btn-ghost btn-edit-interpretation';
-        editBtn.textContent = '다시 수정하기';
-        editBtn.style.marginLeft = '8px';
-        e.target.parentElement.appendChild(editBtn);
-      }
-    }
-
-    if (e.target.classList.contains('btn-edit-interpretation')) {
-      const block = e.target.closest('.image-interpretation-block');
-      const textarea = block.previousElementSibling;
-      const input = block.querySelector('.interpretation-textarea');
-      const confirmBtn = block.querySelector('.btn-confirm-interpretation');
-
-      input.disabled = false;
-      confirmBtn.disabled = false;
-      confirmBtn.textContent = '이 해석으로 확정';
-
-      passageImageInterpretationMap.delete(textarea);
-    }
-
-  });
-
+  
   // 제시문 OCR 버튼
   if (passageOcrBtn && passageOcrInput) {
     passageOcrBtn.addEventListener('click', () => {
