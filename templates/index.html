@@ -709,28 +709,9 @@ canvas.demoChart{ height:140px !important; }
         </div>
 
         <!-- 🔽 제시문: 사진에서 가져오기 + 제시문 추가 버튼 -->
-        <div style="display:flex; justify-content:space-between; margin-top:8px; gap:8px;">
-          <button type="button" id="btnPassageOcr" class="btn btn-ghost">
-            📸 제시문 사진 파일 추가
-          </button>
-          <button type="button" id="btnAddPassage" class="btn btn-ghost">
-            ➕ 제시문 더 추가
-          </button>
-        </div>
-        <p class="muted" style="margin:4px 0 0; font-size:13px;">
-          제시문 사진은 <b>파일에서 선택하거나, 제시문 칸에 그대로 붙여넣기</b> 하셔도 돼요.<br>
-          사진은 글자로 바꾸지 않고 <b>원본 이미지 그대로</b> 참고용으로 보관됩니다.
-        </p>
-
-
-
-<!-- 제시문용 숨은 파일 입력 -->
-<input
-  id="passageImageInput"
-  type="file"
-  accept="image/*"
-  multiple
-  style="display:none" />
+        <button type="button" id="btnAddPassage" class="btn btn-ghost" style="margin-top:8px;">
+          ➕ 제시문 더 추가
+        </button>
 
 
         <!-- 🔼 제시문 영역 끝 -->
