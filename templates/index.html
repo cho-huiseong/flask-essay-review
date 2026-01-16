@@ -701,17 +701,17 @@ canvas.demoChart{ height:140px !important; }
           사진은 글자로 바꾸지 않고 그대로 보여드려요.
         </p>
 
-        <div id="passages">
-          <textarea
-            class="passage textarea"
-            rows="3"
-            placeholder="제시문을 그대로 적어 주세요. (복사한 글을 붙여넣어도 돼요.)"></textarea>
-        </div>
+        <div id="passages"></div>
 
-        <!-- 🔽 제시문: 사진에서 가져오기 + 제시문 추가 버튼 -->
-        <button type="button" id="btnAddPassage" class="btn btn-ghost" style="margin-top:8px;">
+        <!-- 🔽 제시문 추가 버튼 -->
+        <button
+          type="button"
+          id="btnAddPassage"
+          class="btn btn-ghost"
+          style="margin-top:8px;">
           ➕ 제시문 더 추가
         </button>
+
 
 
         <!-- 🔼 제시문 영역 끝 -->
@@ -1022,12 +1022,36 @@ function updateCharCount(){
 
 /* ===== 제시문 추가 (전역 바인딩) ===== */
 window.addPassage = function(){
-  const t=document.createElement('textarea');
-  t.className='passage textarea'; t.rows=3;
-  t.placeholder='제시문을 그대로 적어 주세요.';
-  document.getElementById('passages').appendChild(t);
-  t.addEventListener('input',()=>autoResize(t));
-  autoResize(t); t.focus();
+  const wrap = document.createElement('div');
+  wrap.className = 'passage-wrap';
+
+  wrap.innerHTML = `
+    <textarea
+      class="passage textarea"
+      rows="3"
+      placeholder="제시문을 그대로 적어 주세요. (복사한 글을 붙여넣어도 돼요.)"></textarea>
+
+    <div style="margin-top:6px; display:flex; justify-content:flex-end">
+      <button type="button" class="btn btn-ghost btn-add-passage-image">
+        📸 제시문 사진 추가
+      </button>
+    </div>
+
+    <input
+      type="file"
+      class="passage-image-input"
+      accept="image/*"
+      multiple
+      style="display:none"
+    />
+  `;
+
+  document.getElementById('passages').appendChild(wrap);
+
+  const textarea = wrap.querySelector('textarea');
+  textarea.addEventListener('input', ()=>autoResize(textarea));
+  autoResize(textarea);
+  textarea.focus();
 };
 document.addEventListener('DOMContentLoaded', ()=>{ document.getElementById('btnAddPassage')?.addEventListener('click', ()=>window.addPassage()); });
 /* ===== 교재 문제(단계/페이지) 로딩 ===== */
