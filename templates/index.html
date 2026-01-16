@@ -878,13 +878,7 @@ let deferredAction = null;
 
 <script>
 async function loadExample() {
-  try {
-    if (!currentUser) {
-      deferredAction = 'example';
-      openAuth();
-      return;
-    }
-
+  try {    
     showGlobalLoading('example');
 
     const body = {
