@@ -883,13 +883,13 @@ async function loadExample() {
 
     const body = {
       passages: window.savedPassages || [],
-      image_desc: '',
       question: document.getElementById('question')?.value || '',
       essay: document.getElementById('essay')?.value || '',
       charBase: Number(document.getElementById('charLimit')?.value) || 600,
       charRange: Number(document.getElementById('charRange')?.value) || 100,
       retryConfirmed: false
     };
+
 
     const res = await fetch('/example', {
       method: 'POST',
@@ -1333,9 +1333,7 @@ async function applyBookProblem() {
             const dataUrl = await fetchAsDataUrl(imgUrl);
 
             imageObjs.push({
-              src: dataUrl,
-              confirmed: false,
-              desc: null
+              src: dataUrl
             });
           }
 
@@ -1382,9 +1380,7 @@ async function applyBookProblem() {
               const dataUrl = await fetchAsDataUrl(imgUrl);
 
               imageObjs.push({
-                src: dataUrl,
-                confirmed: false,
-                desc: null
+                src: dataUrl
               });
             }
 
@@ -1415,9 +1411,6 @@ async function applyBookProblem() {
   refreshAutosize();
   updateCharCount();
 }
-
-/** 각 제시문 textarea DOM 요소별로 이미지 dataURL 배열 저장 */
-const passageImageMap = new Map();
 
 function resetReport(){
   document.getElementById('studentName').value = '';
@@ -1469,55 +1462,28 @@ async function submitEssay() {
   document.getElementById('loading').style.display = 'block';
   document.getElementById('error').style.display = 'none';
 
-  showGlobalLoading('review');
+  // 🔒 이미지 있으나 해석 미확정 제시문 검사
+  const passageEls = [...document.querySelectorAll('#passages .passage')];
 
-  // ✅ 미확정 이미지 존재 여부 체크
-  const hasUnconfirmedImage = [...document.querySelectorAll('#passages .passage')]
-    .some(p => {
-      const imgs = passageImageMap.get(p) || [];
-      return imgs.some(img => !img.confirmed);
-    });
+  for (const el of passageEls) {
+    const images = passageImageMap.get(el) || [];
+    const interp = passageImageInterpretationMap.get(el);
 
-  // 🚨 미확정 이미지가 있으면 모달 표시 후 중단
-  if (hasUnconfirmedImage) {
-    hideGlobalLoading();
-    document.getElementById('loading').style.display = 'none';
-
-    const modal = document.getElementById('imageConfirmModal');
-    const btnProceed = document.getElementById('btnProceedWithoutImage');
-    const btnGoConfirm = document.getElementById('btnGoConfirmImage');
-
-    modal.classList.remove('hidden');
-
-    // 👉 이대로 제출
-    btnProceed.onclick = () => {
-      modal.classList.add('hidden');
-      continueSubmitEssay();
-    };
-
-    // 👉 이미지 확정하러 이동
-    btnGoConfirm.onclick = () => {
-      modal.classList.add('hidden');
-
-      const target = [...document.querySelectorAll('#passages .passage')]
-        .find(p => {
-          const imgs = passageImageMap.get(p) || [];
-          return imgs.some(img => !img.confirmed);
-        });
-
-      if (target) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        target.focus({ preventScroll: true });
-      }
-    };
-
-    return; // ⛔ 여기서 반드시 종료
+    if (images.length > 0 && (!interp || !interp.confirmed)) {
+      alert(
+        '사진이 첨부된 제시문이 있습니다.\n\n' +
+        '해당 제시문의 사진 해석을 먼저 확정해 주세요.'
+      );
+      document.getElementById('loading').style.display = 'none';
+      hideGlobalLoading();
+      return;
+    }
   }
 
-  // ✅ 문제 없으면 바로 제출
+  showGlobalLoading('review');
+
   continueSubmitEssay();
 }
-
 
 /* ===== 실제 리뷰 요청 ===== */
 async function continueSubmitEssay() {
@@ -1531,26 +1497,22 @@ async function continueSubmitEssay() {
 
     const passageEls = [...document.querySelectorAll('#passages .passage')];
 
-    const passages = passageEls.map(p => {
-      const baseText = p.value || '';
-      const imgs = passageImageMap.get(p) || [];
+    // ✅ 최종 제시문 구성:
+    // 제시문 텍스트 + (있다면) 확정된 이미지 해석
+    const passages = passageEls.map((el) => {
+      const baseText = (el.value || '').trim();
 
-      // ✅ 확정된 이미지 설명만 사용
-      const confirmedDescs = imgs
-        .filter(img => img.confirmed && img.desc)
-        .map((img, i) => `[이미지 ${i + 1}] ${img.desc}`);
-
-      if (confirmedDescs.length === 0) {
-        return baseText;
+      const interp = passageImageInterpretationMap.get(el);
+      if (interp && interp.confirmed && interp.text) {
+        return baseText
+          ? `${baseText}\n\n[사진 해석]\n${interp.text}`
+          : `[사진 해석]\n${interp.text}`;
       }
 
-      return [
-        baseText,
-        '',
-        confirmedDescs.join('\n')
-      ].join('\n');
+      return baseText;
     });
 
+    // PDF / 이후 단계에서 그대로 사용
     window.savedPassages = passages;
 
     const r = await fetch('/api/review', {
@@ -1587,7 +1549,6 @@ async function continueSubmitEssay() {
     document.getElementById('loading').style.display = 'none';
   }
 }
-
 
     function renderResult(savedScores, savedReasons, total, status, savedSummary) {
   /* ===== 결과 카드 그리기 (예시 버튼만 노출) ===== */
@@ -1833,12 +1794,39 @@ function syncPdfContainer() {
 
   document.getElementById('pdfPassages').innerHTML =
     (passages.length ? passages : [''])
-      .map((p, i) => `
-        <div class="passage-block avoid-break">
-          <div class="passage-label">[제시문 ${i + 1}]</div>
-          <div class="passage-body">${(p || '').replace(/\n/g, '<br/>')}</div>
-        </div>
-      `).join('');
+      .map((p, i) => {
+        const raw = (p || '').toString();
+
+      // [사진 해석] 기준으로 분리
+        const parts = raw.split(/\n\s*\[사진 해석\]\s*\n?/);
+
+        const mainText = parts[0] || '';
+        const imageInterp = parts[1] || '';
+
+        return `
+          <div class="passage-block avoid-break">
+            <div class="passage-label">[제시문 ${i + 1}]</div>
+
+            <div class="passage-body">
+              ${mainText.replace(/\n/g, '<br/>')}
+            </div>
+
+            ${
+              imageInterp
+                ? `
+                  <div class="pdf-image-interpretation">
+                    <div class="pdf-image-interpretation-title">[사진 해석]</div>
+                    <div class="pdf-image-interpretation-body">
+                      ${imageInterp.replace(/\n/g, '<br/>')}
+                    </div>
+                  </div>
+                `
+                : ''
+            }
+          </div>
+        `;
+      })
+      .join('');
 
   document.getElementById('pdfEssay').innerHTML =
     (essay || '').replace(/\n/g, '<br/>');
@@ -2205,7 +2193,15 @@ document.addEventListener('focusin', (e) => {
  
 <!-- 🆕 제시문 / 논술문 OCR 및 이미지 처리 스크립트 -->
 <script>
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // ✅ 5MB 제한 (분석용 이미지 기준)
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; 
+
+// ✅ 제시문별 이미지 목록
+const passageImageMap = new Map();
+
+// ✅ 제시문별 "확정된 이미지 해석"
+// key: textarea.passsage DOM
+// value: { text: string, confirmed: true }
+const passageImageInterpretationMap = new Map();
 
 document.addEventListener('DOMContentLoaded', () => {
   const essayOcrBtn   = document.getElementById('btnEssayOcr');
@@ -2252,22 +2248,75 @@ document.addEventListener('DOMContentLoaded', () => {
     return preview;
   }
 
-  // ========== 1) 논술문: 파일 업로드 → OCR → 텍스트로 변환 ==========
-  async function runEssayOcrWithFile(file){
-  if (!file || !essayArea) return;
+  // ---------- 이미지 해석 확정 UI ----------
+  function ensureImageInterpretationBlock(textareaEl){
+    if (!textareaEl) return null;
 
-  if (file.size > MAX_IMAGE_SIZE) {
-    setError('사진 파일은 5MB 이하만 업로드할 수 있어요.');
-    return;
+    // 🔒 바로 다음 형제 중에서만 찾기
+    let next = textareaEl.nextElementSibling;
+    if (next && next.classList.contains('passage-preview')) {
+      const maybeBlock = next.nextElementSibling;
+      if (maybeBlock && maybeBlock.classList.contains('image-interpretation-block')) {
+        return maybeBlock;
+      }
+    }
+
+    const block = document.createElement('div');
+    block.className = 'image-interpretation-block';
+    block.style.cssText = `
+      margin:12px 0 18px;
+      padding:12px;
+      border:1px dashed rgba(148,163,184,0.6);
+      border-radius:12px;
+      background:#f8fafc;
+    `;
+
+    block.innerHTML = `
+      <button type="button" class="btn btn-ghost btn-generate-interpretation">
+        🖼️ 사진 해석 생성하기
+      </button>
+
+
+      <div class="interpretation-editor hidden" style="margin-top:10px">
+        <div class="muted" style="font-size:13px;margin-bottom:6px">
+          사진을 보고 이해한 내용을 3~4문장으로 정리해 주세요.
+        </div>
+
+        <textarea
+          class="textarea interpretation-textarea"
+          rows="4"
+          placeholder="(예) 이 사진은 ○○ 상황을 보여 주며, 제시문의 주장과 연결하면…"
+        ></textarea>
+
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+          <button type="button" class="btn btn-primary btn-confirm-interpretation">
+            이 해석으로 확정
+          </button>
+        </div>
+      </div>
+    `;
+
+    const preview = ensurePassagePreview(textareaEl);
+    preview.insertAdjacentElement('afterend', block);
+
+    return block;
   }
 
-  const formData = new FormData();
-  formData.append('image', file);
+  // ========== 논술문 OCR ==========
+  async function runEssayOcrWithFile(file){
+    if (!file || !essayArea) return;
 
-  clearError();
-  setLoading('📸 논술문을 읽고 있어요…');
-  showGlobalLoading('ocr');
+    if (file.size > MAX_IMAGE_SIZE) {
+      setError('사진 파일은 5MB 이하만 업로드할 수 있어요.');
+      return;
+    }
 
+    const formData = new FormData();
+    formData.append('image', file);
+
+    clearError();
+    setLoading('📸 논술문을 읽고 있어요…');
+    showGlobalLoading('ocr');
 
     try{
       const res  = await fetch('/api/ocr', {
@@ -2277,293 +2326,191 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await res.json();
 
-      if (!data.ok) {
-        throw new Error(data.error || 'OCR 실패');
-      }
+      if (!data.ok) throw new Error(data.error || 'OCR 실패');
 
-      const text = data.text || '';
-      const prefix = essayArea.value ? '\n' : '';
-      essayArea.value = essayArea.value + prefix + text;
+      essayArea.value += (essayArea.value ? '\n' : '') + (data.text || '');
+      autoResize(essayArea);
+      updateCharCount();
 
-      if (typeof autoResize === 'function') autoResize(essayArea);
-      if (typeof updateCharCount === 'function') updateCharCount();
-
-      setLoading(null);
     }catch(err){
-      console.error('Essay OCR error:', err);
-      setLoading(null);
-      setError('사진에서 글자를 읽는 중 문제가 발생했어요. 다시 시도해 주세요.');
+      setError('사진에서 글자를 읽는 중 문제가 발생했어요.');
     }finally{
-    hideGlobalLoading();       // 🟦 추가
+      hideGlobalLoading();
+      setLoading(null);
+    }
   }
-}
 
-  // 버튼 → 파일 선택
-  if (essayOcrBtn && essayOcrInput && essayArea) {
+  // OCR 버튼
+  if (essayOcrBtn && essayOcrInput) {
     essayOcrBtn.addEventListener('click', () => {
       clearError();
       essayOcrInput.value = '';
       essayOcrInput.click();
     });
-
-    // 파일 선택 후 OCR 실행
-    essayOcrInput.addEventListener('change', (e) => {
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
-      runEssayOcrWithFile(file);
-    });
-
-    // 논술문 textarea에 직접 "붙여넣기" 했을 때, 이미지가 있으면 OCR 실행
-    essayArea.addEventListener('paste', (e) => {
-      const cd = e.clipboardData;
-      if (!cd || !cd.items) return;
-
-      // 이미지가 없으면 기본 동작(텍스트 붙여넣기) 유지
-      const items = Array.from(cd.items);
-      const imageItem = items.find(it => it.type && it.type.startsWith('image/'));
-      if (!imageItem) return;
-
-      e.preventDefault(); // 이미지를 그대로 붙여넣는 기본 동작 막기
-
-      const file = imageItem.getAsFile();
-      if (!file) return;
-      runEssayOcrWithFile(file);
+    essayOcrInput.addEventListener('change', e => {
+      const file = e.target.files?.[0];
+      if (file) runEssayOcrWithFile(file);
     });
   }
 
-  // ========== 2-0) 제시문: 버튼 클릭 → 파일 선택 열기 ==========
+  // ========== 제시문 이미지 추가 ==========
+  function addImageToCurrentPassage(file){
+    if (file.size > MAX_IMAGE_SIZE) {
+      alert('이미지 파일은 5MB 이하만 업로드할 수 있어요.');
+      return;
+    }
+
+    if (!currentPassageTarget) return;
+
+    const arr = passageImageMap.get(currentPassageTarget) || [];
+    if (arr.length >= 3) {
+      alert('제시문당 이미지는 최대 3장까지 추가할 수 있어요.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      arr.push({ src: reader.result });
+      passageImageMap.set(currentPassageTarget, arr);
+      renderPassageImagePreview(currentPassageTarget);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function renderPassageImagePreview(textareaEl){
+    const preview = ensurePassagePreview(textareaEl);
+    const arr = passageImageMap.get(textareaEl) || [];
+
+    if (!arr.length) {
+      preview.innerHTML = '';
+      return;
+    }
+
+    preview.innerHTML = `
+      <div class="passage-images" style="display:flex;gap:10px;flex-wrap:wrap">
+        ${arr.map((img,i)=>`
+          <div style="position:relative">
+            <img src="${img.src}" style="max-width:160px;border-radius:8px" />
+            <button class="remove-img-btn" data-remove-idx="${i}">X</button>
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    ensureImageInterpretationBlock(textareaEl);
+  }
+
+  // ========== 클릭 이벤트 (핵심) ==========
+  document.addEventListener('click', async (e) => {
+
+    // 1️⃣ 사진 해석 생성하기
+    if (e.target.classList.contains('btn-generate-interpretation')) {
+
+      const block = e.target.closest('.image-interpretation-block');
+      const wrap = block.closest('.passage-wrap');
+      const textarea = wrap.querySelector('textarea.passage');
+
+      const editor = block.querySelector('.interpretation-editor');
+      const input = block.querySelector('.interpretation-textarea');
+
+      editor.classList.remove('hidden');
+
+      const interp = passageImageInterpretationMap.get(textarea);
+
+      if (!interp || !interp.confirmed) {
+        const generated = await generateImageInterpretation(textarea);
+        if (generated) {
+          input.value = generated;
+          autoResize(input);
+        }
+      }
+    }
+
+    // 2️⃣ 이 해석으로 확정
+    if (e.target.classList.contains('btn-confirm-interpretation')) {
+
+      const block = e.target.closest('.image-interpretation-block');
+      const wrap = block.closest('.passage-wrap');
+      const textarea = wrap.querySelector('textarea.passage');
+      const input = block.querySelector('.interpretation-textarea');
+
+      const text = input.value.trim();
+      if (!text) {
+        alert('사진 해석 내용을 입력해 주세요.');
+        return;
+      }
+
+      passageImageInterpretationMap.set(textarea, {
+        text,
+        confirmed: true
+      });
+
+      input.setAttribute('readonly', 'readonly');
+      e.target.textContent = '확정됨';
+      e.target.disabled = true;
+    }
+
+    // 3️⃣ 해석 다시 수정하기
+    if (e.target.classList.contains('btn-edit-interpretation')) {
+
+      const block = e.target.closest('.image-interpretation-block');
+      const wrap = block.closest('.passage-wrap');
+      const textarea = wrap.querySelector('textarea.passage');
+      const input = block.querySelector('.interpretation-textarea');
+
+      passageImageInterpretationMap.delete(textarea);
+
+      input.removeAttribute('readonly');
+      input.focus();
+    }
+
+  });
+
+
+      input.disabled = true;
+      e.target.disabled = true;
+      e.target.textContent = '확정됨';
+
+      // 🆕 다시 수정하기 버튼
+      let editBtn = block.querySelector('.btn-edit-interpretation');
+      if (!editBtn) {
+        editBtn = document.createElement('button');
+        editBtn.type = 'button';
+        editBtn.className = 'btn btn-ghost btn-edit-interpretation';
+        editBtn.textContent = '다시 수정하기';
+        editBtn.style.marginLeft = '8px';
+        e.target.parentElement.appendChild(editBtn);
+      }
+    }
+
+    if (e.target.classList.contains('btn-edit-interpretation')) {
+      const block = e.target.closest('.image-interpretation-block');
+      const textarea = block.previousElementSibling;
+      const input = block.querySelector('.interpretation-textarea');
+      const confirmBtn = block.querySelector('.btn-confirm-interpretation');
+
+      input.disabled = false;
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = '이 해석으로 확정';
+
+      passageImageInterpretationMap.delete(textarea);
+    }
+
+  });
+
+  // 제시문 OCR 버튼
   if (passageOcrBtn && passageOcrInput) {
     passageOcrBtn.addEventListener('click', () => {
-      clearError();
       passageOcrInput.value = '';
       passageOcrInput.click();
     });
 
-    // 여러 장 선택 가능
-    passageOcrInput.addEventListener('change', (e) => {
-      const files = (e.target.files ? Array.from(e.target.files) : []);
-      if (files.length === 0) return;
-
-      // 포커스된 제시문이 없으면 첫 칸으로
-      if(!currentPassageTarget){
-        const first = document.querySelector('#passages .passage');
-        if(first) currentPassageTarget = first;
-      }
-
-      files.forEach(f => addImageToCurrentPassage(f));
+    passageOcrInput.addEventListener('change', e => {
+      const files = Array.from(e.target.files || []);
+      if (!currentPassageTarget) return;
+      files.forEach(addImageToCurrentPassage);
     });
   }
-
-  // ========== 2) 제시문: 파일 / 붙여넣기 → 이미지 "그대로" 추가 ==========
-function addImageToCurrentPassage(file){
-  if (file.size > MAX_IMAGE_SIZE) {
-    alert('이미지 파일은 5MB 이하만 업로드할 수 있어요.');
-    return;
-  }
-
-  if (!currentPassageTarget) return;
-
-  // 1️⃣ 현재 제시문 래퍼
-  const passageWrapper = currentPassageTarget.closest('.passage-wrap') || currentPassageTarget.parentElement;
-
-  // 2️⃣ 이미지 표시 컨테이너 (없으면 생성)
-  let imageBox = passageWrapper.querySelector('.passage-images');
-  if (!imageBox) {
-    imageBox = document.createElement('div');
-    imageBox.className = 'passage-images';
-    passageWrapper.appendChild(imageBox);
-  }
-
-  // 3️⃣ img 엘리먼트 생성
-  const img = document.createElement('img');
-  img.src = URL.createObjectURL(file);
-  img.style.maxWidth = '100%';
-  img.style.display = 'block';
-  img.style.marginTop = '8px';
-
-  // 4️⃣ 화면에 추가 (⭐ 이 줄이 핵심)
-  imageBox.appendChild(img);
-
-  // 5️⃣ 상태 저장
-  if (!passageImageMap.has(currentPassageTarget)) {
-    passageImageMap.set(currentPassageTarget, []);
-  }
-
-  passageImageMap.get(currentPassageTarget).push({
-    file,
-    confirmed: false,
-    desc: ''
-  });
-}
-
-  // ✅ 포커스된 제시문이 없으면 첫 번째 제시문을 대상으로
-  if(!currentPassageTarget){
-    const first = document.querySelector('.passage');
-    if(!first) return;
-    currentPassageTarget = first;
-  }
-
-
-  // ✅ preview는 "해당 textarea 바로 다음"에 붙이는 방식으로 안정화
-  const preview = ensurePassagePreview(currentPassageTarget);
-
-  // ✅ 이 textarea에 이미 연결된 이미지 배열(없으면 새로)
-  let prevArr = passageImageMap.get(currentPassageTarget) || [];
-
-  // ✅ 혹시 예전 데이터(string)가 섞여 있으면 정규화
-  prevArr = prevArr.map(item => {
-    if (typeof item === 'string') {
-      return {
-        src: item,
-        confirmed: false,
-        desc: null
-      };
-    }
-    return item;
-  });
-
-
-  if (prevArr.length >= 3) {
-    alert('제시문당 이미지는 최대 3장까지 추가할 수 있어요.');
-    return;
-  }
-
-const reader = new FileReader();
-reader.onload = () => {
-
-    const dataUrl = reader.result; // "data:image/png;base64,...."
-
-    // ✅ 배열에 추가 (여러 장 지원)
-    prevArr.push({
-      src: dataUrl,
-      confirmed: false,
-      desc: null
-    });
-
-passageImageMap.set(currentPassageTarget, prevArr);
-renderPassageImagePreview(currentPassageTarget);
-
-
-    // ✅ 프리뷰 다시 그리기(여러 장 썸네일 + 개별 삭제)
-    preview.innerHTML = '';
-    prevArr.forEach((imageObj, idx) => {
-    const item = document.createElement('div');
-    item.style.cssText = 'display:inline-block; position:relative; margin:6px;';
-
-    // 이미지
-    const img = document.createElement('img');
-    img.src = imageObj.src;
-    img.style.cssText = 'max-width:160px; border-radius:8px; display:block;';
-    item.appendChild(img);
-  
-    // 🆕 사진 확정 버튼
-    const confirmBtn = document.createElement('button');
-    confirmBtn.type = 'button';
-    confirmBtn.textContent = imageObj.confirmed ? '확정됨' : '사진 확정하기';
-    confirmBtn.style.cssText = `
-      margin-top:4px;
-      width:100%;
-      font-size:12px;
-      padding:4px 6px;
-      border-radius:6px;
-      border:1px solid #d1d5db;
-      background:${imageObj.confirmed ? '#e5e7eb' : '#fff'};
-      cursor:${imageObj.confirmed ? 'default' : 'pointer'};
-    `;
-    confirmBtn.disabled = imageObj.confirmed;
-
-    confirmBtn.onclick = async () => {
-      if (imageObj.confirmed) return;
-
-      confirmBtn.textContent = '확정 중...';
-      confirmBtn.disabled = true;
-
-      try {
-        const res = await fetch('/api/image-confirm', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: imageObj.src })
-        });
-        const data = await res.json();
-        if (!data.ok) throw new Error();
-
-        imageObj.confirmed = true;
-        imageObj.desc = data.image_desc;
-
-        confirmBtn.textContent = '확정됨';
-        confirmBtn.style.background = '#e5e7eb';
-      } catch (e) {
-        alert('사진 확정에 실패했어요.');
-        confirmBtn.textContent = '사진 확정하기';
-        confirmBtn.disabled = false;
-      }
-    };
-
-    item.appendChild(confirmBtn);
-
-    // 삭제 버튼 (기존 그대로)
-    const rm = document.createElement('button');
-    rm.className = 'img-remove';
-    rm.textContent = '삭제';
-
-    rm.onclick = () => {
-      const imgs = passageImageMap.get(textarea) || [];
-      const target = imgs[idx];
-
-      // ✅ 확정된 이미지면 경고
-      if (target && target.confirmed) {
-        const ok = confirm(
-          '이 이미지는 이미 확정되었습니다.\n삭제하면 분석 기준에서 완전히 제거됩니다.\n삭제하시겠습니까?'
-        );
-        if (!ok) return;
-      }
-
-      // ✅ 배열에서 제거
-      imgs.splice(idx, 1);
-      passageImageMap.set(textarea, imgs);
-
-      if (imgs.length === 0) {
-        passageImageMap.delete(textarea);
-      }
-
-      // ✅ 프리뷰 다시 렌더
-      renderPassageImagePreview(textarea);
-    };
-
-    wrap.appendChild(rm);
-
-    preview.appendChild(item);
-  });
-  reader.readAsDataURL(file);
-
-};
-
-
-  // 제시문 textarea에 "붙여넣기" 했을 때, 이미지가 있으면 프리뷰로만 추가
-document.addEventListener('paste', (e) => {
-  const active = document.activeElement;
-
-  // ✅ 데모(#passagesDemo) 제외, 실제 입력 영역(#passages)만 허용
-    if (!active || !active.classList || !active.classList.contains('passage') || !(active.closest && active.closest('#passages'))) {
-      return;
-    }
-
-    const cd = e.clipboardData;
-    if (!cd || !cd.items) return;
-
-    const items = Array.from(cd.items);
-    const imageItem = items.find(it => it.type && it.type.startsWith('image/'));
-    if (!imageItem) return; // 이미지 없으면 그대로 텍스트 붙여넣기
-
-  // 이미지가 있으면, 텍스트 붙여넣기 대신 이미지 프리뷰만 추가
-    e.preventDefault();
-
-    const file = imageItem.getAsFile();
-    if (!file) return;
-
-    currentPassageTarget = active;
-    addImageToCurrentPassage(file);
-  });
 });
 </script>
 <script>
@@ -2583,6 +2530,41 @@ const loadingPhrases = {
     '줄바꿈과 띄어쓰기도 가능한 한 그대로 가져오려고 해요.'
   ]
 };
+async function generateImageInterpretation(textareaEl) {
+  const images = passageImageMap.get(textareaEl) || [];
+  if (!images.length) {
+    alert('해석할 이미지가 없습니다.');
+    return;
+  }
+
+  try {
+    showGlobalLoading('ocr');
+
+    const res = await fetch('/api/image-confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        images: images.map(img => img.src) // base64
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || '이미지 해석 생성 실패');
+    }
+
+    return data.text || '';
+
+  } catch (err) {
+    console.error(err);
+    alert(err.message || '이미지 해석 생성 중 오류가 발생했습니다.');
+    return '';
+
+  } finally {
+    hideGlobalLoading();
+  }
+}
 
 let loadingPhraseTimer = null;
 
@@ -2633,38 +2615,7 @@ function hideGlobalLoading(){
 <script>
 document.addEventListener('DOMContentLoaded', updatePdfBtnState);
 </script>
-<!-- ===== 제시문 이미지 확정 안내 모달 ===== -->
-<div id="imageConfirmModal" class="modal-backdrop hidden">
-  <div class="modal">
-    <h3 style="margin: 0 0 8px; font-weight: 900;">
-      아직 확정되지 않은 제시문 이미지가 있어요
-    </h3>
 
-    <p class="muted" style="line-height: 1.6;">
-      이 제시문 이미지는 아직 해석이 확정되지 않았어요.<br><br>
-      지금 진행하면 <b>확정된 제시문만</b>을 근거로<br>
-      리포트가 만들어져요.
-    </p>
-
-    <div style="display: flex; gap: 10px; margin-top: 18px;">
-      <button
-        id="btnProceedWithoutImage"
-        class="btn btn-primary"
-        style="flex: 1;"
-      >
-        이대로 리포트 생성
-      </button>
-
-      <button
-        id="btnGoConfirmImage"
-        class="btn btn-ghost"
-        style="flex: 1;"
-      >
-        사진 확정하러 가기
-      </button>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>
