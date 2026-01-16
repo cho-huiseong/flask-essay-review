@@ -874,7 +874,68 @@ let savedSummary = '';
 let exampleGenerated = false;
 let currentUser = null;
 let deferredAction = null;
+</script>
 
+<script>
+async function loadExample() {
+  try {
+    if (!window.currentUser) {
+      deferredAction = 'example';
+      openAuth();
+      return;
+    }
+
+    showGlobalLoading('example');
+
+    const body = {
+      passages: window.savedPassages || [],
+      image_desc: '',
+      question: document.getElementById('question')?.value || '',
+      essay: document.getElementById('essay')?.value || '',
+      charBase: Number(document.getElementById('charLimit')?.value) || 600,
+      charRange: Number(document.getElementById('charRange')?.value) || 100,
+      retryConfirmed: false
+    };
+
+    const res = await fetch('/example', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(body)
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || '예시답안 생성 실패');
+
+    savedExample = data.example || '';
+    savedComparison = data.comparison || '';
+    exampleGenerated = true;
+
+    document.getElementById('exampleOutput').innerHTML =
+      savedExample.replace(/\n/g, '<br>');
+
+    document.getElementById('comparisonOutput').innerHTML =
+      savedComparison.replace(/\n/g, '<br>');
+
+    const noteEl = document.getElementById('exampleNote');
+    if (noteEl && data.length_note) {
+      noteEl.textContent = data.length_note;
+      noteEl.style.display = 'block';
+    }
+
+    document.getElementById('exampleSection').classList.remove('hidden');
+    updatePdfBtnState();
+
+  } catch (e) {
+    console.error(e);
+    alert(e.message || '예시답안 생성 중 오류가 발생했습니다.');
+  } finally {
+    hideGlobalLoading();
+  }
+}
+</script>
+
+<script>
 /* ===== 데모 데이터 ===== */
 const demoSet = {
   student: "김다움",
