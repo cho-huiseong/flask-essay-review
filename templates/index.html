@@ -879,7 +879,7 @@ let deferredAction = null;
 <script>
 async function loadExample() {
   try {
-    if (!window.currentUser) {
+    if (!currentUser) {
       deferredAction = 'example';
       openAuth();
       return;
