@@ -2194,7 +2194,7 @@ document.addEventListener('focusin', (e) => {
 <!-- 🆕 제시문 / 논술문 OCR 및 이미지 처리 스크립트 -->
 <script>
 /* ===============================
-   제시문 이미지 + 해석 통합 로직
+   제시문 이미지 + 해석 통합 로직 (수정본)
    =============================== */
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
@@ -2206,33 +2206,21 @@ const passageImageMap = new Map();
 // value: { text: string, confirmed: true }
 const passageImageInterpretationMap = new Map();
 
-/* ---------- 포커스 추적 ---------- */
-document.addEventListener('focusin', (e) => {
-  const t = e.target;
-  if (t?.classList?.contains('passage') && t.closest('#passages')) {
-    currentPassageTarget = t;
-  }
-});
-
 /* ---------- 프리뷰 보장 ---------- */
-function ensurePassagePreview(textarea) {
-  let next = textarea.nextElementSibling;
-  if (!next || !next.classList.contains('passage-preview')) {
-    next = document.createElement('div');
-    next.className = 'passage-preview';
-    textarea.insertAdjacentElement('afterend', next);
+function ensurePassagePreview(wrap) {
+  let preview = wrap.querySelector('.passage-preview');
+  if (!preview) {
+    preview = document.createElement('div');
+    preview.className = 'passage-preview';
+    wrap.appendChild(preview);
   }
-  return next;
+  return preview;
 }
 
 /* ---------- 해석 블록 보장 ---------- */
-function ensureImageInterpretationBlock(textarea) {
-  const preview = ensurePassagePreview(textarea);
-  let block = preview.nextElementSibling;
-
-  if (block && block.classList.contains('image-interpretation-block')) {
-    return block;
-  }
+function ensureImageInterpretationBlock(wrap) {
+  let block = wrap.querySelector('.image-interpretation-block');
+  if (block) return block;
 
   block = document.createElement('div');
   block.className = 'image-interpretation-block';
@@ -2255,42 +2243,19 @@ function ensureImageInterpretationBlock(textarea) {
       </div>
     </div>
   `;
-
-  preview.insertAdjacentElement('afterend', block);
+  wrap.appendChild(block);
   return block;
 }
 
-/* ---------- 이미지 추가 ---------- */
-function addImageToCurrentPassage(file) {
-  if (!currentPassageTarget) return;
-
-  if (file.size > MAX_IMAGE_SIZE) {
-    alert('이미지는 5MB 이하만 가능합니다.');
-    return;
-  }
-
-  const arr = passageImageMap.get(currentPassageTarget) || [];
-  if (arr.length >= 3) {
-    alert('제시문당 이미지는 최대 3장까지 가능합니다.');
-    return;
-  }
-
-  const reader = new FileReader();
-  reader.onload = () => {
-    arr.push({ src: reader.result });
-    passageImageMap.set(currentPassageTarget, arr);
-    renderPassageImagePreview(currentPassageTarget);
-  };
-  reader.readAsDataURL(file);
-}
-
-/* ---------- 프리뷰 렌더 ---------- */
-function renderPassageImagePreview(textarea) {
-  const preview = ensurePassagePreview(textarea);
+/* ---------- 이미지 렌더 ---------- */
+function renderPassageImagePreview(wrap, textarea) {
+  const preview = ensurePassagePreview(wrap);
   const arr = passageImageMap.get(textarea) || [];
 
   if (!arr.length) {
     preview.innerHTML = '';
+    wrap.querySelector('.image-interpretation-block')?.remove();
+    passageImageInterpretationMap.delete(textarea);
     return;
   }
 
@@ -2305,22 +2270,27 @@ function renderPassageImagePreview(textarea) {
     </div>
   `;
 
-  ensureImageInterpretationBlock(textarea);
+  ensureImageInterpretationBlock(wrap);
 }
 
-/* ---------- 전역 클릭 핸들러 ---------- */
+/* ---------- 전역 클릭 ---------- */
 document.addEventListener('click', async (e) => {
+
+  /* 제시문별 사진 추가 버튼 */
+  if (e.target.classList.contains('btn-add-passage-image')) {
+    const wrap = e.target.closest('.passage-wrap');
+    const input = wrap.querySelector('.passage-image-input');
+    input.value = '';
+    input.click();
+  }
 
   /* 사진 해석 생성 */
   if (e.target.classList.contains('btn-generate-interpretation')) {
-    const block = e.target.closest('.image-interpretation-block');
-    const textarea =
-      block?.previousElementSibling?.previousElementSibling;
+    const wrap = e.target.closest('.passage-wrap');
+    const textarea = wrap.querySelector('textarea.passage');
+    const editor = wrap.querySelector('.interpretation-editor');
+    const input  = wrap.querySelector('.interpretation-textarea');
 
-    if (!textarea) return;
-
-    const editor = block.querySelector('.interpretation-editor');
-    const input  = block.querySelector('.interpretation-textarea');
     editor.classList.remove('hidden');
 
     const interp = passageImageInterpretationMap.get(textarea);
@@ -2335,12 +2305,11 @@ document.addEventListener('click', async (e) => {
 
   /* 해석 확정 */
   if (e.target.classList.contains('btn-confirm-interpretation')) {
-    const block = e.target.closest('.image-interpretation-block');
-    const textarea =
-      block?.previousElementSibling?.previousElementSibling;
-    const input = block.querySelector('.interpretation-textarea');
+    const wrap = e.target.closest('.passage-wrap');
+    const textarea = wrap.querySelector('textarea.passage');
+    const input = wrap.querySelector('.interpretation-textarea');
 
-    if (!textarea || !input.value.trim()) {
+    if (!input.value.trim()) {
       alert('사진 해석을 입력해 주세요.');
       return;
     }
@@ -2354,9 +2323,8 @@ document.addEventListener('click', async (e) => {
     e.target.disabled = true;
     e.target.textContent = '확정됨';
 
-    let editBtn = block.querySelector('.btn-edit-interpretation');
-    if (!editBtn) {
-      editBtn = document.createElement('button');
+    if (!wrap.querySelector('.btn-edit-interpretation')) {
+      const editBtn = document.createElement('button');
       editBtn.type = 'button';
       editBtn.className = 'btn btn-ghost btn-edit-interpretation';
       editBtn.textContent = '다시 수정하기';
@@ -2366,11 +2334,10 @@ document.addEventListener('click', async (e) => {
 
   /* 해석 다시 수정 */
   if (e.target.classList.contains('btn-edit-interpretation')) {
-    const block = e.target.closest('.image-interpretation-block');
-    const textarea =
-      block?.previousElementSibling?.previousElementSibling;
-    const input = block.querySelector('.interpretation-textarea');
-    const confirmBtn = block.querySelector('.btn-confirm-interpretation');
+    const wrap = e.target.closest('.passage-wrap');
+    const textarea = wrap.querySelector('textarea.passage');
+    const input = wrap.querySelector('.interpretation-textarea');
+    const confirmBtn = wrap.querySelector('.btn-confirm-interpretation');
 
     passageImageInterpretationMap.delete(textarea);
     input.removeAttribute('readonly');
@@ -2381,23 +2348,50 @@ document.addEventListener('click', async (e) => {
 
   /* 이미지 삭제 */
   if (e.target.classList.contains('remove-img-btn')) {
+    const wrap = e.target.closest('.passage-wrap');
+    const textarea = wrap.querySelector('textarea.passage');
     const idx = Number(e.target.dataset.idx);
-    const preview = e.target.closest('.passage-preview');
-    const textarea = preview?.previousElementSibling;
-
-    if (!textarea) return;
 
     const arr = passageImageMap.get(textarea) || [];
     arr.splice(idx, 1);
 
     if (arr.length === 0) {
       passageImageMap.delete(textarea);
-      passageImageInterpretationMap.delete(textarea);
     } else {
       passageImageMap.set(textarea, arr);
     }
 
-    renderPassageImagePreview(textarea);
+    renderPassageImagePreview(wrap, textarea);
+  }
+});
+
+/* ---------- 파일 선택 ---------- */
+document.addEventListener('change', (e) => {
+  if (!e.target.classList.contains('passage-image-input')) return;
+
+  const wrap = e.target.closest('.passage-wrap');
+  const textarea = wrap.querySelector('textarea.passage');
+  const files = Array.from(e.target.files || []);
+
+  const arr = passageImageMap.get(textarea) || [];
+
+  for (const file of files) {
+    if (file.size > MAX_IMAGE_SIZE) {
+      alert('이미지는 5MB 이하만 가능합니다.');
+      continue;
+    }
+    if (arr.length >= 3) {
+      alert('제시문당 이미지는 최대 3장입니다.');
+      break;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      arr.push({ src: reader.result });
+      passageImageMap.set(textarea, arr);
+      renderPassageImagePreview(wrap, textarea);
+    };
+    reader.readAsDataURL(file);
   }
 });
 
@@ -2420,7 +2414,6 @@ async function generateImageInterpretation(textarea) {
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || '이미지 해석 실패');
-
     return data.text || '';
   } catch (e) {
     alert(e.message || '이미지 해석 중 오류');
