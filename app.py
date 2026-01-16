@@ -119,12 +119,41 @@ def _normalize_email(s):
 # ---------------------------------------------------------------------
 # 🔧 Utils
 # ---------------------------------------------------------------------
+
 def _s(v):
     """문자/None만 strip. 리스트/숫자 들어와도 안전하게 문자열로."""
     if isinstance(v, str):
         return v.strip()
     return "" if v is None else str(v)
+def _validate_no_images_and_confirmed_desc(data: dict):
+    """
+    구조 A 강제 검증:
+    - review / example 단계에서는
+      '확정된 이미지 해석 텍스트(image_desc)'만 허용한다.
+    """
 
+    # ❌ 금지: 이미지 데이터 자체
+    forbidden_keys = [
+        "image",
+        "images",
+        "passagesImages",
+        "passageImages",
+        "imageData",
+    ]
+
+    for k in forbidden_keys:
+        if k in data:
+            raise ValueError(f"이미지 데이터({k})는 허용되지 않습니다.")
+
+    # ❌ 금지: base64 이미지 문자열
+    for v in data.values():
+        if isinstance(v, str) and v.startswith("data:image/"):
+            raise ValueError("이미지(base64)는 허용되지 않습니다.")
+
+    # ✅ 필수: 확정된 이미지 해석 텍스트
+    image_desc = _s(data.get("image_desc"))
+    if not image_desc:
+        raise ValueError("확정된 사진 해석 텍스트(image_desc)가 필요합니다.")
 def _coerce_passages(raw):
     """제시문이 문자열/배열 어떤 형태로 와도 문자열 리스트로 통일."""
     if raw is None:
@@ -430,18 +459,37 @@ def image_confirm():
     if not image or not image.startswith("data:image/"):
         return jsonify({"ok": False, "error": "유효한 이미지(data URL)가 필요합니다."}), 400
 
-    prompt = """
-다음 이미지는 논술 문제의 제시 자료입니다.
+    system_prompt = """
+너는 논술 문제에서 사용되는 ‘사진·그래프·도표 제시문’을
+객관적인 텍스트 자료로 변환하는 도우미다.
 
-이 이미지를 보고,
-논술에서 근거로 사용될 수 있도록
-객관적이고 중립적인 텍스트 설명으로 정리하세요.
+너의 역할은 이미지를 해석하거나 평가하는 것이 아니라,
+이미지에 보이는 정보를 사실 중심으로 정리해
+논술의 근거로 사용할 수 있는 텍스트를 만드는 것이다.
 
-- 해석, 판단, 평가는 하지 마세요.
-- 보이는 정보만 서술하세요.
-- 수치, 구조, 변화, 특징이 있다면 빠짐없이 적으세요.
-- 문단 구분을 유지하세요.
-- 추측이나 일반 상식은 절대 포함하지 마세요.
+절대 주장을 만들지 말고,
+의미·정답·평가·비판을 제시하지 마라.
+""".strip()
+
+    user_prompt = """
+아래 이미지(들)을 보고,
+논술 제시문에 포함될 수 있도록
+객관적인 이미지 해석 텍스트를 작성하라.
+
+공통 조건:
+1. 보이는 대상, 구조, 수치, 변화 양상을 중심으로 서술할 것
+2. 제시문 외의 평가·주장·의미 부여는 하지 말 것
+3. 여러 이미지가 있다면 하나의 자료로 통합해 설명할 것
+4. 제시문과 연결 가능한 ‘자료’라는 점을 드러내되,
+   결론은 내리지 말 것
+5. 3~4문장으로 작성할 것
+6. 분석적인 말투 유지할 것.
+
+그래프·도표 이미지일 경우 추가 조건:
+- 그래프의 종류(막대, 선, 원형 등)를 서술할 것
+- 축의 기준(가로축·세로축에 무엇이 표시되는지)을 명시할 것
+- 수치의 증가·감소·차이·비율 등 ‘관찰 가능한 변화’만 서술할 것
+- 제시문 외의 지식으로 원인, 의미, 문제점, 시사점은 절대 서술하지 말 것
 """.strip()
 
     try:
@@ -450,12 +498,12 @@ def image_confirm():
             messages=[
                 {
                     "role": "system",
-                    "content": "너는 논술 문제의 제시 이미지를 객관적인 텍스트로 변환하는 역할이다."
+                    "content": system_prompt
                 },
                 {
                     "role": "user",
                     "content": [
-                        {"type": "text", "text": prompt},
+                        {"type": "text", "text": user_prompt},
                         {
                             "type": "image_url",
                             "image_url": {"url": image}
@@ -481,12 +529,18 @@ def image_confirm():
 @app.post("/api/review")
 def review_open():
     data = request.get_json(force=True)
+
+    try:
+        _validate_no_images_and_confirmed_desc(data)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
     student = _s(data.get("student") or data.get("name"))
     question = _s(data.get("question"))
     essay = _s(data.get("essay"))
     passages = _coerce_passages(data.get("passages"))
     image_desc = _s(data.get("image_desc"))
-
+    
     try:
         if client:
             passages_block = _format_passages_block(passages, [])
@@ -607,6 +661,11 @@ def review_open():
 @app.post("/example")
 def example():
     data = request.json or {}
+
+    try:
+        _validate_no_images_and_confirmed_desc(data)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
 
     passages = _coerce_passages(data.get("passages"))
     image_desc = _s(data.get("image_desc"))
