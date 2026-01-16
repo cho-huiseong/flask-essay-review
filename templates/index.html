@@ -2206,9 +2206,6 @@ const passageImageMap = new Map();
 // value: { text: string, confirmed: true }
 const passageImageInterpretationMap = new Map();
 
-// 현재 포커스된 제시문 textarea
-let currentPassageTarget = null;
-
 /* ---------- 포커스 추적 ---------- */
 document.addEventListener('focusin', (e) => {
   const t = e.target;
