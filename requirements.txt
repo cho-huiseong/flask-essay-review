@@ -1,6 +1,6 @@
 flask
 flask-cors
-gunicorn app:app --workers 2 --threads 4 --timeout 120
+gunicorn
 openai>=1.0.0
 flask-login
 sqlalchemy
