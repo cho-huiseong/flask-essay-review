@@ -2392,10 +2392,19 @@ document.addEventListener('change', (e) => {
 
     const reader = new FileReader();
     reader.onload = () => {
-      arr.push({ src: reader.result });
+      let dataUrl = String(reader.result || '');
+
+      // ✅ 혹시 data:image 가 아닌 data:* 로 들어오면 강제 보정 (기기/브라우저 예외)
+      if (dataUrl.startsWith('data:') && !dataUrl.startsWith('data:image/')) {
+        const base64 = dataUrl.split('base64,')[1];
+        if (base64) dataUrl = 'data:image/png;base64,' + base64;
+      }
+
+      arr.push({ src: dataUrl });
       passageImageMap.set(textarea, arr);
       renderPassageImagePreview(wrap, textarea);
     };
+
     reader.readAsDataURL(file);
   }
 });
@@ -2408,17 +2417,27 @@ async function generateImageInterpretation(textarea) {
   showGlobalLoading('ocr');
 
   try {
+    // ✅ 백엔드가 단수 image를 기대하므로, 기본은 1장만 보냄
+    // (여러 장 지원 백엔드면 여기만 살짝 확장하면 됨)
+    const first = images[0]?.src || '';
+
+    // dataURL 유효성 체크
+    if (!/^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(first)) {
+      throw new Error('유효한 이미지(data URL)가 필요합니다.');
+    }
+
     const res = await fetch('/api/image-confirm', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({
-        images: images.map(img => img.src)
+        image: first   // ✅ 핵심: images가 아니라 image
       })
     });
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || '이미지 해석 실패');
+
     return data.text || '';
   } catch (e) {
     alert(e.message || '이미지 해석 중 오류');
@@ -2445,41 +2464,6 @@ const loadingPhrases = {
     '줄바꿈과 띄어쓰기도 가능한 한 그대로 가져오려고 해요.'
   ]
 };
-async function generateImageInterpretation(textareaEl) {
-  const images = passageImageMap.get(textareaEl) || [];
-  if (!images.length) {
-    alert('해석할 이미지가 없습니다.');
-    return;
-  }
-
-  try {
-    showGlobalLoading('ocr');
-
-    const res = await fetch('/api/image-confirm', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        images: images.map(img => img.src) // base64
-      })
-    });
-
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || '이미지 해석 생성 실패');
-    }
-
-    return data.text || '';
-
-  } catch (err) {
-    console.error(err);
-    alert(err.message || '이미지 해석 생성 중 오류가 발생했습니다.');
-    return '';
-
-  } finally {
-    hideGlobalLoading();
-  }
-}
 
 let loadingPhraseTimer = null;
 
