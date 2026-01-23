@@ -2438,7 +2438,7 @@ async function generateImageInterpretation(textarea) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || '이미지 해석 실패');
 
-    return data.text || '';
+    return data.image_desc || '';
   } catch (e) {
     alert(e.message || '이미지 해석 중 오류');
     return '';
