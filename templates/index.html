@@ -2313,11 +2313,12 @@ function ensurePassagePreview(wrap) {
 }
 
 /* ---------- 해석 블록 보장 ---------- */
-function ensureImageInterpretationBlock(wrap) {
-  let block = wrap.querySelector('.image-interpretation-block');
-  if (block) return block;
+function ensureImageInterpretationBlock(wrap, textarea) {
+  const interp = passageImageInterpretationMap.get(textarea);
+  if (interp && interp.confirmed) return;
+  if (wrap.querySelector('.image-interpretation-block')) return;
 
-  block = document.createElement('div');
+  const block = document.createElement('div');
   block.className = 'image-interpretation-block';
   block.innerHTML = `
     <button type="button" class="btn btn-ghost btn-generate-interpretation">
@@ -2326,7 +2327,7 @@ function ensureImageInterpretationBlock(wrap) {
 
     <div class="interpretation-editor hidden" style="margin-top:10px">
       <div class="muted" style="font-size:13px;margin-bottom:6px">
-        사진 자료가 보여주는 핵심 내용을 제시문처럼 문장으로 정리해 주세요.
+        사진 자료가 보여주는 핵심을 제시문처럼 정리해 주세요.
       </div>
 
       <textarea class="textarea interpretation-textarea" rows="4"></textarea>
@@ -2339,9 +2340,7 @@ function ensureImageInterpretationBlock(wrap) {
     </div>
   `;
   wrap.appendChild(block);
-  return block;
 }
-
 /* ---------- 이미지 렌더 ---------- */
 function renderPassageImagePreview(wrap, textarea) {
   const preview = ensurePassagePreview(wrap);
@@ -2365,7 +2364,7 @@ function renderPassageImagePreview(wrap, textarea) {
     </div>
   `;
 
-  ensureImageInterpretationBlock(wrap);
+  ensureImageInterpretationBlock(wrap, textarea);
 }
 
 /* ---------- 전역 클릭 ---------- */
@@ -2409,51 +2408,23 @@ document.addEventListener('click', async (e) => {
       return;
     }
 
+    const text = input.value.trim();
+
     passageImageInterpretationMap.set(textarea, {
-      text: input.value.trim(),
+      text,
       confirmed: true
     });
 
-    // 1. 제시문에 합치기
+    // 1️⃣ 제시문에 흡수
     textarea.value =
       textarea.value.trim() +
-      `\n\n[자료 해석]\n${input.value.trim()}`;
+      `\n\n[자료 해석]\n${text}`;
 
     autoResize(textarea);
 
-    // 2. 해석 블록 제거
+    // 2️⃣ 자료 해석 입력 UI 완전 제거
     wrap.querySelector('.image-interpretation-block')?.remove();
-
-    // 3. 상태 정리
-    passageImageInterpretationMap.set(textarea, {
-      text: input.value.trim(),
-      confirmed: true
-    });
-
-
-    if (!wrap.querySelector('.btn-edit-interpretation')) {
-      const editBtn = document.createElement('button');
-      editBtn.type = 'button';
-      editBtn.className = 'btn btn-ghost btn-edit-interpretation';
-      editBtn.textContent = '다시 수정하기';
-      e.target.parentElement.appendChild(editBtn);
-    }
   }
-
-  /* 해석 다시 수정 */
-  if (e.target.classList.contains('btn-edit-interpretation')) {
-    const wrap = e.target.closest('.passage-wrap');
-    const textarea = wrap.querySelector('textarea.passage');
-    const input = wrap.querySelector('.interpretation-textarea');
-    const confirmBtn = wrap.querySelector('.btn-confirm-interpretation');
-
-    passageImageInterpretationMap.delete(textarea);
-    input.removeAttribute('readonly');
-    confirmBtn.disabled = false;
-    confirmBtn.textContent = '이 해석으로 확정';
-    input.focus();
-  }
-
   /* 이미지 삭제 */
   if (e.target.classList.contains('remove-img-btn')) {
     const wrap = e.target.closest('.passage-wrap');

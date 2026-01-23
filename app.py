@@ -119,20 +119,18 @@ def _normalize_email(s):
 # ---------------------------------------------------------------------
 # 🔧 Utils
 # ---------------------------------------------------------------------
-
 def _s(v):
     """문자/None만 strip. 리스트/숫자 들어와도 안전하게 문자열로."""
     if isinstance(v, str):
         return v.strip()
     return "" if v is None else str(v)
-def _validate_no_images_and_confirmed_desc(data: dict):
+def _validate_no_images(data: dict):
     """
-    구조 A 강제 검증:
-    - review / example 단계에서는
-      '확정된 이미지 해석 텍스트(image_desc)'만 허용한다.
+    review / example 단계에서는
+    이미지 데이터 자체만 금지한다.
+    (자료 해석은 passages 안에 이미 포함됨)
     """
 
-    # ❌ 금지: 이미지 데이터 자체
     forbidden_keys = [
         "image",
         "images",
@@ -145,11 +143,10 @@ def _validate_no_images_and_confirmed_desc(data: dict):
         if k in data:
             raise ValueError(f"이미지 데이터({k})는 허용되지 않습니다.")
 
-    # ❌ 금지: base64 이미지 문자열
     for v in data.values():
         if isinstance(v, str) and v.startswith("data:image/"):
             raise ValueError("이미지(base64)는 허용되지 않습니다.")
-
+        
     # ✅ 필수: 확정된 이미지 해석 텍스트
     image_desc = _s(data.get("image_desc"))
     if not image_desc:
@@ -531,7 +528,7 @@ def review_open():
     data = request.get_json(force=True)
 
     try:
-        _validate_no_images_and_confirmed_desc(data)
+        _validate_no_images(data)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
@@ -539,7 +536,10 @@ def review_open():
     question = _s(data.get("question"))
     essay = _s(data.get("essay"))
     passages = _coerce_passages(data.get("passages"))
+
     image_desc = _s(data.get("image_desc"))
+    if image_desc:
+        passages.append(f"[자료 해석]\n{image_desc}")
     
     try:
         if client:
@@ -577,9 +577,6 @@ def review_open():
 
 제시문(텍스트):
 {passages_block}
-
-[이미지 해석 기준]
-{image_desc}
 
 질문:
 {question}
@@ -663,12 +660,15 @@ def example():
     data = request.json or {}
 
     try:
-        _validate_no_images_and_confirmed_desc(data)
+        _validate_no_images(data)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
     passages = _coerce_passages(data.get("passages"))
+
     image_desc = _s(data.get("image_desc"))
+    if image_desc:
+        passages.append(f"[자료 해석]\n{image_desc}")
 
     question = _s(data.get("question"))
     essay = _s(data.get("essay"))
@@ -718,9 +718,6 @@ def example():
 
 제시문(텍스트):
 {passages_block}
-
-[이미지 해석 기준]
-{image_desc}
 
 질문:
 {question}
