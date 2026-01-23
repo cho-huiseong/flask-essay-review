@@ -461,6 +461,22 @@ canvas.demoChart{ height:140px !important; }
   45%  { transform:rotateY(180deg) translateY(-1px); opacity:0.9; }
   100% { transform:rotateY(360deg) translateY(0); opacity:1; }
 }
+
+/* ===== 제시문 카드 UI ===== */
+.passage-wrap{
+  background: rgba(255,255,255,0.75);
+  border: 1px solid rgba(148,163,184,0.35);
+  border-radius: 18px;
+  padding: 14px 16px 16px;
+  margin-bottom: 16px;
+}
+
+.passage-header{
+  font-weight: 900;
+  font-size: 14px;
+  color: #2140B1;
+  margin-bottom: 6px;
+}
 </style>
 </head>
 
@@ -1021,11 +1037,28 @@ function updateCharCount(){
 }
 
 /* ===== 제시문 추가 (전역 바인딩) ===== */
+function updatePassageLabels(){
+  const wraps = document.querySelectorAll('#passages .passage-wrap');
+  wraps.forEach((wrap, idx) => {
+    const label = wrap.querySelector('.passage-label');
+    if (label) {
+      label.textContent = `제시문 (${String.fromCharCode(44032 + idx)})`;
+    }
+  });
+}
+
 window.addPassage = function(){
   const wrap = document.createElement('div');
   wrap.className = 'passage-wrap';
 
   wrap.innerHTML = `
+    <!-- 🆕 제시문 헤더 -->
+    <div class="passage-header">
+      <span class="passage-label">제시문 (가)</span>
+      <button type="button" class="btn-delete-passage">삭제</button>
+    </div>
+
+
     <textarea
       class="passage textarea"
       rows="3"
@@ -1048,12 +1081,25 @@ window.addPassage = function(){
 
   document.getElementById('passages').appendChild(wrap);
 
+  updatePassageLabels(); // 🆕 번호 재정렬
+
   const textarea = wrap.querySelector('textarea');
   textarea.addEventListener('input', ()=>autoResize(textarea));
   autoResize(textarea);
   textarea.focus();
 };
-document.addEventListener('DOMContentLoaded', ()=>{ document.getElementById('btnAddPassage')?.addEventListener('click', ()=>window.addPassage()); });
+document.addEventListener('DOMContentLoaded', ()=>{
+  const passagesWrap = document.getElementById('passages');
+
+  // ✅ 최초 진입 시 제시문 (가) 1칸 자동 생성
+  if (passagesWrap && passagesWrap.querySelectorAll('.passage').length === 0) {
+    window.addPassage(); // ← 제시문 (가)
+    updatePassageLabels();
+  }
+
+  document.getElementById('btnAddPassage')
+    ?.addEventListener('click', ()=>window.addPassage());
+});
 /* ===== 교재 문제(단계/페이지) 로딩 ===== */
 let BOOK_ITEMS = [];
 
@@ -1421,27 +1467,31 @@ function resetReport(){
   document.getElementById('studentName').value = '';
   document.getElementById('question').value = '';
 
- // 제시문 이미지 프리뷰도 함께 리셋
+  // ✅ 제시문 영역 완전 초기화
+  const passagesWrap = document.getElementById('passages');
+  if (passagesWrap) passagesWrap.innerHTML = '';
+
+  // 제시문 이미지 프리뷰/상태 리셋
   document.querySelectorAll('.passage-preview').forEach(preview => {
     preview.remove();
   });
-
-  // 제시문 이미지 상태도 리셋
   passageImageMap.clear();
+  passageImageInterpretationMap.clear();
+
+  // ✅ 다시 제시문 (가) 1칸 생성
+  window.addPassage();
 
   document.getElementById('essay').value = '';
   document.getElementById('charLimit').value = '';
   document.getElementById('charRange').value = '';
   document.getElementById('charCount').textContent = '';
 
-  // 결과/예시 영역 닫고 비우기
   document.getElementById('resultCard').classList.add('hidden');
   document.getElementById('exampleSection').classList.add('hidden');
   document.getElementById('exampleNote').style.display = 'none';
   document.getElementById('exampleOutput').innerHTML = '';
   document.getElementById('comparisonOutput').innerHTML = '';
 
-  // 상태값 / 차트 초기화
   savedScores = [];
   savedReasons = {};
   savedExample = '';
