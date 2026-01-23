@@ -1575,7 +1575,7 @@ async function submitEssay() {
     if (images.length > 0 && (!interp || !interp.confirmed)) {
       alert(
         '사진이 첨부된 제시문이 있습니다.\n\n' +
-        '해당 제시문의 사진 해석을 먼저 확정해 주세요.'
+        '해당 제시문의 자료 해석을 먼저 확정해 주세요.'
       );
       document.getElementById('loading').style.display = 'none';
       hideGlobalLoading();
@@ -1600,23 +1600,14 @@ async function continueSubmitEssay() {
 
     const passageEls = [...document.querySelectorAll('#passages .passage')];
 
-    // ✅ 최종 제시문 구성:
-    // 제시문 텍스트 + (있다면) 확정된 이미지 해석
-    const passages = passageEls.map((el) => {
-      const baseText = (el.value || '').trim();
-
-      const interp = passageImageInterpretationMap.get(el);
-      if (interp && interp.confirmed && interp.text) {
-        return baseText
-          ? `${baseText}\n\n[사진 해석]\n${interp.text}`
-          : `[사진 해석]\n${interp.text}`;
-      }
-
-      return baseText;
-    });
+    // ✅ 최종 제시문 구성: textarea에 있는 내용 그대로
+    const passages = passageEls.map(el =>
+      (el.value || '').trim()
+    );
 
     // PDF / 이후 단계에서 그대로 사용
     window.savedPassages = passages;
+
 
     const r = await fetch('/api/review', {
       method: 'POST',
@@ -1900,8 +1891,8 @@ function syncPdfContainer() {
       .map((p, i) => {
         const raw = (p || '').toString();
 
-      // [사진 해석] 기준으로 분리
-        const parts = raw.split(/\n\s*\[사진 해석\]\s*\n?/);
+      // [자료 해석] 기준으로 분리
+        const parts = raw.split(/\n\s*\[자료 해석\]\s*\n?/);
 
         const mainText = parts[0] || '';
         const imageInterp = parts[1] || '';
@@ -1919,7 +1910,7 @@ function syncPdfContainer() {
               imageInterp
                 ? `
                   <div class="pdf-image-interpretation">
-                    <div class="pdf-image-interpretation-title">[사진 해석]</div>
+                    <div class="pdf-image-interpretation-title">[자료 해석]</div>
                     <div class="pdf-image-interpretation-body">
                       ${imageInterp.replace(/\n/g, '<br/>')}
                     </div>
@@ -2330,12 +2321,12 @@ function ensureImageInterpretationBlock(wrap) {
   block.className = 'image-interpretation-block';
   block.innerHTML = `
     <button type="button" class="btn btn-ghost btn-generate-interpretation">
-      🖼️ 사진 해석 생성하기
+      🖼️ 자료 해석 생성하기
     </button>
 
     <div class="interpretation-editor hidden" style="margin-top:10px">
       <div class="muted" style="font-size:13px;margin-bottom:6px">
-        사진을 보고 이해한 내용을 3~4문장으로 정리해 주세요.
+        사진 자료가 보여주는 핵심 내용을 제시문처럼 문장으로 정리해 주세요.
       </div>
 
       <textarea class="textarea interpretation-textarea" rows="4"></textarea>
@@ -2388,7 +2379,7 @@ document.addEventListener('click', async (e) => {
     input.click();
   }
 
-  /* 사진 해석 생성 */
+  /* 자료 해석 생성 */
   if (e.target.classList.contains('btn-generate-interpretation')) {
     const wrap = e.target.closest('.passage-wrap');
     const textarea = wrap.querySelector('textarea.passage');
@@ -2414,7 +2405,7 @@ document.addEventListener('click', async (e) => {
     const input = wrap.querySelector('.interpretation-textarea');
 
     if (!input.value.trim()) {
-      alert('사진 해석을 입력해 주세요.');
+      alert('자료 해석을 입력해 주세요.');
       return;
     }
 
@@ -2423,9 +2414,22 @@ document.addEventListener('click', async (e) => {
       confirmed: true
     });
 
-    input.setAttribute('readonly', 'readonly');
-    e.target.disabled = true;
-    e.target.textContent = '확정됨';
+    // 1. 제시문에 합치기
+    textarea.value =
+      textarea.value.trim() +
+      `\n\n[자료 해석]\n${input.value.trim()}`;
+
+    autoResize(textarea);
+
+    // 2. 해석 블록 제거
+    wrap.querySelector('.image-interpretation-block')?.remove();
+
+    // 3. 상태 정리
+    passageImageInterpretationMap.set(textarea, {
+      text: input.value.trim(),
+      confirmed: true
+    });
+
 
     if (!wrap.querySelector('.btn-edit-interpretation')) {
       const editBtn = document.createElement('button');
