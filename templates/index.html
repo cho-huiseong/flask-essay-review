@@ -1134,7 +1134,7 @@ window.addPassage = function(){
   autoResize(textarea);
   textarea.focus();
 };
-</script>
+
 document.addEventListener('DOMContentLoaded', ()=>{
   const passagesWrap = document.getElementById('passages');
 
@@ -1235,7 +1235,8 @@ function loadBookItems() {
 
 // 페이지 로딩 시 교재 데이터 먼저 불러오기
 window.addEventListener('DOMContentLoaded', loadBookItems);
-
+</script>
+<script>
 /* =========================
    ✅ 교재 passages(문자열/객체) 모두 지원 + 이미지 자동 연결 버전
    ========================= */
