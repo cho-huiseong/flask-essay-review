@@ -470,12 +470,28 @@ canvas.demoChart{ height:140px !important; }
   padding: 14px 16px 16px;
   margin-bottom: 16px;
 }
-
 .passage-header{
   font-weight: 900;
   font-size: 14px;
   color: #2140B1;
   margin-bottom: 6px;
+}
+.passage-header{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.btn-delete-passage{
+  margin-left:auto;
+  background:none;
+  border:none;
+  font-size:12px;
+  color:#9CA3AF;
+  cursor:pointer;
+}
+.btn-delete-passage:hover{
+  color:#EF4444;
 }
 </style>
 </head>
@@ -1046,7 +1062,36 @@ function updatePassageLabels(){
     }
   });
 }
+<script>
+/* ===== 제시문 삭제 버튼 처리 ===== */
+document.addEventListener('click', (e)=>{
+  if (!e.target.classList.contains('btn-delete-passage')) return;
 
+  const wrap = e.target.closest('.passage-wrap');
+  const passagesWrap = document.getElementById('passages');
+
+  if (!wrap || !passagesWrap) return;
+
+  // ❗ 제시문 최소 1개 보호
+  const total = passagesWrap.querySelectorAll('.passage-wrap').length;
+  if (total <= 1) {
+    alert('제시문은 최소 1개 이상 필요합니다.');
+    return;
+  }
+
+  // 상태 정리
+  const textarea = wrap.querySelector('textarea.passage');
+  if (textarea) {
+    passageImageMap.delete(textarea);
+    passageImageInterpretationMap.delete(textarea);
+  }
+
+  wrap.remove();
+
+  // ⭐ 번호 자동 당김
+  updatePassageLabels();
+});
+</script>
 window.addPassage = function(){
   const wrap = document.createElement('div');
   wrap.className = 'passage-wrap';
@@ -1860,7 +1905,8 @@ function syncPdfContainer() {
 
         return `
           <div class="passage-block avoid-break">
-            <div class="passage-label">[제시문 ${i + 1}]</div>
+            <div class="passage-label">제시문 (${String.fromCharCode(44032 + i)})</div>
+
 
             <div class="passage-body">
               ${mainText.replace(/\n/g, '<br/>')}
