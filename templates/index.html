@@ -1062,7 +1062,7 @@ function updatePassageLabels(){
     }
   });
 }
-<script>
+
 /* ===== 제시문 삭제 버튼 처리 ===== */
 document.addEventListener('click', (e)=>{
   if (!e.target.classList.contains('btn-delete-passage')) return;
@@ -1092,6 +1092,7 @@ document.addEventListener('click', (e)=>{
   updatePassageLabels();
 });
 </script>
+<script>
 window.addPassage = function(){
   const wrap = document.createElement('div');
   wrap.className = 'passage-wrap';
@@ -1133,6 +1134,7 @@ window.addPassage = function(){
   autoResize(textarea);
   textarea.focus();
 };
+</script>
 document.addEventListener('DOMContentLoaded', ()=>{
   const passagesWrap = document.getElementById('passages');
 
