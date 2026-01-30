@@ -342,22 +342,21 @@ header{
   }
 }
 /* ======================================================
-   EDITOR SECTION – Glass Stage Edition
-   STEP / HERO와 통일된 고급 입력 무대
+   EDITOR SECTION – Product Workspace Edition
+   STEP 디자인 톤과 통일 / 화려하지만 안정적인 작업 공간
    ====================================================== */
 
-/* 전체 에디터 무대 */
+/* 1. 에디터 전체 무대 */
 #editorSection{
   position:relative;
   padding:140px 0 160px;
   background:
-    radial-gradient(1200px 600px at 50% -220px, rgba(99,102,241,.20), transparent 60%),
-    radial-gradient(900px 520px at 12% 30%, rgba(56,189,248,.16), transparent 65%),
-    linear-gradient(180deg, #f9fbff 0%, #f3f6ff 100%);
-  overflow:hidden;
+    radial-gradient(1200px 600px at 70% -200px, rgba(33,64,177,.18), transparent 60%),
+    radial-gradient(900px 500px at 10% 20%, rgba(99,102,241,.14), transparent 65%),
+    linear-gradient(180deg, #f8faff 0%, #f3f6ff 100%);
 }
 
-/* 상단 확산광 */
+/* 상단 은은한 빛 */
 #editorSection::before{
   content:"";
   position:absolute;
@@ -366,11 +365,10 @@ header{
   transform:translateX(-50%);
   width:1200px;
   height:520px;
-  background:
-    radial-gradient(circle, rgba(255,255,255,.85), transparent 70%);
+  background:radial-gradient(circle, rgba(255,255,255,.85), transparent 70%);
   filter:blur(80px);
-  pointer-events:none;
   z-index:0;
+  pointer-events:none;
 }
 
 /* 하단 공기층 */
@@ -380,187 +378,186 @@ header{
   bottom:-300px;
   left:50%;
   transform:translateX(-50%);
-  width:1300px;
-  height:600px;
-  background:
-    radial-gradient(circle, rgba(99,102,241,.25), transparent 70%);
+  width:1400px;
+  height:620px;
+  background:radial-gradient(circle, rgba(79,70,229,.22), transparent 70%);
   filter:blur(100px);
-  pointer-events:none;
   z-index:0;
+  pointer-events:none;
 }
 
-/* 실제 콘텐츠 */
+/* 실제 콘텐츠 전면 */
 #editorSection > *{
   position:relative;
   z-index:2;
 }
 
-/* ------------------------------------------------------
-   에디터 헤더
------------------------------------------------------- */
-#editorSection .section-header{
-  text-align:center;
-  margin-bottom:72px;
+/* 2. 에디터 컨테이너 정렬 */
+#editorSection .container{
+  max-width:1040px;
 }
 
-#editorSection .section-header h2{
-  font-size:clamp(36px, 4.6vw, 52px);
-  font-weight:900;
-  letter-spacing:-0.025em;
-  color:#0b1220;
-  text-shadow:0 2px 0 rgba(255,255,255,.7);
-  margin:0 0 14px;
-}
-
-#editorSection .section-header p{
-  font-size:18px;
-  line-height:1.7;
-  color:#475569;
-}
-
-/* ------------------------------------------------------
-   입력 패널 (유리 카드)
------------------------------------------------------- */
-.editor-panel{
+/* 3. 입력 패널 (메인 카드) */
+#editorSection #inputPanel{
   background:
     linear-gradient(
       180deg,
       rgba(255,255,255,.96),
-      rgba(255,255,255,.88)
+      rgba(255,255,255,.90)
     );
-  border-radius:36px;
-  border:1px solid rgba(148,163,184,.35);
-  backdrop-filter:blur(22px);
-  -webkit-backdrop-filter:blur(22px);
-  box-shadow:
-    0 48px 90px rgba(30,41,59,.22),
-    inset 0 1px 0 rgba(255,255,255,.85);
+  border-radius:28px;
   padding:56px 52px 52px;
+  border:1px solid rgba(148,163,184,.30);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  box-shadow:
+    0 40px 90px rgba(30,41,59,.22),
+    inset 0 1px 0 rgba(255,255,255,.75);
+}
+
+/* 4. 에디터 헤더 */
+#editorSection #inputPanel h2{
+  font-size:32px;
+  font-weight:900;
+  letter-spacing:-0.02em;
+  color:#0f172a;
+  margin-bottom:12px;
+}
+
+#editorSection #inputPanel > p.muted{
+  font-size:16px;
+  line-height:1.65;
+  color:#475569;
   margin-bottom:36px;
 }
 
-/* 패널 내부 타이틀 */
-.editor-panel .panel-title{
-  font-size:20px;
-  font-weight:900;
-  color:#0f172a;
-  margin-bottom:18px;
-  letter-spacing:-0.015em;
-}
-
-/* ------------------------------------------------------
-   입력 필드
------------------------------------------------------- */
-.editor-panel .form-label{
+/* 5. 폼 라벨 */
+#editorSection .form-label{
   font-size:14px;
   font-weight:800;
-  color:#334155;
-  margin:18px 0 8px;
+  color:#1e293b;
+  margin:22px 0 8px;
 }
 
-.editor-panel .input,
-.editor-panel .textarea{
+/* 6. 입력 필드 공통 */
+#editorSection .input,
+#editorSection .textarea{
   width:100%;
   padding:16px 18px;
-  font-size:16px;
-  line-height:1.7;
   border-radius:14px;
   border:1px solid rgba(148,163,184,.45);
-  background:rgba(255,255,255,.9);
-  color:#111827;
+  font-size:15px;
+  line-height:1.65;
+  background:rgba(255,255,255,.95);
   transition:
-    border-color .25s ease,
-    box-shadow .25s ease,
-    background .25s ease;
+    border-color .2s ease,
+    box-shadow .2s ease;
 }
 
-.editor-panel .input::placeholder,
-.editor-panel .textarea::placeholder{
+#editorSection .input:focus,
+#editorSection .textarea:focus{
+  outline:none;
+  border-color:#4f46e5;
+  box-shadow:0 0 0 4px rgba(79,70,229,.20);
+}
+
+/* placeholder */
+#editorSection .input::placeholder,
+#editorSection .textarea::placeholder{
   color:#9ca3af;
 }
 
-.editor-panel .input:focus,
-.editor-panel .textarea:focus{
-  outline:none;
-  border-color:#6366f1;
-  background:#ffffff;
-  box-shadow:
-    0 0 0 4px rgba(99,102,241,.22),
-    0 12px 28px rgba(99,102,241,.18);
+/* 7. 질문 + 교재 불러오기 정렬 */
+#editorSection .form-label + div{
+  margin-top:8px;
 }
 
-/* ------------------------------------------------------
-   제시문 카드 묶음
------------------------------------------------------- */
-#passages{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:20px;
+#editorSection select.input{
+  height:44px;
+  padding:0 14px;
+  font-size:14px;
 }
 
-@media (max-width:900px){
-  #passages{
-    grid-template-columns:1fr;
-  }
-}
-
-/* ------------------------------------------------------
-   CTA 영역
------------------------------------------------------- */
-#editorSection .cta-row{
-  margin-top:72px;
+/* 8. 제시문 영역 */
+#editorSection #passages{
   display:flex;
-  justify-content:center;
+  flex-direction:column;
+  gap:12px;
+  margin-top:10px;
 }
 
-/* CTA 버튼 – STEP와 통일 */
+/* 제시문 텍스트 영역 */
+#editorSection #passages textarea{
+  min-height:120px;
+}
+
+/* 제시문 추가 버튼 */
+#editorSection #btnAddPassage{
+  margin-top:10px;
+}
+
+/* 9. 논술문 영역 강조 */
+#editorSection #essay{
+  min-height:220px;
+}
+
+/* 글자 수 안내 */
+#editorSection #charCount{
+  font-size:13px;
+  margin-top:6px;
+  color:#64748b;
+}
+
+/* 10. CTA 영역 */
 #editorSection .btn-primary{
-  appearance:none;
-  border:none;
-  padding:20px 46px;
-  min-width:240px;
-  height:60px;
-  border-radius:999px;
   font-size:18px;
-  font-weight:900;
-  letter-spacing:-0.01em;
-  color:#ffffff;
+  padding:18px 44px;
+  border-radius:999px;
   background:
     linear-gradient(135deg, #4f6ef7, #3b5bfd);
+  color:#ffffff;
   box-shadow:
-    0 26px 54px rgba(59,91,253,.45);
+    0 24px 54px rgba(59,91,253,.45);
   text-shadow:0 1px 2px rgba(0,0,0,.18);
-  cursor:pointer;
   transition:
-    transform .35s cubic-bezier(.22,1,.36,1),
-    box-shadow .35s cubic-bezier(.22,1,.36,1);
+    transform .35s ease,
+    box-shadow .35s ease;
 }
 
-@media (hover:hover){
-  #editorSection .btn-primary:hover{
-    transform:translateY(-6px);
-    box-shadow:
-      0 36px 80px rgba(59,91,253,.6);
-  }
-}
-
-#editorSection .btn-primary:active{
-  transform:translateY(-2px);
+#editorSection .btn-primary:hover{
+  transform:translateY(-4px);
   box-shadow:
-    0 18px 36px rgba(59,91,253,.45);
+    0 32px 80px rgba(59,91,253,.6);
 }
 
-/* ------------------------------------------------------
-   모바일 보정
------------------------------------------------------- */
-@media (max-width:768px){
+/* 11. 결과 카드 */
+#editorSection #resultCard,
+#editorSection #exampleSection{
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.96),
+      rgba(255,255,255,.92)
+    );
+  border-radius:26px;
+  padding:36px 36px 34px;
+  border:1px solid rgba(148,163,184,.28);
+  box-shadow:
+    0 28px 60px rgba(30,41,59,.18);
+}
+
+/* 12. 모바일 대응 */
+@media (max-width:900px){
   #editorSection{
-    padding:120px 0 140px;
+    padding:110px 0 140px;
   }
 
-  .editor-panel{
-    padding:36px 28px;
-    border-radius:28px;
+  #editorSection #inputPanel{
+    padding:40px 26px 36px;
+  }
+
+  #editorSection #inputPanel h2{
+    font-size:26px;
   }
 }
 </style>
@@ -691,7 +688,7 @@ header{
     <div class="container">
 
       <!-- 입력 -->
-      <div id="inputPanel" class="panel">
+      <div id="inputPanel" class="panel editor-panel">
         <h2 style="margin:0 0 12px; font-weight:900">✨ 너의 글, 오늘 더 멀리 날아가게.</h2>
         <p class="muted" style="margin-top:0">정성껏 쓴 문장 위에 필요한 피드백만 얹어, 목표에 닿도록 부드럽게 이끌어 드릴게요.</p>
 
