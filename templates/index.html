@@ -341,6 +341,228 @@ header{
     margin-top:120px;
   }
 }
+/* ======================================================
+   EDITOR SECTION – Glass Stage Edition
+   STEP / HERO와 통일된 고급 입력 무대
+   ====================================================== */
+
+/* 전체 에디터 무대 */
+#editorSection{
+  position:relative;
+  padding:140px 0 160px;
+  background:
+    radial-gradient(1200px 600px at 50% -220px, rgba(99,102,241,.20), transparent 60%),
+    radial-gradient(900px 520px at 12% 30%, rgba(56,189,248,.16), transparent 65%),
+    linear-gradient(180deg, #f9fbff 0%, #f3f6ff 100%);
+  overflow:hidden;
+}
+
+/* 상단 확산광 */
+#editorSection::before{
+  content:"";
+  position:absolute;
+  top:-260px;
+  left:50%;
+  transform:translateX(-50%);
+  width:1200px;
+  height:520px;
+  background:
+    radial-gradient(circle, rgba(255,255,255,.85), transparent 70%);
+  filter:blur(80px);
+  pointer-events:none;
+  z-index:0;
+}
+
+/* 하단 공기층 */
+#editorSection::after{
+  content:"";
+  position:absolute;
+  bottom:-300px;
+  left:50%;
+  transform:translateX(-50%);
+  width:1300px;
+  height:600px;
+  background:
+    radial-gradient(circle, rgba(99,102,241,.25), transparent 70%);
+  filter:blur(100px);
+  pointer-events:none;
+  z-index:0;
+}
+
+/* 실제 콘텐츠 */
+#editorSection > *{
+  position:relative;
+  z-index:2;
+}
+
+/* ------------------------------------------------------
+   에디터 헤더
+------------------------------------------------------ */
+#editorSection .section-header{
+  text-align:center;
+  margin-bottom:72px;
+}
+
+#editorSection .section-header h2{
+  font-size:clamp(36px, 4.6vw, 52px);
+  font-weight:900;
+  letter-spacing:-0.025em;
+  color:#0b1220;
+  text-shadow:0 2px 0 rgba(255,255,255,.7);
+  margin:0 0 14px;
+}
+
+#editorSection .section-header p{
+  font-size:18px;
+  line-height:1.7;
+  color:#475569;
+}
+
+/* ------------------------------------------------------
+   입력 패널 (유리 카드)
+------------------------------------------------------ */
+.editor-panel{
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.96),
+      rgba(255,255,255,.88)
+    );
+  border-radius:36px;
+  border:1px solid rgba(148,163,184,.35);
+  backdrop-filter:blur(22px);
+  -webkit-backdrop-filter:blur(22px);
+  box-shadow:
+    0 48px 90px rgba(30,41,59,.22),
+    inset 0 1px 0 rgba(255,255,255,.85);
+  padding:56px 52px 52px;
+  margin-bottom:36px;
+}
+
+/* 패널 내부 타이틀 */
+.editor-panel .panel-title{
+  font-size:20px;
+  font-weight:900;
+  color:#0f172a;
+  margin-bottom:18px;
+  letter-spacing:-0.015em;
+}
+
+/* ------------------------------------------------------
+   입력 필드
+------------------------------------------------------ */
+.editor-panel .form-label{
+  font-size:14px;
+  font-weight:800;
+  color:#334155;
+  margin:18px 0 8px;
+}
+
+.editor-panel .input,
+.editor-panel .textarea{
+  width:100%;
+  padding:16px 18px;
+  font-size:16px;
+  line-height:1.7;
+  border-radius:14px;
+  border:1px solid rgba(148,163,184,.45);
+  background:rgba(255,255,255,.9);
+  color:#111827;
+  transition:
+    border-color .25s ease,
+    box-shadow .25s ease,
+    background .25s ease;
+}
+
+.editor-panel .input::placeholder,
+.editor-panel .textarea::placeholder{
+  color:#9ca3af;
+}
+
+.editor-panel .input:focus,
+.editor-panel .textarea:focus{
+  outline:none;
+  border-color:#6366f1;
+  background:#ffffff;
+  box-shadow:
+    0 0 0 4px rgba(99,102,241,.22),
+    0 12px 28px rgba(99,102,241,.18);
+}
+
+/* ------------------------------------------------------
+   제시문 카드 묶음
+------------------------------------------------------ */
+#passages{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+}
+
+@media (max-width:900px){
+  #passages{
+    grid-template-columns:1fr;
+  }
+}
+
+/* ------------------------------------------------------
+   CTA 영역
+------------------------------------------------------ */
+#editorSection .cta-row{
+  margin-top:72px;
+  display:flex;
+  justify-content:center;
+}
+
+/* CTA 버튼 – STEP와 통일 */
+#editorSection .btn-primary{
+  appearance:none;
+  border:none;
+  padding:20px 46px;
+  min-width:240px;
+  height:60px;
+  border-radius:999px;
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:-0.01em;
+  color:#ffffff;
+  background:
+    linear-gradient(135deg, #4f6ef7, #3b5bfd);
+  box-shadow:
+    0 26px 54px rgba(59,91,253,.45);
+  text-shadow:0 1px 2px rgba(0,0,0,.18);
+  cursor:pointer;
+  transition:
+    transform .35s cubic-bezier(.22,1,.36,1),
+    box-shadow .35s cubic-bezier(.22,1,.36,1);
+}
+
+@media (hover:hover){
+  #editorSection .btn-primary:hover{
+    transform:translateY(-6px);
+    box-shadow:
+      0 36px 80px rgba(59,91,253,.6);
+  }
+}
+
+#editorSection .btn-primary:active{
+  transform:translateY(-2px);
+  box-shadow:
+    0 18px 36px rgba(59,91,253,.45);
+}
+
+/* ------------------------------------------------------
+   모바일 보정
+------------------------------------------------------ */
+@media (max-width:768px){
+  #editorSection{
+    padding:120px 0 140px;
+  }
+
+  .editor-panel{
+    padding:36px 28px;
+    border-radius:28px;
+  }
+}
 </style>
 </head>
 
@@ -464,27 +686,137 @@ header{
 
     </div>
   </section>
-  <!-- ============================= -->
-  <!-- ✍️ 에디터 섹션 (추가해야 함) -->
-  <!-- ============================= -->
-  <section id="editorSection" class="hidden">
-    <div class="container" style="padding:120px 0">
-      <h2 style="font-size:32px; font-weight:900; margin-bottom:16px;">
-        논술 작성하기
-      </h2>
-      <p class="muted" style="margin-bottom:32px;">
-        여기에 학생 논술 입력 UI가 들어갑니다.
-      </p>
+    <!-- 실제 에디터 -->
+  <section id="editorSection" class="hidden" style="padding:56px 0">
+    <div class="container">
 
-      <!-- 🔽 임시 확인용 박스 (나중에 실제 에디터로 교체) -->
-      <div style="
-        background:#fff;
-        border-radius:16px;
-        padding:32px;
-        box-shadow:0 20px 40px rgba(0,0,0,.08);
-      ">
-        <p>에디터 영역 정상 표시됨 ✅</p>
+      <!-- 입력 -->
+      <div id="inputPanel" class="panel">
+        <h2 style="margin:0 0 12px; font-weight:900">✨ 너의 글, 오늘 더 멀리 날아가게.</h2>
+        <p class="muted" style="margin-top:0">정성껏 쓴 문장 위에 필요한 피드백만 얹어, 목표에 닿도록 부드럽게 이끌어 드릴게요.</p>
+
+                <label class="form-label">학생 이름</label>
+        <input id="studentName" class="input" placeholder="예: 홍길동" />
+
+        <!-- 🔽 질문 + 교재 불러오기 영역 -->
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+          <label class="form-label" style="margin:0">질문</label>
+
+          <div style="display:flex; align-items:center; gap:6px; font-size:13px;">
+            <span class="muted">교재에서 불러오기</span>
+
+            <select id="bookMainStageSelect" class="input" style="width:auto; min-width:90px;">
+              <option value="">단계</option>
+            </select>
+
+            <select id="bookSubStageSelect" class="input" style="width:auto; min-width:90px;">
+              <option value="">교재</option>
+            </select>
+
+            <select id="bookPageSelect" class="input" style="width:auto; min-width:90px;">
+              <option value="">페이지</option>
+
+              <!-- JS에서 해당 단계의 페이지 목록 자동 채움 -->
+            </select>
+
+            <button type="button" class="btn btn-ghost" onclick="applyBookProblem()">
+              불러오기
+            </button>
+          </div>
+        </div>
+
+        <textarea
+          id="question"
+          class="textarea"
+          rows="2"
+          placeholder="질문을 여기에 작성해 주세요."></textarea>
+
+                <!-- 🔽 여기부터 새로 추가: 제시문 영역 -->
+        <label class="form-label">
+          제시문 <span class="muted">(최소 1개)</span>
+        </label>
+        <p class="muted" style="margin:4px 0 6px;">
+          제시문은 <b>텍스트를 그대로 붙여넣어</b> 주시면 돼요.<br>
+          필요하다면 <b>사진 파일을 추가해서 원본 이미지를 함께 보관</b>할 수도 있지만,
+          사진은 글자로 바꾸지 않고 그대로 보여드려요.
+        </p>
+
+        <div id="passages"></div>
+
+        <!-- 🔽 제시문 추가 버튼 -->
+        <button
+          type="button"
+          id="btnAddPassage"
+          class="btn btn-ghost"
+          style="margin-top:8px;">
+          ➕ 제시문 더 추가
+        </button>
+
+
+
+        <!-- 🔼 제시문 영역 끝 -->
+        <label class="form-label">
+          논술문 <span class="muted">(학생 작성 글)</span>
+        </label>
+        <p class="muted" style="margin:4px 0 6px;">
+          학생이 종이에 쓴 답안은 <b>사진을 붙여넣거나 파일로 올리면</b>
+          자동으로 <b>텍스트로 변환</b>해 드릴게요.<br>
+          제시문에 없는 배경지식은 최대한 줄이고, 제시문만 근거로 써 주세요.
+        </p>
+        <textarea
+          id="essay"
+          class="textarea"
+          rows="6"
+          placeholder="제시문만 근거로, 배경지식 없이 작성해 주세요. (종이에 쓴 답안은 사진을 붙여넣으면 글자로 바뀝니다.)"
+          oninput="updateCharCount()"></textarea>
+        <div id="charCount" class="muted" style="margin-top:6px"></div>
+
+        <!-- 🆕 사진에서 글 가져오기 버튼 + 숨겨진 파일 입력 -->
+        <div style="margin-top:6px; display:flex; justify-content:flex-end; gap:8px;">
+          <button type="button" id="btnEssayOcr" class="btn btn-ghost">
+            📸 사진에서 글 → 글자로 변환
+          </button>
+        </div>
+        <input
+          id="essayImageInput"
+          type="file"
+          accept="image/*"
+          style="display:none" />
+        <label class="form-label">글자 수 제한</label>
+        <div class="row">
+          <input id="charLimit" class="input" placeholder="예: 700" />
+          <input id="charRange" class="input" placeholder="± 예: 50" />
+        </div>
+
+        <div style="margin-top:18px; text-align:center">
+          <button class="btn btn-primary" onclick="submitEssay()">⚡ 리포트 생성</button>
+        </div>
+        <div id="loading" class="muted" style="display:none; margin-top:8px">⏳ 읽고 있어요…</div>
+        <div id="error" class="muted" style="display:none; color:#dc2626; margin-top:8px">잠시 후 다시 시도해 주세요.</div>
       </div>
+
+      <!-- 결과 (예시 버튼만 노출) -->
+      <div id="resultCard" class="panel hidden" style="margin-top:18px">
+        <h3 style="margin-top:0">📊 한눈에 이해되는 리포트</h3>
+        <div id="evalSummary"></div>
+      </div>
+
+      <!-- 예시/비교 + PDF (버튼 누르기 전에는 감춤) -->
+      <div id="exampleSection" class="panel hidden" style="margin-top:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <h3 style="margin:0">📝 예시답안</h3>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button class="btn btn-ghost" onclick="openRecords()">내 기록</button>
+          </div>
+        </div>
+        <div id="exampleNote" class="muted" style="margin-top:8px;display:none"></div>
+        <div id="exampleOutput" class="panel" style="background:#fff"></div>
+        <div id="comparisonOutput" class="panel" style="background:#fff;margin-top:12px"></div>
+        <button id="btnSavePDF" class="btn btn-primary" style="margin-top:14px"
+        onclick="downloadPDF_dashboard_land()">📥 PDF 저장</button>
+        <button class="btn btn-ghost" style="margin-top:14px" onclick="resetReport()">🔄 새 리포트 시작</button>
+      </div>
+
     </div>
   </section>
 </main>
