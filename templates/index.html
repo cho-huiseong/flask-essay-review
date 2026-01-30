@@ -493,6 +493,92 @@ canvas.demoChart{ height:140px !important; }
 .btn-delete-passage:hover{
   color:#EF4444;
 }
+/* ===============================
+   HERO 톤 다운 (hero-soft)
+   =============================== */
+.hero.hero-soft{
+  background:
+    radial-gradient(1200px 400px at 50% -120px, rgba(33,64,177,.08), transparent 60%),
+    linear-gradient(180deg, #f7f9ff 0%, #ffffff 70%);
+  padding:120px 0 96px;
+}
+
+.hero.hero-soft h1{
+  font-weight:900;
+  letter-spacing:-.02em;
+}
+
+.hero.hero-soft p{
+  color:#6b7280;
+  font-size:17px;
+  margin-top:12px;
+}
+
+
+/* ===============================
+   STEP 설명 카드 (card-soft)
+   =============================== */
+.card-soft{
+  background:rgba(255,255,255,.72);
+  border:1px solid rgba(229,231,235,.9);
+  border-radius:24px;
+  padding:36px 32px;
+  box-shadow:
+    0 20px 40px rgba(33,64,177,.10),
+    inset 0 1px 0 rgba(255,255,255,.6);
+  backdrop-filter:blur(10px);
+}
+
+.card-soft h2{
+  margin:0 0 10px;
+  font-size:24px;
+  font-weight:900;
+}
+
+.card-soft p{
+  margin:0;
+  line-height:1.65;
+  color:#6b7280;
+}
+
+.card-soft .cta-row{
+  margin-top:20px;
+}
+
+
+/* ===============================
+   STEP 간 여백 정리
+   =============================== */
+.step{
+  padding:120px 0;
+}
+
+.step-grid.fixed{
+  align-items:center;
+  gap:36px;
+}
+
+
+/* ===============================
+   반응형 (모바일)
+   =============================== */
+@media (max-width: 960px){
+  .step-grid.fixed{
+    grid-template-columns:1fr;
+  }
+
+  .card-soft{
+    order:2;
+  }
+
+  .monitor{
+    order:1;
+  }
+
+  .hero.hero-soft{
+    padding:96px 0 72px;
+  }
+}
 </style>
 </head>
 
@@ -521,12 +607,20 @@ canvas.demoChart{ height:140px !important; }
 
 <main>
   <!-- HERO -->
-  <section id="homeSection" class="hero">
+  <section id="homeSection" class="hero hero-soft">
     <div class="container">
-      <h1>글 평가와 예시 작성,<br/>바로 체험해 보세요</h1>
-      <p>입력 → 평가 → 예시답안 · 차이점까지, 실제 화면 크기로 보여줍니다.</p>
+      <h1>글 평가와 예시 작성,<br/>차분하게 한 번에</h1>
+      <p>
+        입력 → 평가 → 예시답안 · 차이점까지,<br>
+        실제 화면 크기로 흐름대로 보여드립니다.
+      </p>
       <div style="display:flex; gap:12px; flex-wrap:wrap">
-        <button class="btn btn-primary" style="height:52px" onclick="document.getElementById('step1').scrollIntoView({behavior:'smooth'});">체험 시작</button>
+        <button
+          class="btn btn-primary"
+          style="height:52px"
+          onclick="document.getElementById('step1').scrollIntoView({behavior:'smooth'});">
+          체험 시작
+        </button>
       </div>
     </div>
   </section>
@@ -534,24 +628,49 @@ canvas.demoChart{ height:140px !important; }
   <!-- STEP 1 -->
   <section id="step1" class="step">
     <div class="container wide step-grid fixed">
-      <div>
+
+      <!-- 설명 카드 -->
+      <div class="card-soft">
         <h2>1. 입력하기</h2>
-        <p>학생·질문·제시문(여러 개)·논술문을 그대로 붙여넣기만 하세요. 글자 수는 자동으로 세고, 제시문은 버튼으로 빠르게 추가돼요.</p>
-        <div class="cta-row"><button class="btn btn-primary" onclick="document.getElementById('step2').scrollIntoView({behavior:'smooth'});">다음 단계</button></div>
+        <p>
+          학생·질문·제시문(여러 개)·논술문을 그대로 붙여넣기만 하세요.<br>
+          글자 수는 자동으로 세고, 제시문은 버튼으로 빠르게 추가돼요.
+        </p>
+        <div class="cta-row">
+          <button class="btn btn-primary"
+            onclick="document.getElementById('step2').scrollIntoView({behavior:'smooth'});">
+            다음 단계
+          </button>
+        </div>
       </div>
+
+      <!-- 화면 -->
       <div class="monitor">
-        <div class="bar"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+        <div class="bar">
+          <span class="dot red"></span>
+          <span class="dot yellow"></span>
+          <span class="dot green"></span>
+        </div>
         <div class="screen">
           <div class="viewport" data-demo="input" data-stage="960">
             <div class="stage input-demo">
-              <h3 style="margin:0 0 6px;font-weight:900">✨ 너의 글, 오늘 더 멀리 날아가게.</h3>
-              <p class="muted" style="margin-top:0">정성껏 쓴 문장 위에 필요한 피드백만 얹어, 목표에 닿도록 부드럽게 이끌어 드릴게요.</p>
+
+              <h3 style="margin:0 0 6px;font-weight:900">
+                ✨ 너의 글, 오늘 더 멀리 날아가게.
+              </h3>
+              <p class="muted" style="margin-top:0">
+                정성껏 쓴 문장 위에 필요한 피드백만 얹어,
+                목표에 닿도록 부드럽게 이끌어 드릴게요.
+              </p>
 
               <label class="form-label">학생 이름</label>
               <div class="panel" style="padding:12px">홍길동</div>
 
               <label class="form-label">질문</label>
-              <div class="panel" style="padding:12px" data-demo-question>제시문을 바탕으로 '공정'의 의미를 정의하고, 사회적 약자 보호의 관점에서 그 정당성을 논하시오.</div>
+              <div class="panel" style="padding:12px">
+                제시문을 바탕으로 '공정'의 의미를 정의하고,
+                사회적 약자 보호의 관점에서 그 정당성을 논하시오.
+              </div>
 
               <label class="form-label">
                 제시문 <span class="muted">(최소 1개)</span>
@@ -566,14 +685,15 @@ canvas.demoChart{ height:140px !important; }
                 <textarea
                   class="passage textarea"
                   rows="3"
-                  placeholder="제시문을 그대로 적어 주세요. (복사한 글을 붙여넣어도 돼요.)"></textarea>
+                  placeholder="제시문을 그대로 적어 주세요. (복사한 글을 붙여넣어도 돼요.)">
+                </textarea>
               </div>
-
-
 
               <label class="form-label">논술문</label>
               <div class="panel" style="padding:12px">
-                나는 공정을 결과의 균등이 아니라 기회의 균등으로 이해한다. 같은 규칙이 주어져도 출발선이 기울어 있으면 경쟁은 공정해 보이지 않는다. … (생략) … 출발선의 균형과 결과의 책임이 함께 작동할 때 우리는 비로소 공정하다고 말할 수 있다.
+                나는 공정을 결과의 균등이 아니라 기회의 균등으로 이해한다.
+                같은 규칙이 주어져도 출발선이 기울어 있으면 경쟁은 공정해 보이지 않는다.
+                … (생략) …
               </div>
 
               <label class="form-label">글자 수 제한</label>
@@ -581,93 +701,161 @@ canvas.demoChart{ height:140px !important; }
                 <div class="panel" style="padding:12px;flex:1">기준 700</div>
                 <div class="panel" style="padding:12px;flex:1">± 50</div>
               </div>
-              <div style="text-align:center;margin-top:10px"><button class="btn btn-primary">⚡ 리포트 생성</button></div>
+
+              <div style="text-align:center;margin-top:10px">
+                <button class="btn btn-primary">⚡ 리포트 생성</button>
+              </div>
+
             </div>
           </div>
         </div>
       </div>
+
     </div>
   </section>
 
   <!-- STEP 2 -->
   <section id="step2" class="step">
     <div class="container wide step-grid fixed">
-      <div>
+
+      <div class="card-soft">
         <h2>2. 평가 받기</h2>
-        <p>논리·독해·구성·표현 4개 항목 점수와 이유를 한 화면에서 확인하세요. 합격/예비/다시쓰기 기준도 함께 보여드립니다.</p>
-        <div class="cta-row"><button class="btn btn-primary" onclick="document.getElementById('step3').scrollIntoView({behavior:'smooth'});">다음 단계</button></div>
+        <p>
+          논리·독해·구성·표현 4개 항목 점수와 이유를<br>
+          한 화면에서 확인하세요.
+        </p>
+        <div class="cta-row">
+          <button class="btn btn-primary"
+            onclick="document.getElementById('step3').scrollIntoView({behavior:'smooth'});">
+            다음 단계
+          </button>
+        </div>
       </div>
+
       <div class="monitor">
-        <div class="bar"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+        <div class="bar">
+          <span class="dot red"></span>
+          <span class="dot yellow"></span>
+          <span class="dot green"></span>
+        </div>
         <div class="screen">
           <div class="viewport" data-demo="score" data-stage="960">
             <div class="stage">
+
               <div class="panel" style="margin-bottom:10px">
                 <div style="display:flex;align-items:center;gap:14px">
                   <div style="font-size:28px">🙂</div>
                   <div style="flex:1">
-                    <div style="font-weight:900">총점 <span style="color:#10b981">37</span> / 40 · <span style="color:#10b981">합격</span></div>
-                    <div class="muted" style="margin-top:4px">근거 배열과 문장의 연결이 자연스럽습니다.</div>
-                    <div style="margin-top:8px;position:relative;height:10px;background:#eef2ff;border-radius:999px;overflow:hidden">
-                      <div style="width:92.5%;height:100%;background:#10b981"></div>
-                      <div style="position:absolute;left:75%;top:0;bottom:0;width:2px;background:rgba(17,24,39,.15)"></div>
-                      <div style="position:absolute;left:90%;top:0;bottom:0;width:2px;background:rgba(17,24,39,.25)"></div>
+                    <div style="font-weight:900">
+                      총점 <span style="color:#10b981">37</span> / 40 ·
+                      <span style="color:#10b981">합격</span>
                     </div>
-                  </div>
-                  <div style="position:relative;width:110px;height:110px">
-                    <svg width="110" height="110">
-                      <circle r="52" cx="55" cy="55" fill="transparent" stroke="#eef2ff" stroke-width="10"></circle>
-                      <circle r="52" cx="55" cy="55" fill="transparent" stroke="#10b981" stroke-width="10"
-                        stroke-dasharray="327" stroke-dashoffset="49"></circle>
-                    </svg>
-                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-weight:900">37</div>
+                    <div class="muted" style="margin-top:4px">
+                      근거 배열과 문장의 연결이 자연스럽습니다.
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div class="kpi">
-                <div class="panel"><div style="font-weight:800">논리력 (9)</div><div class="muted" style="margin-top:6px">주장-근거-예시가 짝을 이루며 반론 대비가 포함됨.</div></div>
-                <div class="panel"><div style="font-weight:800">독해력 (9)</div><div class="muted" style="margin-top:6px">제시문 핵심을 정확히 요약하고 상호관계를 반영.</div></div>
-                <div class="panel"><div style="font-weight:800">구성력 (9)</div><div class="muted" style="margin-top:6px">문단 전환이 매끄럽고 단락 목표가 명확함.</div></div>
-                <div class="panel"><div style="font-weight:800">표현력 (10)</div><div class="muted" style="margin-top:6px">어휘 선택이 적절하고 문법 오류가 거의 없음.</div></div>
+                <div class="panel">
+                  <div style="font-weight:800">논리력 (9)</div>
+                  <div class="muted" style="margin-top:6px">
+                    주장-근거-예시가 짝을 이루며 반론 대비가 포함됨.
+                  </div>
+                </div>
+                <div class="panel">
+                  <div style="font-weight:800">독해력 (9)</div>
+                  <div class="muted" style="margin-top:6px">
+                    제시문 핵심을 정확히 요약하고 상호관계를 반영.
+                  </div>
+                </div>
+                <div class="panel">
+                  <div style="font-weight:800">구성력 (9)</div>
+                  <div class="muted" style="margin-top:6px">
+                    문단 전환이 매끄럽고 단락 목표가 명확함.
+                  </div>
+                </div>
+                <div class="panel">
+                  <div style="font-weight:800">표현력 (10)</div>
+                  <div class="muted" style="margin-top:6px">
+                    어휘 선택이 적절하고 문법 오류가 거의 없음.
+                  </div>
+                </div>
               </div>
 
-              <div style="margin-top:14px" class="panel">
-                <canvas id="demoChart" class="demoChart"></canvas>
-              </div>
             </div>
           </div>
         </div>
       </div>
+
     </div>
   </section>
 
-  <!-- STEP 3 -->
-  <section id="step3" class="step">
-    <div class="container wide step-grid fixed">
-      <div>
-        <h2>3. 예시답안 · 비교분석</h2>
-        <p>예시답안 보기를 누르면 내 글과 다른 점을 줄글로 정리해 드려요. 마음에 들면 PDF 저장하고, 내 기록에서 언제든 다시 볼 수 있어요.</p>
-        <div class="cta-row">
-          <button class="btn btn-primary" onclick="location.hash='#editor'">내 글로 시작하기</button>
-        </div>
+<!-- STEP 3 -->
+<section id="step3" class="step">
+  <div class="container wide step-grid fixed">
+    <div>
+      <h2>3. 예시답안 · 비교분석</h2>
+      <p>
+        예시답안 보기를 누르면 내 글과 다른 점을 줄글로 정리해 드려요.
+        마음에 들면 PDF로 저장하고, 내 기록에서 언제든 다시 볼 수 있어요.
+      </p>
+      <div class="cta-row">
+        <button
+          class="btn btn-primary"
+          onclick="location.hash='#editor'">
+          내 글로 시작하기
+        </button>
       </div>
-      <div class="monitor">
-        <div class="bar"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
-        <div class="screen">
-          <div class="viewport" data-demo="example" data-stage="960">
-            <div class="stage">
-              <div class="panel">
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-                  <h3 style="margin:0">📝 예시답안</h3>
-                  <button id="demoExampleBtn" class="btn btn-primary" onclick="renderDemoExample()">예시답안 보기</button>
+    </div>
+
+    <div class="monitor">
+      <div class="bar">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+      </div>
+
+      <div class="screen">
+        <div class="viewport" data-demo="example" data-stage="960">
+          <div class="stage">
+            <div class="panel">
+
+              <div
+                style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+                <h3 style="margin:0">📝 예시답안</h3>
+
+                <button
+                  id="demoExampleBtn"
+                  class="btn btn-primary"
+                  onclick="renderDemoExample()">
+                  예시답안 보기
+                </button>
+              </div>
+
+              <p class="muted" style="margin-top:6px">
+                권장 글자수 범위를 벗어나도 참고용 예시는 표시됩니다.
+              </p>
+
+              <div
+                id="demoExampleWrap"
+                class="hidden"
+                style="margin-top:12px">
+
+                <div
+                  id="demoExampleText"
+                  class="panel"
+                  style="background:#fff; line-height:1.8">
                 </div>
-                <p class="muted" style="margin-top:6px">권장 글자수 범위를 벗어나도 참고용 예시는 표시됩니다.</p>
-                <div id="demoExampleWrap" class="hidden">
-                  <div id="demoExampleText" class="panel" style="background:#fff"></div>
-                  <div class="panel" style="background:#fff;margin-top:12px">
-                    <h3 style="margin:0">🔍 비교 분석</h3>
-                    <div id="demoComparisonText" style="margin-top:8px;line-height:1.8"></div>
+
+                <div
+                  class="panel"
+                  style="background:#fff; margin-top:12px">
+                  <h3 style="margin:0">🔍 비교 분석</h3>
+                  <div
+                    id="demoComparisonText"
+                    style="margin-top:8px; line-height:1.8">
                   </div>
                 </div>
               </div>
@@ -676,141 +864,9 @@ canvas.demoChart{ height:140px !important; }
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- 실제 에디터 -->
-  <section id="editorSection" class="hidden" style="visibility:hidden; padding:56px 0">
-    <div class="container">
-
-      <!-- 입력 -->
-      <div id="inputPanel" class="panel">
-        <h2 style="margin:0 0 12px; font-weight:900">✨ 너의 글, 오늘 더 멀리 날아가게.</h2>
-        <p class="muted" style="margin-top:0">정성껏 쓴 문장 위에 필요한 피드백만 얹어, 목표에 닿도록 부드럽게 이끌어 드릴게요.</p>
-
-                <label class="form-label">학생 이름</label>
-        <input id="studentName" class="input" placeholder="예: 홍길동" />
-
-        <!-- 🔽 질문 + 교재 불러오기 영역 -->
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-          <label class="form-label" style="margin:0">질문</label>
-
-          <div style="display:flex; align-items:center; gap:6px; font-size:13px;">
-            <span class="muted">교재에서 불러오기</span>
-
-            <select id="bookMainStageSelect" class="input" style="width:auto; min-width:90px;">
-              <option value="">단계</option>
-            </select>
-
-            <select id="bookSubStageSelect" class="input" style="width:auto; min-width:90px;">
-              <option value="">교재</option>
-            </select>
-
-            <select id="bookPageSelect" class="input" style="width:auto; min-width:90px;">
-              <option value="">페이지</option>
-
-              <!-- JS에서 해당 단계의 페이지 목록 자동 채움 -->
-            </select>
-
-            <button type="button" class="btn btn-ghost" onclick="applyBookProblem()">
-              불러오기
-            </button>
-          </div>
-        </div>
-
-        <textarea
-          id="question"
-          class="textarea"
-          rows="2"
-          placeholder="질문을 여기에 작성해 주세요."></textarea>
-          
-                <!-- 🔽 여기부터 새로 추가: 제시문 영역 -->
-        <label class="form-label">
-          제시문 <span class="muted">(최소 1개)</span>
-        </label>
-        <p class="muted" style="margin:4px 0 6px;">
-          제시문은 <b>텍스트를 그대로 붙여넣어</b> 주시면 돼요.<br>
-          필요하다면 <b>사진 파일을 추가해서 원본 이미지를 함께 보관</b>할 수도 있지만,
-          사진은 글자로 바꾸지 않고 그대로 보여드려요.
-        </p>
-
-        <div id="passages"></div>
-
-        <!-- 🔽 제시문 추가 버튼 -->
-        <button
-          type="button"
-          id="btnAddPassage"
-          class="btn btn-ghost"
-          style="margin-top:8px;">
-          ➕ 제시문 더 추가
-        </button>
-
-
-
-        <!-- 🔼 제시문 영역 끝 -->
-        <label class="form-label">
-          논술문 <span class="muted">(학생 작성 글)</span>
-        </label>
-        <p class="muted" style="margin:4px 0 6px;">
-          학생이 종이에 쓴 답안은 <b>사진을 붙여넣거나 파일로 올리면</b>
-          자동으로 <b>텍스트로 변환</b>해 드릴게요.<br>
-          제시문에 없는 배경지식은 최대한 줄이고, 제시문만 근거로 써 주세요.
-        </p>
-        <textarea
-          id="essay"
-          class="textarea"
-          rows="6"
-          placeholder="제시문만 근거로, 배경지식 없이 작성해 주세요. (종이에 쓴 답안은 사진을 붙여넣으면 글자로 바뀝니다.)"
-          oninput="updateCharCount()"></textarea>
-        <div id="charCount" class="muted" style="margin-top:6px"></div>
-        
-        <!-- 🆕 사진에서 글 가져오기 버튼 + 숨겨진 파일 입력 -->
-        <div style="margin-top:6px; display:flex; justify-content:flex-end; gap:8px;">
-          <button type="button" id="btnEssayOcr" class="btn btn-ghost">
-            📸 사진에서 글 → 글자로 변환
-          </button>
-        </div>
-        <input
-          id="essayImageInput"
-          type="file"
-          accept="image/*"
-          style="display:none" />
-        <label class="form-label">글자 수 제한</label>
-        <div class="row">
-          <input id="charLimit" class="input" placeholder="예: 700" />
-          <input id="charRange" class="input" placeholder="± 예: 50" />
-        </div>
-
-        <div style="margin-top:18px; text-align:center">
-          <button class="btn btn-primary" onclick="submitEssay()">⚡ 리포트 생성</button>
-        </div>
-        <div id="loading" class="muted" style="display:none; margin-top:8px">⏳ 읽고 있어요…</div>
-        <div id="error" class="muted" style="display:none; color:#dc2626; margin-top:8px">잠시 후 다시 시도해 주세요.</div>
-      </div>
-
-      <!-- 결과 (예시 버튼만 노출) -->
-      <div id="resultCard" class="panel hidden" style="margin-top:18px">
-        <h3 style="margin-top:0">📊 한눈에 이해되는 리포트</h3>
-        <div id="evalSummary"></div>
-      </div>
-
-      <!-- 예시/비교 + PDF (버튼 누르기 전에는 감춤) -->
-      <div id="exampleSection" class="panel hidden" style="margin-top:18px">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-          <h3 style="margin:0">📝 예시답안</h3>
-          <div style="display:flex;gap:8px;align-items:center">
-            <button class="btn btn-ghost" onclick="openRecords()">내 기록</button>
-          </div>
-        </div>
-        <div id="exampleNote" class="muted" style="margin-top:8px;display:none"></div>
-        <div id="exampleOutput" class="panel" style="background:#fff"></div>
-        <div id="comparisonOutput" class="panel" style="background:#fff;margin-top:12px"></div>
-        <button id="btnSavePDF" class="btn btn-primary" style="margin-top:14px"
-        onclick="downloadPDF_dashboard_land()">📥 PDF 저장</button>
-        <button class="btn btn-ghost" style="margin-top:14px" onclick="resetReport()">🔄 새 리포트 시작</button>
-      </div>
-
-    </div>
-  </section>
 </main>
 
 <!-- GLOBAL LOADING OVERLAY -->
