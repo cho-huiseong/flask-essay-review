@@ -683,19 +683,26 @@ header{
 
     </div>
   </section>
-    <!-- 실제 에디터 -->
-  <section id="editorSection" class="hidden" style="padding:56px 0">
+  <!-- 실제 에디터 -->
+  <section id="editorSection" class="hidden">
     <div class="container">
+
+      <!-- 에디터 헤더 -->
+      <div class="section-header">
+        <h2>✨ 너의 글, 오늘 더 멀리 날아가게.</h2>
+        <p>
+          정성껏 쓴 문장 위에 필요한 피드백만 얹어,
+          목표에 닿도록 부드럽게 이끌어 드릴게요.
+        </p>
+      </div>
 
       <!-- 입력 -->
       <div id="inputPanel" class="panel editor-panel">
-        <h2 style="margin:0 0 12px; font-weight:900">✨ 너의 글, 오늘 더 멀리 날아가게.</h2>
-        <p class="muted" style="margin-top:0">정성껏 쓴 문장 위에 필요한 피드백만 얹어, 목표에 닿도록 부드럽게 이끌어 드릴게요.</p>
 
-                <label class="form-label">학생 이름</label>
+        <label class="form-label">학생 이름</label>
         <input id="studentName" class="input" placeholder="예: 홍길동" />
 
-        <!-- 🔽 질문 + 교재 불러오기 영역 -->
+        <!-- 질문 + 교재 불러오기 -->
         <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
           <label class="form-label" style="margin:0">질문</label>
 
@@ -712,8 +719,6 @@ header{
 
             <select id="bookPageSelect" class="input" style="width:auto; min-width:90px;">
               <option value="">페이지</option>
-
-              <!-- JS에서 해당 단계의 페이지 목록 자동 채움 -->
             </select>
 
             <button type="button" class="btn btn-ghost" onclick="applyBookProblem()">
@@ -728,10 +733,11 @@ header{
           rows="2"
           placeholder="질문을 여기에 작성해 주세요."></textarea>
 
-                <!-- 🔽 여기부터 새로 추가: 제시문 영역 -->
+        <!-- 제시문 -->
         <label class="form-label">
           제시문 <span class="muted">(최소 1개)</span>
         </label>
+
         <p class="muted" style="margin:4px 0 6px;">
           제시문은 <b>텍스트를 그대로 붙여넣어</b> 주시면 돼요.<br>
           필요하다면 <b>사진 파일을 추가해서 원본 이미지를 함께 보관</b>할 수도 있지만,
@@ -740,7 +746,6 @@ header{
 
         <div id="passages"></div>
 
-        <!-- 🔽 제시문 추가 버튼 -->
         <button
           type="button"
           id="btnAddPassage"
@@ -749,69 +754,94 @@ header{
           ➕ 제시문 더 추가
         </button>
 
-
-
-        <!-- 🔼 제시문 영역 끝 -->
+        <!-- 논술문 -->
         <label class="form-label">
           논술문 <span class="muted">(학생 작성 글)</span>
         </label>
+
         <p class="muted" style="margin:4px 0 6px;">
           학생이 종이에 쓴 답안은 <b>사진을 붙여넣거나 파일로 올리면</b>
           자동으로 <b>텍스트로 변환</b>해 드릴게요.<br>
           제시문에 없는 배경지식은 최대한 줄이고, 제시문만 근거로 써 주세요.
         </p>
+
         <textarea
           id="essay"
           class="textarea"
           rows="6"
           placeholder="제시문만 근거로, 배경지식 없이 작성해 주세요. (종이에 쓴 답안은 사진을 붙여넣으면 글자로 바뀝니다.)"
           oninput="updateCharCount()"></textarea>
+
         <div id="charCount" class="muted" style="margin-top:6px"></div>
 
-        <!-- 🆕 사진에서 글 가져오기 버튼 + 숨겨진 파일 입력 -->
+        <!-- 사진에서 글 가져오기 -->
         <div style="margin-top:6px; display:flex; justify-content:flex-end; gap:8px;">
           <button type="button" id="btnEssayOcr" class="btn btn-ghost">
             📸 사진에서 글 → 글자로 변환
           </button>
         </div>
+
         <input
           id="essayImageInput"
           type="file"
           accept="image/*"
           style="display:none" />
+
         <label class="form-label">글자 수 제한</label>
         <div class="row">
           <input id="charLimit" class="input" placeholder="예: 700" />
           <input id="charRange" class="input" placeholder="± 예: 50" />
         </div>
 
-        <div style="margin-top:18px; text-align:center">
-          <button class="btn btn-primary" onclick="submitEssay()">⚡ 리포트 생성</button>
+        <!-- CTA -->
+        <div class="cta-row">
+          <button class="btn btn-primary" onclick="submitEssay()">
+            ⚡ 리포트 생성
+          </button>
         </div>
-        <div id="loading" class="muted" style="display:none; margin-top:8px">⏳ 읽고 있어요…</div>
-        <div id="error" class="muted" style="display:none; color:#dc2626; margin-top:8px">잠시 후 다시 시도해 주세요.</div>
+
+        <div id="loading" class="muted" style="display:none; margin-top:8px">
+          ⏳ 읽고 있어요…
+        </div>
+        <div id="error" class="muted" style="display:none; color:#dc2626; margin-top:8px">
+          잠시 후 다시 시도해 주세요.
+        </div>
+
       </div>
 
-      <!-- 결과 (예시 버튼만 노출) -->
+      <!-- 결과 -->
       <div id="resultCard" class="panel hidden" style="margin-top:18px">
         <h3 style="margin-top:0">📊 한눈에 이해되는 리포트</h3>
         <div id="evalSummary"></div>
       </div>
 
-      <!-- 예시/비교 + PDF (버튼 누르기 전에는 감춤) -->
+      <!-- 예시/비교 -->
       <div id="exampleSection" class="panel hidden" style="margin-top:18px">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px">
           <h3 style="margin:0">📝 예시답안</h3>
-          <div style="display:flex;gap:8px;align-items:center">
+          <div style="display:flex; gap:8px; align-items:center">
             <button class="btn btn-ghost" onclick="openRecords()">내 기록</button>
           </div>
         </div>
-        <div id="exampleNote" class="muted" style="margin-top:8px;display:none"></div>
+
+        <div id="exampleNote" class="muted" style="margin-top:8px; display:none"></div>
         <div id="exampleOutput" class="panel" style="background:#fff"></div>
-        <div id="comparisonOutput" class="panel" style="background:#fff;margin-top:12px"></div>
-        <button id="btnSavePDF" class="btn btn-primary" style="margin-top:14px"
-        onclick="downloadPDF_dashboard_land()">📥 PDF 저장</button>
-        <button class="btn btn-ghost" style="margin-top:14px" onclick="resetReport()">🔄 새 리포트 시작</button>
+        <div id="comparisonOutput" class="panel" style="background:#fff; margin-top:12px"></div>
+
+        <button
+          id="btnSavePDF"
+          class="btn btn-primary"
+          style="margin-top:14px"
+          onclick="downloadPDF_dashboard_land()">
+          📥 PDF 저장
+        </button>
+
+        <button
+          class="btn btn-ghost"
+          style="margin-top:14px"
+          onclick="resetReport()">
+          🔄 새 리포트 시작
+        </button>
       </div>
 
     </div>
