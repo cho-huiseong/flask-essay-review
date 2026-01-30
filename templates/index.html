@@ -1053,12 +1053,16 @@ function updateCharCount(){
 }
 
 /* ===== 제시문 추가 (전역 바인딩) ===== */
+const KOREAN_ORDER = [
+  '가','나','다','라','마','바','사','아','자','차','카','타','파','하'
+];
 function updatePassageLabels(){
   const wraps = document.querySelectorAll('#passages .passage-wrap');
   wraps.forEach((wrap, idx) => {
     const label = wrap.querySelector('.passage-label');
     if (label) {
-      label.textContent = `제시문 (${String.fromCharCode(44032 + idx * 588)})`;
+      const ch = KOREAN_ORDER[idx] || `(${idx + 1})`;
+      label.textContent = `제시문 (${ch})`;
     }
   });
 }
