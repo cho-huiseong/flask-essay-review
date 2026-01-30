@@ -1058,7 +1058,7 @@ function updatePassageLabels(){
   wraps.forEach((wrap, idx) => {
     const label = wrap.querySelector('.passage-label');
     if (label) {
-      label.textContent = `제시문 (${String.fromCharCode(44032 + idx)})`;
+      label.textContent = `제시문 (${String.fromCharCode(44032 + idx * 588)})`;
     }
   });
 }
