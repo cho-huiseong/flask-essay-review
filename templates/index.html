@@ -342,222 +342,258 @@ header{
   }
 }
 /* ======================================================
-   EDITOR SECTION – Product Workspace Edition
-   STEP 디자인 톤과 통일 / 화려하지만 안정적인 작업 공간
+   1. EDITOR STAGE (전체 무대)
    ====================================================== */
-
-/* 1. 에디터 전체 무대 */
 #editorSection{
   position:relative;
-  padding:140px 0 160px;
+  padding:160px 0 180px;
   background:
-    radial-gradient(1200px 600px at 70% -200px, rgba(33,64,177,.18), transparent 60%),
-    radial-gradient(900px 500px at 10% 20%, rgba(99,102,241,.14), transparent 65%),
-    linear-gradient(180deg, #f8faff 0%, #f3f6ff 100%);
+    radial-gradient(1400px 720px at 50% -260px, rgba(99,102,241,.26), transparent 60%),
+    radial-gradient(900px 520px at 14% 32%, rgba(56,189,248,.20), transparent 65%),
+    linear-gradient(180deg, #f9fbff 0%, #f2f6ff 100%);
+  overflow:hidden;
 }
 
-/* 상단 은은한 빛 */
 #editorSection::before{
   content:"";
   position:absolute;
-  top:-260px;
+  top:-280px;
   left:50%;
   transform:translateX(-50%);
   width:1200px;
-  height:520px;
-  background:radial-gradient(circle, rgba(255,255,255,.85), transparent 70%);
-  filter:blur(80px);
+  height:560px;
+  background:radial-gradient(circle, rgba(255,255,255,.95), transparent 70%);
+  filter:blur(90px);
   z-index:0;
   pointer-events:none;
 }
 
-/* 하단 공기층 */
 #editorSection::after{
   content:"";
   position:absolute;
-  bottom:-300px;
+  bottom:-320px;
   left:50%;
   transform:translateX(-50%);
   width:1400px;
-  height:620px;
-  background:radial-gradient(circle, rgba(79,70,229,.22), transparent 70%);
-  filter:blur(100px);
+  height:640px;
+  background:radial-gradient(circle, rgba(99,102,241,.30), transparent 70%);
+  filter:blur(120px);
   z-index:0;
   pointer-events:none;
 }
 
-/* 실제 콘텐츠 전면 */
 #editorSection > *{
   position:relative;
   z-index:2;
 }
 
-/* 2. 에디터 컨테이너 정렬 */
-#editorSection .container{
-  max-width:1040px;
+/* ======================================================
+   2. HEADER
+   ====================================================== */
+#editorSection .section-header{
+  text-align:center;
+  margin-bottom:96px;
 }
 
-/* 3. 입력 패널 (메인 카드) */
-#editorSection #inputPanel{
+#editorSection .section-header h2{
+  font-size:clamp(38px, 4.8vw, 54px);
+  font-weight:900;
+  letter-spacing:-0.03em;
+  color:#0b1220;
+  margin:0 0 18px;
+  text-shadow:
+    0 2px 0 rgba(255,255,255,.9),
+    0 16px 40px rgba(99,102,241,.25);
+}
+
+#editorSection .section-header p{
+  font-size:18px;
+  line-height:1.75;
+  color:#475569;
+}
+
+/* ======================================================
+   3. MAIN PANEL (Glass Card)
+   ====================================================== */
+#editorSection .panel.editor-panel{
   background:
     linear-gradient(
       180deg,
-      rgba(255,255,255,.96),
+      rgba(255,255,255,.98),
       rgba(255,255,255,.90)
     );
-  border-radius:28px;
-  padding:56px 52px 52px;
-  border:1px solid rgba(148,163,184,.30);
-  backdrop-filter:blur(18px);
-  -webkit-backdrop-filter:blur(18px);
+  border-radius:40px;
+  border:1px solid rgba(148,163,184,.32);
+  backdrop-filter:blur(26px);
+  -webkit-backdrop-filter:blur(26px);
   box-shadow:
-    0 40px 90px rgba(30,41,59,.22),
-    inset 0 1px 0 rgba(255,255,255,.75);
+    0 60px 120px rgba(30,41,59,.26),
+    inset 0 1px 0 rgba(255,255,255,.9);
+  padding:64px 60px 60px;
 }
 
-/* 4. 에디터 헤더 */
-#editorSection #inputPanel h2{
-  font-size:32px;
-  font-weight:900;
-  letter-spacing:-0.02em;
-  color:#0f172a;
-  margin-bottom:12px;
-}
-
-#editorSection #inputPanel > p.muted{
-  font-size:16px;
-  line-height:1.65;
-  color:#475569;
-  margin-bottom:36px;
-}
-
-/* 5. 폼 라벨 */
+/* ======================================================
+   4. LABEL / TEXT
+   ====================================================== */
 #editorSection .form-label{
   font-size:14px;
-  font-weight:800;
+  font-weight:900;
+  letter-spacing:-0.01em;
   color:#1e293b;
-  margin:22px 0 8px;
+  margin:22px 0 10px;
 }
 
-/* 6. 입력 필드 공통 */
+#editorSection .muted{
+  color:#64748b;
+  font-size:14px;
+}
+
+/* ======================================================
+   5. INPUT / TEXTAREA
+   ====================================================== */
 #editorSection .input,
 #editorSection .textarea{
   width:100%;
-  padding:16px 18px;
-  border-radius:14px;
+  padding:18px 20px;
+  font-size:16px;
+  line-height:1.7;
+  border-radius:16px;
   border:1px solid rgba(148,163,184,.45);
-  font-size:15px;
-  line-height:1.65;
-  background:rgba(255,255,255,.95);
+  background:rgba(255,255,255,.92);
+  color:#0f172a;
   transition:
-    border-color .2s ease,
-    box-shadow .2s ease;
+    border-color .25s ease,
+    box-shadow .25s ease,
+    background .25s ease;
 }
 
-#editorSection .input:focus,
-#editorSection .textarea:focus{
-  outline:none;
-  border-color:#4f46e5;
-  box-shadow:0 0 0 4px rgba(79,70,229,.20);
-}
-
-/* placeholder */
 #editorSection .input::placeholder,
 #editorSection .textarea::placeholder{
   color:#9ca3af;
 }
 
-/* 7. 질문 + 교재 불러오기 정렬 */
-#editorSection .form-label + div{
-  margin-top:8px;
+#editorSection .input:focus,
+#editorSection .textarea:focus{
+  outline:none;
+  border-color:#6366f1;
+  background:#ffffff;
+  box-shadow:
+    0 0 0 5px rgba(99,102,241,.22),
+    0 20px 44px rgba(99,102,241,.25);
 }
 
-#editorSection select.input{
-  height:44px;
-  padding:0 14px;
-  font-size:14px;
-}
-
-/* 8. 제시문 영역 */
+/* ======================================================
+   6. PASSAGE GRID
+   ====================================================== */
 #editorSection #passages{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  margin-top:10px;
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:22px;
 }
 
-/* 제시문 텍스트 영역 */
-#editorSection #passages textarea{
-  min-height:120px;
+@media (max-width:900px){
+  #editorSection #passages{
+    grid-template-columns:1fr;
+  }
 }
 
-/* 제시문 추가 버튼 */
-#editorSection #btnAddPassage{
-  margin-top:10px;
+/* ======================================================
+   7. BUTTON – GLOBAL (STEP 통일)
+   ====================================================== */
+#editorSection .btn{
+  appearance:none;
+  border:none;
+  cursor:pointer;
+  font-weight:900;
+  letter-spacing:-0.01em;
 }
 
-/* 9. 논술문 영역 강조 */
-#editorSection #essay{
-  min-height:220px;
-}
-
-/* 글자 수 안내 */
-#editorSection #charCount{
-  font-size:13px;
-  margin-top:6px;
-  color:#64748b;
-}
-
-/* 10. CTA 영역 */
-#editorSection .btn-primary{
-  font-size:18px;
-  padding:18px 44px;
+/* Ghost */
+#editorSection .btn-ghost{
+  padding:14px 22px;
   border-radius:999px;
-  background:
-    linear-gradient(135deg, #4f6ef7, #3b5bfd);
-  color:#ffffff;
-  box-shadow:
-    0 24px 54px rgba(59,91,253,.45);
-  text-shadow:0 1px 2px rgba(0,0,0,.18);
-  transition:
-    transform .35s ease,
-    box-shadow .35s ease;
-}
-
-#editorSection .btn-primary:hover{
-  transform:translateY(-4px);
-  box-shadow:
-    0 32px 80px rgba(59,91,253,.6);
-}
-
-/* 11. 결과 카드 */
-#editorSection #resultCard,
-#editorSection #exampleSection{
   background:
     linear-gradient(
       180deg,
-      rgba(255,255,255,.96),
-      rgba(255,255,255,.92)
+      rgba(255,255,255,.75),
+      rgba(255,255,255,.45)
     );
-  border-radius:26px;
-  padding:36px 36px 34px;
   border:1px solid rgba(148,163,184,.28);
+  color:#1e293b;
+  backdrop-filter:blur(14px);
   box-shadow:
-    0 28px 60px rgba(30,41,59,.18);
+    0 10px 22px rgba(15,23,42,.16),
+    inset 0 1px 0 rgba(255,255,255,.8);
+  transition:
+    transform .25s cubic-bezier(.22,1,.36,1),
+    box-shadow .25s cubic-bezier(.22,1,.36,1);
 }
 
-/* 12. 모바일 대응 */
-@media (max-width:900px){
+@media (hover:hover){
+  #editorSection .btn-ghost:hover{
+    transform:translateY(-3px);
+    box-shadow:
+      0 16px 36px rgba(15,23,42,.22),
+      inset 0 1px 0 rgba(255,255,255,.9);
+  }
+}
+
+/* Primary – 메인 CTA */
+#editorSection .btn-primary{
+  padding:22px 54px;
+  min-width:260px;
+  height:64px;
+  border-radius:999px;
+  font-size:18px;
+  color:#ffffff;
+  background:
+    linear-gradient(135deg, #4f6ef7, #3b5bfd);
+  box-shadow:
+    0 30px 64px rgba(59,91,253,.48);
+  text-shadow:0 1px 2px rgba(0,0,0,.2);
+  transition:
+    transform .35s cubic-bezier(.22,1,.36,1),
+    box-shadow .35s cubic-bezier(.22,1,.36,1);
+}
+
+@media (hover:hover){
+  #editorSection .btn-primary:hover{
+    transform:translateY(-6px);
+    box-shadow:
+      0 44px 96px rgba(59,91,253,.65);
+  }
+}
+
+#editorSection .btn-primary:active{
+  transform:translateY(-2px);
+  box-shadow:
+    0 22px 44px rgba(59,91,253,.45);
+}
+
+/* ======================================================
+   8. CTA ROW
+   ====================================================== */
+#editorSection .cta-row{
+  margin-top:88px;
+  display:flex;
+  justify-content:center;
+}
+
+/* ======================================================
+   9. MOBILE
+   ====================================================== */
+@media (max-width:768px){
   #editorSection{
-    padding:110px 0 140px;
+    padding:120px 0 140px;
   }
 
-  #editorSection #inputPanel{
-    padding:40px 26px 36px;
+  #editorSection .panel.editor-panel{
+    padding:40px 28px;
+    border-radius:28px;
   }
 
-  #editorSection #inputPanel h2{
-    font-size:26px;
+  #editorSection .section-header{
+    margin-bottom:64px;
   }
 }
 </style>
