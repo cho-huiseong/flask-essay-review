@@ -341,8 +341,8 @@ header{
     margin-top:120px;
   }
 }
-/* ======================================================
-   1. EDITOR STAGE (전체 무대)
+//* ======================================================
+   EDITOR STAGE – FINAL
    ====================================================== */
 #editorSection{
   position:relative;
@@ -364,7 +364,6 @@ header{
   height:560px;
   background:radial-gradient(circle, rgba(255,255,255,.95), transparent 70%);
   filter:blur(90px);
-  z-index:0;
   pointer-events:none;
 }
 
@@ -378,7 +377,6 @@ header{
   height:640px;
   background:radial-gradient(circle, rgba(99,102,241,.30), transparent 70%);
   filter:blur(120px);
-  z-index:0;
   pointer-events:none;
 }
 
@@ -388,7 +386,7 @@ header{
 }
 
 /* ======================================================
-   2. HEADER
+   HEADER
    ====================================================== */
 #editorSection .section-header{
   text-align:center;
@@ -413,19 +411,17 @@ header{
 }
 
 /* ======================================================
-   3. MAIN PANEL (Glass Card)
+   MAIN PANEL
    ====================================================== */
 #editorSection .panel.editor-panel{
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255,255,255,.98),
-      rgba(255,255,255,.90)
-    );
+  background:linear-gradient(
+    180deg,
+    rgba(255,255,255,.98),
+    rgba(255,255,255,.92)
+  );
   border-radius:40px;
   border:1px solid rgba(148,163,184,.32);
   backdrop-filter:blur(26px);
-  -webkit-backdrop-filter:blur(26px);
   box-shadow:
     0 60px 120px rgba(30,41,59,.26),
     inset 0 1px 0 rgba(255,255,255,.9);
@@ -433,23 +429,22 @@ header{
 }
 
 /* ======================================================
-   4. LABEL / TEXT
+   LABEL / TEXT
    ====================================================== */
 #editorSection .form-label{
   font-size:14px;
   font-weight:900;
-  letter-spacing:-0.01em;
   color:#1e293b;
   margin:22px 0 10px;
 }
 
 #editorSection .muted{
-  color:#64748b;
   font-size:14px;
+  color:#64748b;
 }
 
 /* ======================================================
-   5. INPUT / TEXTAREA
+   INPUT / TEXTAREA
    ====================================================== */
 #editorSection .input,
 #editorSection .textarea{
@@ -459,119 +454,112 @@ header{
   line-height:1.7;
   border-radius:16px;
   border:1px solid rgba(148,163,184,.45);
-  background:rgba(255,255,255,.92);
+  background:rgba(255,255,255,.94);
   color:#0f172a;
-  transition:
-    border-color .25s ease,
-    box-shadow .25s ease,
-    background .25s ease;
-}
-
-#editorSection .input::placeholder,
-#editorSection .textarea::placeholder{
-  color:#9ca3af;
+  transition:all .25s ease;
 }
 
 #editorSection .input:focus,
 #editorSection .textarea:focus{
   outline:none;
   border-color:#6366f1;
-  background:#ffffff;
   box-shadow:
     0 0 0 5px rgba(99,102,241,.22),
     0 20px 44px rgba(99,102,241,.25);
 }
 
 /* ======================================================
-   6. PASSAGE GRID
+   PASSAGES
    ====================================================== */
-#editorSection #passages{
+#passages{
   display:grid;
-  grid-template-columns:repeat(2, minmax(0, 1fr));
-  gap:22px;
+  gap:18px;
 }
 
-@media (max-width:900px){
-  #editorSection #passages{
-    grid-template-columns:1fr;
-  }
+.passage-wrap{
+  position:relative;
+  background:rgba(255,255,255,.85);
+  border-radius:18px;
+  border:1px solid rgba(148,163,184,.28);
+  padding:18px;
+}
+
+.passage-wrap .btn-delete{
+  position:absolute;
+  top:12px;
+  right:12px;
 }
 
 /* ======================================================
-   7. BUTTON – GLOBAL (STEP 통일)
+   IMAGE PREVIEW
+   ====================================================== */
+.passage-images{
+  display:flex;
+  gap:12px;
+  margin-top:10px;
+}
+
+.passage-images img{
+  width:96px;
+  height:96px;
+  object-fit:cover;
+  border-radius:14px;
+  box-shadow:0 8px 20px rgba(15,23,42,.25);
+}
+
+/* ======================================================
+   BUTTON SYSTEM
    ====================================================== */
 #editorSection .btn{
-  appearance:none;
   border:none;
   cursor:pointer;
   font-weight:900;
   letter-spacing:-0.01em;
 }
 
-/* Ghost */
+/* STEP BUTTON (Ghost) */
 #editorSection .btn-ghost{
-  padding:14px 22px;
+  height:40px;
+  padding:0 18px;
   border-radius:999px;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255,255,255,.75),
-      rgba(255,255,255,.45)
-    );
+  background:linear-gradient(
+    180deg,
+    rgba(255,255,255,.75),
+    rgba(255,255,255,.45)
+  );
   border:1px solid rgba(148,163,184,.28);
   color:#1e293b;
-  backdrop-filter:blur(14px);
   box-shadow:
     0 10px 22px rgba(15,23,42,.16),
     inset 0 1px 0 rgba(255,255,255,.8);
-  transition:
-    transform .25s cubic-bezier(.22,1,.36,1),
-    box-shadow .25s cubic-bezier(.22,1,.36,1);
+  transition:all .25s cubic-bezier(.22,1,.36,1);
 }
 
-@media (hover:hover){
-  #editorSection .btn-ghost:hover{
-    transform:translateY(-3px);
-    box-shadow:
-      0 16px 36px rgba(15,23,42,.22),
-      inset 0 1px 0 rgba(255,255,255,.9);
-  }
+#editorSection .btn-ghost:hover{
+  transform:translateY(-3px);
+  box-shadow:
+    0 16px 36px rgba(15,23,42,.22);
 }
 
-/* Primary – 메인 CTA */
+/* PRIMARY CTA */
 #editorSection .btn-primary{
-  padding:22px 54px;
-  min-width:260px;
   height:64px;
+  padding:0 56px;
   border-radius:999px;
   font-size:18px;
-  color:#ffffff;
-  background:
-    linear-gradient(135deg, #4f6ef7, #3b5bfd);
-  box-shadow:
-    0 30px 64px rgba(59,91,253,.48);
-  text-shadow:0 1px 2px rgba(0,0,0,.2);
-  transition:
-    transform .35s cubic-bezier(.22,1,.36,1),
-    box-shadow .35s cubic-bezier(.22,1,.36,1);
+  color:#fff;
+  background:linear-gradient(135deg, #5b72ff, #4a63ff);
+  box-shadow:0 30px 64px rgba(79,114,255,.45);
+  transition:all .35s cubic-bezier(.22,1,.36,1);
 }
 
-@media (hover:hover){
-  #editorSection .btn-primary:hover{
-    transform:translateY(-6px);
-    box-shadow:
-      0 44px 96px rgba(59,91,253,.65);
-  }
-}
-
-#editorSection .btn-primary:active{
-  transform:translateY(-2px);
-  box-shadow:
-    0 22px 44px rgba(59,91,253,.45);
+#editorSection .btn-primary:hover{
+  transform:translateY(-6px);
+  box-shadow:0 44px 96px rgba(79,114,255,.65);
 }
 
 /* ======================================================
-   8. CTA ROW
+   CTA ROW
    ====================================================== */
 #editorSection .cta-row{
   margin-top:88px;
@@ -580,7 +568,47 @@ header{
 }
 
 /* ======================================================
-   9. MOBILE
+   LOADING OVERLAY
+   ====================================================== */
+#editorLoadingOverlay{
+  position:fixed;
+  inset:0;
+  background:rgba(15,23,42,.35);
+  backdrop-filter:blur(8px);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+
+#editorLoadingOverlay .card{
+  background:linear-gradient(
+    180deg,
+    rgba(255,255,255,.98),
+    rgba(255,255,255,.92)
+  );
+  border-radius:28px;
+  padding:40px 44px;
+  box-shadow:0 40px 80px rgba(15,23,42,.35);
+  text-align:center;
+}
+
+#editorLoadingOverlay .spinner{
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  border:4px solid rgba(99,102,241,.25);
+  border-top-color:#6366f1;
+  animation:spin 1s linear infinite;
+  margin:0 auto 16px;
+}
+
+@keyframes spin{
+  to{ transform:rotate(360deg); }
+}
+
+/* ======================================================
+   MOBILE
    ====================================================== */
 @media (max-width:768px){
   #editorSection{
