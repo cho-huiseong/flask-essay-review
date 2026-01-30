@@ -408,33 +408,31 @@ def ocr_image():
         mime = file.mimetype or "image/png"
         image_url = f"data:{mime};base64,{b64}"
 
-        # GPT-4-turbo 비전 기능 사용해서 OCR
-        resp = client.chat.completions.create(
-            model="gpt-4-turbo",
-            messages=[
+        # GPT-4-1.-mini 기능 사용해서 OCR
+        resp = client.responses.create(
+            model="gpt-4.1-mini",
+            input=[
                 {
                     "role": "user",
                     "content": [
                         {
-                            "type": "text",
+                            "type": "input_text",
                             "text": (
                                 "이 이미지 안에 있는 글을 그대로 텍스트로 추출해 주세요. "
                                 "줄바꿈과 문단 구분을 최대한 유지해 주세요. "
                                 "설명이나 요약을 덧붙이지 말고, 보이는 글자만 출력합니다."
-                            ),
+                            )
                         },
                         {
-                            "type": "image_url",
-                            "image_url": {"url": image_url},
-                        },
-                    ],
+                            "type": "input_image",
+                            "image_url": image_url
+                        }
+                    ]
                 }
             ],
-            temperature=0,
-            max_tokens=2048,
+            max_output_tokens=2048,
         )
-
-        text = resp.choices[0].message.content or ""
+        text = resp.output_text or ""
         return jsonify({"ok": True, "text": text.strip()})
     except Exception as e:
         print("❗ OCR 실패:", e, flush=True)
@@ -490,29 +488,36 @@ def image_confirm():
 """.strip()
 
     try:
-        resp = client.chat.completions.create(
-            model="gpt-4-turbo",
-            messages=[
+        resp = client.responses.create(
+            model="gpt-4.1-mini",
+            input=[
                 {
                     "role": "system",
-                    "content": system_prompt
+                    "content": [
+                        {
+                            "type": "input_text",
+                            "text": system_prompt
+                        }
+                    ]
                 },
                 {
                     "role": "user",
                     "content": [
-                        {"type": "text", "text": user_prompt},
                         {
-                            "type": "image_url",
-                            "image_url": {"url": image}
+                            "type": "input_text",
+                            "text": user_prompt
+                        },
+                        {
+                            "type": "input_image",
+                            "image_url": image
                         }
                     ]
                 }
             ],
-            temperature=0,
-            max_tokens=800
+            max_output_tokens=800,
         )
 
-        text = resp.choices[0].message.content or ""
+        text = resp.output_text or ""
         return jsonify({
             "ok": True,
             "image_desc": text.strip()
