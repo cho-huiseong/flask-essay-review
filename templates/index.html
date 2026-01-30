@@ -462,122 +462,135 @@ canvas.demoChart{ height:140px !important; }
   100% { transform:rotateY(360deg) translateY(0); opacity:1; }
 }
 
-/* ===== 제시문 카드 UI ===== */
-.passage-wrap{
-  background: rgba(255,255,255,0.75);
-  border: 1px solid rgba(148,163,184,0.35);
-  border-radius: 18px;
-  padding: 14px 16px 16px;
-  margin-bottom: 16px;
-}
-.passage-header{
-  font-weight: 900;
-  font-size: 14px;
-  color: #2140B1;
-  margin-bottom: 6px;
-}
-.passage-header{
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
+/* ======================================================
+   STEP 카드 랜딩 UI (두 번째 이미지 스타일)
+   ====================================================== */
 
-.btn-delete-passage{
-  margin-left:auto;
-  background:none;
-  border:none;
-  font-size:12px;
-  color:#9CA3AF;
-  cursor:pointer;
-}
-.btn-delete-passage:hover{
-  color:#EF4444;
-}
-/* ===============================
-   HERO 톤 다운 (hero-soft)
-   =============================== */
-.hero.hero-soft{
+/* STEP 섹션 전체 */
+.step.step-cards{
+  padding:140px 0;
   background:
-    radial-gradient(1200px 400px at 50% -120px, rgba(33,64,177,.08), transparent 60%),
-    linear-gradient(180deg, #f7f9ff 0%, #ffffff 70%);
-  padding:120px 0 96px;
+    radial-gradient(900px 420px at 20% -120px, rgba(33,64,177,.10), transparent 60%),
+    radial-gradient(700px 360px at 90% 10%, rgba(33,64,177,.08), transparent 55%);
 }
 
-.hero.hero-soft h1{
-  font-weight:900;
-  letter-spacing:-.02em;
+/* STEP 상단 헤더 */
+.step-header{
+  text-align:center;
 }
 
-.hero.hero-soft p{
-  color:#6b7280;
-  font-size:17px;
-  margin-top:12px;
-}
-
-
-/* ===============================
-   STEP 설명 카드 (card-soft)
-   =============================== */
-.card-soft{
-  background:rgba(255,255,255,.72);
-  border:1px solid rgba(229,231,235,.9);
-  border-radius:24px;
-  padding:36px 32px;
-  box-shadow:
-    0 20px 40px rgba(33,64,177,.10),
-    inset 0 1px 0 rgba(255,255,255,.6);
-  backdrop-filter:blur(10px);
-}
-
-.card-soft h2{
-  margin:0 0 10px;
-  font-size:24px;
-  font-weight:900;
-}
-
-.card-soft p{
+.step-header h2{
   margin:0;
-  line-height:1.65;
+  font-size:clamp(34px, 4.5vw, 48px);
+  font-weight:900;
+  letter-spacing:-0.02em;
+  line-height:1.15;
+}
+
+.step-header .accent{
+  color:var(--brand);
+}
+
+.step-header p{
+  font-size:17px;
   color:#6b7280;
+  line-height:1.6;
 }
 
-.card-soft .cta-row{
-  margin-top:20px;
-}
-
-
-/* ===============================
-   STEP 간 여백 정리
-   =============================== */
-.step{
-  padding:120px 0;
-}
-
-.step-grid.fixed{
-  align-items:center;
+/* 카드 그리드 */
+.step-card-grid{
+  margin-top:80px;
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
   gap:36px;
 }
 
-
-/* ===============================
-   반응형 (모바일)
-   =============================== */
-@media (max-width: 960px){
-  .step-grid.fixed{
+@media (max-width: 1024px){
+  .step-card-grid{
     grid-template-columns:1fr;
+    gap:28px;
   }
+}
 
-  .card-soft{
-    order:2;
-  }
+/* 개별 STEP 카드 */
+.step-card{
+  position:relative;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,0.95),
+      rgba(255,255,255,0.88)
+    );
+  border-radius:28px;
+  padding:44px 36px 40px;
+  border:1px solid rgba(148,163,184,0.35);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  box-shadow:
+    0 24px 50px rgba(33,64,177,0.14),
+    inset 0 1px 0 rgba(255,255,255,0.65);
+  transition:
+    transform .35s ease,
+    box-shadow .35s ease;
+}
 
-  .monitor{
-    order:1;
-  }
+/* hover 효과 */
+.step-card:hover{
+  transform:translateY(-8px);
+  box-shadow:
+    0 32px 70px rgba(33,64,177,0.20),
+    inset 0 1px 0 rgba(255,255,255,0.7);
+}
 
-  .hero.hero-soft{
-    padding:96px 0 72px;
-  }
+/* STEP 뱃지 */
+.step-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  height:32px;
+  padding:0 14px;
+  border-radius:999px;
+  font-size:13px;
+  font-weight:900;
+  color:var(--brand);
+  background:rgba(33,64,177,0.10);
+  border:1px solid rgba(33,64,177,0.25);
+  margin-bottom:22px;
+}
+
+/* 카드 제목 */
+.step-card h3{
+  margin:0 0 14px;
+  font-size:22px;
+  font-weight:900;
+  letter-spacing:-0.01em;
+  color:#111827;
+}
+
+/* 카드 본문 */
+.step-card p{
+  margin:0 0 12px;
+  font-size:16px;
+  line-height:1.65;
+  color:#374151;
+}
+
+/* 카드 보조 설명 */
+.step-card .muted{
+  font-size:14px;
+  color:#6b7280;
+  line-height:1.6;
+}
+
+/* 하단 CTA 중앙 정렬 */
+.cta-row.center{
+  display:flex;
+  justify-content:center;
+}
+
+/* CTA 버튼 여백 */
+.step.step-cards .cta-row{
+  margin-top:96px;
 }
 </style>
 </head>
@@ -607,266 +620,101 @@ canvas.demoChart{ height:140px !important; }
 
 <main>
   <!-- HERO -->
-  <section id="homeSection" class="hero hero-soft">
+  <section id="homeSection" class="hero hero-soft hero-visual">
+    <div class="hero-bg">
+      <span class="blob b1"></span>
+      <span class="blob b2"></span>
+      <span class="blob b3"></span>
+    </div>
+
+    <div class="container hero-inner">
+      <h1>
+        딱 3단계만 하면,<br>
+        <span class="accent">논술 피드백</span>을 받을 수 있어요.
+      </h1>
+
+      <p class="hero-desc">
+        아이의 논술을 차분히 분석하고<br>
+        더 나아질 방향을 함께 정리해 드려요.
+      </p>
+
+      <button
+        class="btn btn-primary hero-cta"
+        onclick="document.getElementById('step1').scrollIntoView({behavior:'smooth'});">
+        지금 시작하기
+      </button>
+    </div>
+  </section>
+
+
+  <!-- STEP 1~3 : 카드형 설명 UI -->
+  <section id="step1" class="step step-cards">
     <div class="container">
-      <h1>글 평가와 예시 작성,<br/>차분하게 한 번에</h1>
-      <p>
-        입력 → 평가 → 예시답안 · 차이점까지,<br>
-        실제 화면 크기로 흐름대로 보여드립니다.
-      </p>
-      <div style="display:flex; gap:12px; flex-wrap:wrap">
-        <button
-          class="btn btn-primary"
-          style="height:52px"
-          onclick="document.getElementById('step1').scrollIntoView({behavior:'smooth'});">
-          체험 시작
-        </button>
-      </div>
-    </div>
-  </section>
 
-  <!-- STEP 1 -->
-  <section id="step1" class="step">
-    <div class="container wide step-grid fixed">
-
-      <!-- 설명 카드 -->
-      <div class="card-soft">
-        <h2>1. 입력하기</h2>
-        <p>
-          학생·질문·제시문(여러 개)·논술문을 그대로 붙여넣기만 하세요.<br>
-          글자 수는 자동으로 세고, 제시문은 버튼으로 빠르게 추가돼요.
+      <div class="step-header" style="margin-bottom:56px">
+        <h2>
+          딱 3단계만 하면,<br>
+          <span class="accent">AI 논술 피드백</span>을 받을 수 있어요.
+        </h2>
+        <p class="muted" style="margin-top:16px">
+          아이의 글을 차분히 분석하고,<br>
+          더 나아질 방향을 함께 정리해 드려요.
         </p>
-        <div class="cta-row">
-          <button class="btn btn-primary"
-            onclick="document.getElementById('step2').scrollIntoView({behavior:'smooth'});">
-            다음 단계
-          </button>
-        </div>
       </div>
 
-      <!-- 화면 -->
-      <div class="monitor">
-        <div class="bar">
-          <span class="dot red"></span>
-          <span class="dot yellow"></span>
-          <span class="dot green"></span>
+      <div class="step-card-grid">
+
+        <div class="step-card">
+          <div class="step-badge">STEP 1</div>
+          <h3>입력하기</h3>
+          <p>
+            학생 이름, 질문, 제시문,<br>
+            논술문을 그대로 붙여넣기만 하세요.
+          </p>
+          <p class="muted">
+            제시문은 여러 개도 가능하고,<br>
+            글자 수는 자동으로 계산돼요.
+          </p>
         </div>
-        <div class="screen">
-          <div class="viewport" data-demo="input" data-stage="960">
-            <div class="stage input-demo">
 
-              <h3 style="margin:0 0 6px;font-weight:900">
-                ✨ 너의 글, 오늘 더 멀리 날아가게.
-              </h3>
-              <p class="muted" style="margin-top:0">
-                정성껏 쓴 문장 위에 필요한 피드백만 얹어,
-                목표에 닿도록 부드럽게 이끌어 드릴게요.
-              </p>
-
-              <label class="form-label">학생 이름</label>
-              <div class="panel" style="padding:12px">홍길동</div>
-
-              <label class="form-label">질문</label>
-              <div class="panel" style="padding:12px">
-                제시문을 바탕으로 '공정'의 의미를 정의하고,
-                사회적 약자 보호의 관점에서 그 정당성을 논하시오.
-              </div>
-
-              <label class="form-label">
-                제시문 <span class="muted">(최소 1개)</span>
-              </label>
-              <p class="muted" style="margin:4px 0 6px;">
-                제시문은 <b>텍스트를 그대로 붙여넣어</b> 주시면 돼요.<br>
-                필요하다면 <b>사진 파일을 추가해서 원본 이미지를 함께 보관</b>할 수도 있지만,
-                사진은 글자로 바꾸지 않고 그대로 보여드려요.
-              </p>
-
-              <div id="passagesDemo">
-                <textarea
-                  class="passage textarea"
-                  rows="3"
-                  placeholder="제시문을 그대로 적어 주세요. (복사한 글을 붙여넣어도 돼요.)">
-                </textarea>
-              </div>
-
-              <label class="form-label">논술문</label>
-              <div class="panel" style="padding:12px">
-                나는 공정을 결과의 균등이 아니라 기회의 균등으로 이해한다.
-                같은 규칙이 주어져도 출발선이 기울어 있으면 경쟁은 공정해 보이지 않는다.
-                … (생략) …
-              </div>
-
-              <label class="form-label">글자 수 제한</label>
-              <div class="row">
-                <div class="panel" style="padding:12px;flex:1">기준 700</div>
-                <div class="panel" style="padding:12px;flex:1">± 50</div>
-              </div>
-
-              <div style="text-align:center;margin-top:10px">
-                <button class="btn btn-primary">⚡ 리포트 생성</button>
-              </div>
-
-            </div>
-          </div>
+        <div class="step-card">
+          <div class="step-badge">STEP 2</div>
+          <h3>평가 받기</h3>
+          <p>
+            논리·독해·구성·표현<br>
+            4개 항목을 점수와 설명으로 확인해요.
+          </p>
+          <p class="muted">
+            총점과 합격 여부를<br>
+            한 화면에서 바로 볼 수 있어요.
+          </p>
         </div>
+
+        <div class="step-card">
+          <div class="step-badge">STEP 3</div>
+          <h3>예시답안 · 비교분석</h3>
+          <p>
+            내 글과 다른 점을 정리한<br>
+            예시답안과 비교 설명을 제공해요.
+          </p>
+          <p class="muted">
+            결과는 PDF로 저장하고<br>
+            언제든 다시 확인할 수 있어요.
+          </p>
+        </div>
+
       </div>
 
-    </div>
-  </section>
-
-  <!-- STEP 2 -->
-  <section id="step2" class="step">
-    <div class="container wide step-grid fixed">
-
-      <div class="card-soft">
-        <h2>2. 평가 받기</h2>
-        <p>
-          논리·독해·구성·표현 4개 항목 점수와 이유를<br>
-          한 화면에서 확인하세요.
-        </p>
-        <div class="cta-row">
-          <button class="btn btn-primary"
-            onclick="document.getElementById('step3').scrollIntoView({behavior:'smooth'});">
-            다음 단계
-          </button>
-        </div>
-      </div>
-
-      <div class="monitor">
-        <div class="bar">
-          <span class="dot red"></span>
-          <span class="dot yellow"></span>
-          <span class="dot green"></span>
-        </div>
-        <div class="screen">
-          <div class="viewport" data-demo="score" data-stage="960">
-            <div class="stage">
-
-              <div class="panel" style="margin-bottom:10px">
-                <div style="display:flex;align-items:center;gap:14px">
-                  <div style="font-size:28px">🙂</div>
-                  <div style="flex:1">
-                    <div style="font-weight:900">
-                      총점 <span style="color:#10b981">37</span> / 40 ·
-                      <span style="color:#10b981">합격</span>
-                    </div>
-                    <div class="muted" style="margin-top:4px">
-                      근거 배열과 문장의 연결이 자연스럽습니다.
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="kpi">
-                <div class="panel">
-                  <div style="font-weight:800">논리력 (9)</div>
-                  <div class="muted" style="margin-top:6px">
-                    주장-근거-예시가 짝을 이루며 반론 대비가 포함됨.
-                  </div>
-                </div>
-                <div class="panel">
-                  <div style="font-weight:800">독해력 (9)</div>
-                  <div class="muted" style="margin-top:6px">
-                    제시문 핵심을 정확히 요약하고 상호관계를 반영.
-                  </div>
-                </div>
-                <div class="panel">
-                  <div style="font-weight:800">구성력 (9)</div>
-                  <div class="muted" style="margin-top:6px">
-                    문단 전환이 매끄럽고 단락 목표가 명확함.
-                  </div>
-                </div>
-                <div class="panel">
-                  <div style="font-weight:800">표현력 (10)</div>
-                  <div class="muted" style="margin-top:6px">
-                    어휘 선택이 적절하고 문법 오류가 거의 없음.
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-<!-- STEP 3 -->
-<section id="step3" class="step">
-  <div class="container wide step-grid fixed">
-    <div>
-      <h2>3. 예시답안 · 비교분석</h2>
-      <p>
-        예시답안 보기를 누르면 내 글과 다른 점을 줄글로 정리해 드려요.
-        마음에 들면 PDF로 저장하고, 내 기록에서 언제든 다시 볼 수 있어요.
-      </p>
-      <div class="cta-row">
+      <div class="cta-row center" style="margin-top:72px">
         <button
           class="btn btn-primary"
           onclick="location.hash='#editor'">
           내 글로 시작하기
         </button>
       </div>
+
     </div>
-
-    <div class="monitor">
-      <div class="bar">
-        <span class="dot red"></span>
-        <span class="dot yellow"></span>
-        <span class="dot green"></span>
-      </div>
-
-      <div class="screen">
-        <div class="viewport" data-demo="example" data-stage="960">
-          <div class="stage">
-            <div class="panel">
-
-              <div
-                style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-                <h3 style="margin:0">📝 예시답안</h3>
-
-                <button
-                  id="demoExampleBtn"
-                  class="btn btn-primary"
-                  onclick="renderDemoExample()">
-                  예시답안 보기
-                </button>
-              </div>
-
-              <p class="muted" style="margin-top:6px">
-                권장 글자수 범위를 벗어나도 참고용 예시는 표시됩니다.
-              </p>
-
-              <div
-                id="demoExampleWrap"
-                class="hidden"
-                style="margin-top:12px">
-
-                <div
-                  id="demoExampleText"
-                  class="panel"
-                  style="background:#fff; line-height:1.8">
-                </div>
-
-                <div
-                  class="panel"
-                  style="background:#fff; margin-top:12px">
-                  <h3 style="margin:0">🔍 비교 분석</h3>
-                  <div
-                    id="demoComparisonText"
-                    style="margin-top:8px; line-height:1.8">
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
+  </section>
 </main>
 
 <!-- GLOBAL LOADING OVERLAY -->
