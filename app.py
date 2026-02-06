@@ -146,11 +146,10 @@ def _validate_no_images(data: dict):
     for v in data.values():
         if isinstance(v, str) and v.startswith("data:image/"):
             raise ValueError("이미지(base64)는 허용되지 않습니다.")
-        
-    # ✅ 필수: 확정된 이미지 해석 텍스트
-    image_desc = _s(data.get("image_desc"))
-    if not image_desc:
-        raise ValueError("확정된 사진 해석 텍스트(image_desc)가 필요합니다.")
+
+    # ✅ image_desc는 선택(optional)
+    # 프론트에서 자료 해석은 passages 문자열 안에 이미 흡수됨
+    # ❗ image_desc가 없어도 허용 (검증하지 않음)
 def _coerce_passages(raw):
     """제시문이 문자열/배열 어떤 형태로 와도 문자열 리스트로 통일."""
     if raw is None:
@@ -543,9 +542,11 @@ def review_open():
     passages = _coerce_passages(data.get("passages"))
 
     image_desc = _s(data.get("image_desc"))
+
+    # image_desc가 따로 전달된 경우만 예외적으로 병합
     if image_desc:
         passages.append(f"[자료 해석]\n{image_desc}")
-    
+
     try:
         if client:
             passages_block = _format_passages_block(passages, [])
