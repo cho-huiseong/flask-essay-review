@@ -341,7 +341,7 @@ header{
     margin-top:120px;
   }
 }
-//* ======================================================
+/* ======================================================
    EDITOR STAGE – FINAL
    ====================================================== */
 #editorSection{
@@ -467,7 +467,17 @@ header{
     0 0 0 5px rgba(99,102,241,.22),
     0 20px 44px rgba(99,102,241,.25);
 }
-
+/* ======================================================
+   INPUT – COMPACT (글자 수 / 설정 전용)
+   ====================================================== */
+#editorSection .input-compact{
+  width:120px;
+  height:40px;
+  padding:0 12px;
+  font-size:14px;
+  line-height:1;
+  border-radius:12px;
+}
 /* ======================================================
    PASSAGES
    ====================================================== */
@@ -680,7 +690,6 @@ header{
   border-radius:14px;
   padding:12px;
 }
-
 </style>
 </head>
 
@@ -913,8 +922,8 @@ header{
 
         <label class="form-label">글자 수 제한</label>
         <div class="row">
-          <input id="charLimit" class="input" placeholder="예: 700" />
-          <input id="charRange" class="input" placeholder="± 예: 50" />
+          <input id="charLimit" class="input input-compact" placeholder="예: 700" />
+          <input id="charRange" class="input input-compact" placeholder="± 예: 50" />
         </div>
 
         <!-- CTA -->
@@ -2569,6 +2578,7 @@ document.addEventListener('click', async (e) => {
         input.focus();
       }
     }
+  }
 
 
   /* 해석 확정 */
