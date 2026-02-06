@@ -927,6 +927,160 @@ header{
     border-radius:18px;
   }
 }
+/* ======================================================
+   [FIX] 하단 surface 카드가 콘텐츠 덮는 문제 해결
+   ====================================================== */
+
+/* 1️⃣ 전체 리포트 래퍼는 기준점만 제공 */
+.report-section,
+.result-section,
+.example-section {
+  position: relative;
+  z-index: 1;
+}
+
+/* 2️⃣ 실제 콘텐츠 카드들은 항상 위 */
+.report-card,
+.result-card,
+.example-card,
+.comparison-card {
+  position: relative;
+  z-index: 3;
+}
+
+/* 3️⃣ 문제의 바닥 surface (이름이 다를 수 있음) */
+.bottom-surface,
+.report-surface,
+.page-surface,
+.surface-bg {
+  position: absolute !important;
+
+  /* ❗ top 사용 금지 */
+  top: auto !important;
+  bottom: -120px; /* 화면 밖으로 밀어냄 */
+
+  left: 50%;
+  transform: translateX(-50%);
+
+  width: 1400px;
+  max-width: 140vw;
+  height: 520px;
+
+  border-radius: 32px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,0.92),
+      rgba(241,245,249,0.85)
+    );
+
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+
+  /* ✅ 핵심 */
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* 4️⃣ 페이지 하단 여백 확보 (surface와 겹치지 않게) */
+.example-section,
+.result-section {
+  padding-bottom: 180px;
+}
+/* ======================================================
+   GLOBAL LOADING OVERLAY (중앙 고정 + 블러)
+   ====================================================== */
+.loading-overlay{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:rgba(15,23,42,.45);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+
+  transition:opacity .25s ease;
+}
+
+/* 로딩 카드 */
+.loading-overlay .loading-card{
+  background:linear-gradient(
+    180deg,
+    rgba(255,255,255,.98),
+    rgba(255,255,255,.92)
+  );
+  border-radius:28px;
+  padding:36px 40px;
+
+  box-shadow:
+    0 40px 90px rgba(15,23,42,.45),
+    inset 0 1px 0 rgba(255,255,255,.9);
+
+  display:flex;
+  align-items:center;
+  gap:24px;
+}
+
+/* 종이 스피너 */
+.paper-spinner{
+  width:72px;
+  height:72px;
+  position:relative;
+}
+
+.paper{
+  width:100%;
+  height:100%;
+  background:#fff;
+  border-radius:10px;
+  box-shadow:0 10px 24px rgba(15,23,42,.18);
+  animation:paperFloat 1.6s ease-in-out infinite;
+}
+
+.paper-line{
+  height:6px;
+  background:#e5e7eb;
+  border-radius:4px;
+  margin:10px;
+}
+
+.paper-line.paper-header{
+  width:70%;
+}
+
+.paper-line.short{
+  width:45%;
+}
+
+@keyframes paperFloat{
+  0%,100%{ transform:translateY(0); }
+  50%{ transform:translateY(-8px); }
+}
+
+/* 로딩 텍스트 */
+.loading-main{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+.loading-title{
+  font-size:18px;
+  font-weight:900;
+  color:#0f172a;
+}
+
+.loading-sub{
+  font-size:14px;
+  color:#475569;
+  line-height:1.5;
+}
+
 </style>
 </head>
 
