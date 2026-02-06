@@ -432,10 +432,11 @@ header{
    LABEL / TEXT
    ====================================================== */
 #editorSection .form-label{
-  font-size:14px;
-  font-weight:900;
-  color:#1e293b;
-  margin:22px 0 10px;
+  font-size:16px;
+  font-weight:800;
+  color:#0f172a;
+  margin:0 0 8px;
+  letter-spacing:-0.01em;
 }
 
 #editorSection .muted{
@@ -673,13 +674,20 @@ header{
   border-color:#6366f1;
   color:#3730a3;
 }
-/* 자료 해석 확정 버튼 – 소형 */
+/* 자료 해석 확정 버튼 – SUB ACTION */
 .btn-confirm-interpretation.btn-small{
-  height:44px;
-  padding:0 22px;
-  font-size:15px;
-  border-radius:12px;
-  box-shadow:0 10px 24px rgba(79,114,255,.35);
+  height:36px;                         /* ⬇ 작게 */
+  padding:0 18px;
+  font-size:14px;
+  font-weight:700;
+  border-radius:10px;
+  background:linear-gradient(
+    180deg,
+    rgba(255,255,255,.9),
+    rgba(255,255,255,.6)
+  );
+  color:#3730a3;
+  box-shadow:0 6px 14px rgba(99,102,241,.25);   /* ⬇ 힘 제거 */
 }
 /* ===============================
    자료 해석 입력 박스(에디터) 구분감
@@ -689,6 +697,12 @@ header{
   border:1px dashed rgba(56,189,248,.6);
   border-radius:14px;
   padding:12px;
+}
+/* ======================================================
+   FORM BLOCK (LABEL + INPUT GROUP)
+   ====================================================== */
+#editorSection .form-block{
+  margin-bottom:32px;   /* 입력 블록 간 간격 완전 통일 */
 }
 </style>
 </head>
@@ -829,39 +843,45 @@ header{
       <!-- 입력 -->
       <div id="inputPanel" class="panel editor-panel">
 
-        <label class="form-label">학생 이름</label>
-        <input id="studentName" class="input" placeholder="예: 홍길동" />
-
-        <!-- 질문 + 교재 불러오기 -->
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
-          <label class="form-label" style="margin:0">질문</label>
-
-          <div style="display:flex; align-items:center; gap:6px; font-size:13px;">
-            <span class="muted">교재에서 불러오기</span>
-
-            <select id="bookMainStageSelect" class="input" style="width:auto; min-width:90px;">
-              <option value="">단계</option>
-            </select>
-
-            <select id="bookSubStageSelect" class="input" style="width:auto; min-width:90px;">
-              <option value="">교재</option>
-            </select>
-
-            <select id="bookPageSelect" class="input" style="width:auto; min-width:90px;">
-              <option value="">페이지</option>
-            </select>
-
-            <button type="button" class="btn btn-ghost" onclick="applyBookProblem()">
-              불러오기
-            </button>
-          </div>
+        <div class="form-block">
+          <label class="form-label">학생 이름</label>
+           <input id="studentName" class="input" placeholder="예: 홍길동" />
         </div>
 
-        <textarea
-          id="question"
-          class="textarea"
-          rows="2"
-          placeholder="질문을 여기에 작성해 주세요."></textarea>
+
+        <!-- 질문 + 교재 불러오기 -->
+        <div class="form-block">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+            <label class="form-label">질문</label>
+
+            <div style="display:flex; align-items:center; gap:6px; font-size:13px;">
+              <span class="muted">교재에서 불러오기</span>
+
+              <select id="bookMainStageSelect" class="input" style="width:auto; min-width:90px;">
+                <option value="">단계</option>
+              </select>
+
+              <select id="bookSubStageSelect" class="input" style="width:auto; min-width:90px;">
+                <option value="">교재</option>
+              </select>
+
+              <select id="bookPageSelect" class="input" style="width:auto; min-width:90px;">
+                <option value="">페이지</option>
+              </select>
+
+              <button type="button" class="btn btn-ghost" onclick="applyBookProblem()">
+                불러오기
+              </button>
+            </div>
+          </div>
+
+          <textarea
+            id="question"
+            class="textarea"
+            rows="2"
+            placeholder="질문을 여기에 작성해 주세요."></textarea>
+        </div>
+
 
         <!-- 제시문 -->
         <label class="form-label">
@@ -920,10 +940,12 @@ header{
           accept="image/*"
           style="display:none" />
 
-        <label class="form-label">글자 수 제한</label>
-        <div class="row">
-          <input id="charLimit" class="input input-compact" placeholder="예: 700" />
-          <input id="charRange" class="input input-compact" placeholder="± 예: 50" />
+        <div class="form-block">
+          <label class="form-label">글자 수 제한</label>
+          <div class="row">
+            <input id="charLimit" class="input input-compact" placeholder="예: 700" />
+            <input id="charRange" class="input input-compact" placeholder="± 예: 50" />
+          </div>
         </div>
 
         <!-- CTA -->
