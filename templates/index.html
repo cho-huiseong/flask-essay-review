@@ -708,6 +708,225 @@ header{
 .form-block.simple{
   margin-bottom:40px;
 }
+/* 0) 패널(결과 영역에서만 안전하게 베이스 정의) */
+#editorSection #resultCard.panel,
+#editorSection #exampleSection.panel{
+  border-radius:28px;
+  border:1px solid rgba(148,163,184,.28);
+  background:linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.88));
+  box-shadow:0 28px 70px rgba(15,23,42,.14);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  padding:26px 26px 28px;
+}
+
+/* 제목 느낌 업 */
+#editorSection #resultCard h3,
+#editorSection #exampleSection h3{
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:-.02em;
+  color:#0f172a;
+}
+
+/* 1) 결과 카드: "바닥(서피스) + 떠있는 콘텐츠" 만들기 */
+#editorSection #resultCard{
+  position:relative;
+  overflow:visible;
+}
+
+/* 하단 바닥(서피스) 레이어 */
+#editorSection #resultCard::after{
+  content:"";
+  position:absolute;
+  left:-24px;
+  right:-24px;
+  bottom:-26px;
+  height:150px;
+  border-radius:26px;
+  background:
+    linear-gradient(180deg,
+      rgba(248,250,252,0) 0%,
+      rgba(248,250,252,.88) 35%,
+      rgba(248,250,252,.98) 100%
+    );
+  border:1px solid rgba(15,23,42,.06);
+  box-shadow:0 26px 70px rgba(15,23,42,.12);
+  z-index:0;
+  pointer-events:none;
+}
+
+/* 결과 내용이 바닥 위로 올라오게 */
+#editorSection #evalSummary{
+  position:relative;
+  z-index:2;
+}
+
+/* 2) evalSummary 안에 들어가는 "패널"들(인라인 스타일 덮어쓰기용) */
+#editorSection #evalSummary .panel{
+  border-radius:20px;
+  border:1px solid rgba(148,163,184,.22);
+  background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.78));
+  box-shadow:
+    0 18px 40px rgba(15,23,42,.12),
+    inset 0 1px 0 rgba(255,255,255,.85);
+  padding:18px 18px;
+}
+
+/* KPI 그리드(논리/독해/구성/표현 4카드) */
+#editorSection #evalSummary .kpi{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));
+  gap:12px;
+}
+@media (max-width:780px){
+  #editorSection #evalSummary .kpi{
+    grid-template-columns:1fr;
+  }
+}
+
+/* 총점 라인 + 프로그레스바 가독성 */
+#editorSection #evalSummary .panel[style*="display:flex"]{
+  padding:18px 18px;
+}
+#editorSection #evalSummary .panel[style*="display:flex"] .muted{
+  color:#64748b;
+  font-weight:700;
+}
+
+/* 차트 패널(가운데 정렬 + 안정 폭) */
+#editorSection #evalSummary .panel canvas{
+  display:block;
+  max-width:100%;
+}
+#editorSection #evalSummary .panel[style*="width:70%"]{
+  background:linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,255,255,.72)) !important;
+  border-radius:22px !important;
+  padding:18px !important;
+}
+
+/* 예시답안 보기 CTA 오른쪽 버튼 */
+#editorSection #exampleCTA{
+  margin-top:14px !important;
+}
+#editorSection #btnExample{
+  height:52px;
+  padding:0 24px;
+  border-radius:999px;
+  box-shadow:0 18px 40px rgba(33,64,177,.22);
+}
+
+/* 3) 예시답안 섹션: 바닥 위로 "떠 있는 카드"처럼 */
+#editorSection #exampleSection{
+  position:relative;
+  overflow:visible;
+}
+
+/* 예시답안 섹션도 하단 서피스(은은하게) */
+#editorSection #exampleSection::before{
+  content:"";
+  position:absolute;
+  left:-24px;
+  right:-24px;
+  bottom:-28px;
+  height:170px;
+  border-radius:26px;
+  background:
+    radial-gradient(900px 180px at 50% 0%, rgba(33,64,177,.10), transparent 60%),
+    linear-gradient(180deg,
+      rgba(248,250,252,0) 0%,
+      rgba(248,250,252,.90) 35%,
+      rgba(248,250,252,.98) 100%
+    );
+  border:1px solid rgba(15,23,42,.06);
+  box-shadow:0 26px 70px rgba(15,23,42,.12);
+  z-index:0;
+  pointer-events:none;
+}
+
+/* 예시/비교 출력 카드들(현재 #exampleOutput, #comparisonOutput에 class="panel") */
+#editorSection #exampleSection #exampleOutput.panel,
+#editorSection #exampleSection #comparisonOutput.panel{
+  position:relative;
+  z-index:2;
+  margin-top:14px;
+  border-radius:24px;
+  border:1px solid rgba(148,163,184,.20);
+  background:rgba(255,255,255,.92) !important;
+  box-shadow:
+    0 26px 60px rgba(15,23,42,.14),
+    inset 0 1px 0 rgba(255,255,255,.85);
+  padding:26px 22px !important;
+  line-height:1.82;
+  color:#0f172a;
+}
+
+/* 예시답안 문단 가독성(긴 텍스트 대비) */
+#editorSection #exampleSection #exampleOutput,
+#editorSection #exampleSection #comparisonOutput{
+  font-size:15px;
+  letter-spacing:-.01em;
+}
+#editorSection #exampleSection #exampleOutput br,
+#editorSection #exampleSection #comparisonOutput br{
+  line-height:2.0;
+}
+
+/* 예시 노트(“학생 글을 밀어내지 않도록…” 등) */
+#editorSection #exampleNote{
+  background:rgba(224,242,254,.55);
+  border:1px dashed rgba(56,189,248,.55);
+  border-radius:14px;
+  padding:10px 12px;
+  color:#0f172a;
+  font-weight:800;
+}
+
+/* 버튼들: 예시 섹션에서 묵직하게 */
+#editorSection #exampleSection #btnSavePDF{
+  height:56px;
+  padding:0 28px !important;
+  border-radius:999px !important;
+  box-shadow:0 26px 64px rgba(33,64,177,.30) !important;
+}
+#editorSection #exampleSection .btn-ghost{
+  height:52px;
+  border-radius:999px;
+}
+
+/* 4) 결과/예시 섹션 사이 간격(바닥 겹침 방지) */
+#editorSection #resultCard{
+  margin-top:18px;
+}
+#editorSection #exampleSection{
+  margin-top:22px;
+}
+
+/* 5) 모바일: 패딩/바닥 높이 축소 */
+@media (max-width:768px){
+  #editorSection #resultCard.panel,
+  #editorSection #exampleSection.panel{
+    padding:18px 16px 20px;
+    border-radius:22px;
+  }
+  #editorSection #resultCard::after{
+    left:-14px; right:-14px;
+    height:120px;
+    bottom:-18px;
+    border-radius:22px;
+  }
+  #editorSection #exampleSection::before{
+    left:-14px; right:-14px;
+    height:130px;
+    bottom:-18px;
+    border-radius:22px;
+  }
+  #editorSection #exampleSection #exampleOutput.panel,
+  #editorSection #exampleSection #comparisonOutput.panel{
+    padding:18px 16px !important;
+    border-radius:18px;
+  }
+}
 </style>
 </head>
 
