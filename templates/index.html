@@ -1227,7 +1227,7 @@ header{
 
 <!-- GLOBAL LOADING OVERLAY -->
 <div id="globalLoading" class="loading-overlay hidden">
-  <div class="loading-card">
+  <div class="loading-box">
     <div class="paper-spinner">
       <div class="paper">
         <div class="paper-line paper-header"></div>
@@ -1389,7 +1389,9 @@ function show(section){
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(()=>refreshAutosize());
     editor.style.visibility = 'visible';
   }
-  window.scrollTo({ top:0, behavior:'instant' });
+  if(section !== 'editor'){
+    window.scrollTo({ top:0, behavior:'instant' });
+  }
 }
 function go(section){ location.hash = (section==='editor' ? '#editor' : '#home'); show(section); }
 function routeFromHash(){ const h=(location.hash||'').toLowerCase(); if(h==='#editor') show('editor'); else show('home'); }
@@ -1442,6 +1444,7 @@ function renderDemoExample(){
     ex.innerHTML = (demoSet.example||'').replace(/\n/g,'<br>');
     cmp.innerHTML = (demoSet.comparison||'').replace(/\n/g,'<br>');
     wrap.classList.remove('hidden');
+    wrap.style.display = 'flex';
     btn.textContent='예시답안 생성됨';
   }, 500);
 }
@@ -3054,10 +3057,9 @@ function showGlobalLoading(kind = 'review'){
 
 function hideGlobalLoading(){
   const wrap = document.getElementById('globalLoading');
-  if(wrap) wrap.classList.add('hidden');
-  if(loadingPhraseTimer){
-    clearInterval(loadingPhraseTimer);
-    loadingPhraseTimer = null;
+  if(wrap){
+    wrap.classList.add('hidden');
+    wrap.style.display = 'none';
   }
 }
 </script>
