@@ -661,7 +661,75 @@ header{
   border-color:#6366f1;
   color:#3730a3;
 }
+/* 자료 해석 확정 버튼 – 소형 */
+.btn-confirm-interpretation.btn-small{
+  height:44px;
+  padding:0 22px;
+  font-size:15px;
+  border-radius:12px;
+  box-shadow:0 10px 24px rgba(79,114,255,.35);
+}
+/* ===============================
+   자료 해석 생성 버튼 – 로딩 상태
+   =============================== */
 
+.btn-generate-interpretation{
+  position:relative;
+  overflow:hidden;
+}
+
+/* 로딩 중: 버튼 자체가 살아 있음 */
+.btn-generate-interpretation[data-state="loading"]{
+  pointer-events:none;
+  color:#1e293b;
+  background:linear-gradient(
+    90deg,
+    rgba(255,255,255,.6),
+    rgba(99,102,241,.25),
+    rgba(255,255,255,.6)
+  );
+  background-size:200% 100%;
+  animation:btnShimmer 1.6s ease-in-out infinite;
+  border-color:rgba(99,102,241,.45);
+  box-shadow:
+    0 14px 36px rgba(99,102,241,.25),
+    inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+/* 텍스트 살짝 숨기고 상태 강조 */
+.btn-generate-interpretation[data-state="loading"]::after{
+  content:"해석 중이에요";
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:800;
+  font-size:14px;
+  letter-spacing:-0.01em;
+  color:#1e293b;
+  background:transparent;
+}
+
+/* 완료 상태 */
+.btn-generate-interpretation[data-state="done"]{
+  background:linear-gradient(
+    180deg,
+    rgba(236,254,255,.95),
+    rgba(224,242,254,.95)
+  );
+  border-color:#67e8f9;
+  color:#0369a1;
+  box-shadow:
+    0 10px 28px rgba(6,182,212,.25),
+    inset 0 1px 0 rgba(255,255,255,.85);
+}
+
+/* 부드러운 shimmer */
+@keyframes btnShimmer{
+  0%{ background-position:0% 50%; }
+  100%{ background-position:200% 50%; }
+}
 </style>
 </head>
 
@@ -855,6 +923,9 @@ header{
           style="margin-top:8px;">
           ➕ 제시문 더 추가
         </button>
+
+        <!-- ✅ 제시문 / 논술문 구분선 -->
+        <div style="margin:32px 0 8px"></div>
 
         <!-- 논술문 -->
         <label class="form-label">
@@ -2462,7 +2533,11 @@ function ensureImageInterpretationBlock(wrap, textarea) {
   const block = document.createElement('div');
   block.className = 'image-interpretation-block';
   block.innerHTML = `
-    <button type="button" class="btn btn-ghost btn-generate-interpretation">
+    <!-- 자료 해석 생성 버튼 -->
+    <button
+      type="button"
+      class="btn btn-ghost btn-generate-interpretation"
+      data-state="idle">
       🖼️ 자료 해석 생성하기
     </button>
 
@@ -2474,7 +2549,10 @@ function ensureImageInterpretationBlock(wrap, textarea) {
       <textarea class="textarea interpretation-textarea" rows="4"></textarea>
 
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
-        <button type="button" class="btn btn-primary btn-confirm-interpretation">
+        <!-- 🔽 확정 버튼: 소형으로 -->
+        <button
+          type="button"
+          class="btn btn-primary btn-confirm-interpretation btn-small">
           이 해석으로 확정
         </button>
       </div>
@@ -2521,12 +2599,16 @@ document.addEventListener('click', async (e) => {
 
   /* 자료 해석 생성 */
   if (e.target.classList.contains('btn-generate-interpretation')) {
-    const wrap = e.target.closest('.passage-wrap');
+    const btn = e.target;
+    const wrap = btn.closest('.passage-wrap');
     const textarea = wrap.querySelector('textarea.passage');
     const editor = wrap.querySelector('.interpretation-editor');
     const input  = wrap.querySelector('.interpretation-textarea');
 
     editor.classList.remove('hidden');
+
+    // 🔽 상태: 로딩 시작
+    btn.dataset.state = 'loading';
 
     const interp = passageImageInterpretationMap.get(textarea);
     if (!interp || !interp.confirmed) {
@@ -2534,9 +2616,17 @@ document.addEventListener('click', async (e) => {
       if (generated) {
         input.value = generated;
         input.focus();
+
+        // 🔽 상태: 완료
+        btn.dataset.state = 'done';
+        btn.textContent = '자료 해석 완료';
+      } else {
+        // 실패 시 원복
+        btn.dataset.state = 'idle';
       }
     }
   }
+
 
   /* 해석 확정 */
   if (e.target.classList.contains('btn-confirm-interpretation')) {
