@@ -1382,17 +1382,24 @@ const demoSet = {
 function show(section){
   const home = document.getElementById('homeSection');
   const editor = document.getElementById('editorSection');
-  home.classList.toggle('hidden', section!=='home');
-  editor.classList.toggle('hidden', section!=='editor');
-  if(section==='editor'){
+
+  home.classList.toggle('hidden', section !== 'home');
+  editor.classList.toggle('hidden', section !== 'editor');
+
+  if(section === 'editor'){
     requestAnimationFrame(refreshAutosize);
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(()=>refreshAutosize());
-    editor.style.visibility = 'visible';
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(()=>refreshAutosize());
+    }
+
+    // ⭐ 에디터 진입 시 스크롤 유지
+    return;
   }
-  if(section !== 'editor'){
-    window.scrollTo({ top:0, behavior:'instant' });
-  }
+
+  // 홈으로 갈 때만 최상단
+  window.scrollTo({ top: 0, behavior: 'instant' });
 }
+
 function go(section){ location.hash = (section==='editor' ? '#editor' : '#home'); show(section); }
 function routeFromHash(){ const h=(location.hash||'').toLowerCase(); if(h==='#editor') show('editor'); else show('home'); }
 window.addEventListener('hashchange', routeFromHash);
@@ -3029,7 +3036,6 @@ function showGlobalLoading(kind = 'review'){
   const list = loadingPhrases[kind] || loadingPhrases.review;
   let idx = 0;
 
-  // 타이틀은 상황별로 약간 다르게
   if(kind === 'review'){
     mainEl.textContent = '리포트를 만들고 있어요';
   }else if(kind === 'example'){
@@ -3040,11 +3046,10 @@ function showGlobalLoading(kind = 'review'){
     mainEl.textContent = '글을 읽고 있어요';
   }
 
-  subEl.textContent  = list[0] || '';
+  subEl.textContent = list[0] || '';
 
   if(loadingPhraseTimer){
     clearInterval(loadingPhraseTimer);
-    loadingPhraseTimer = null;
   }
 
   loadingPhraseTimer = setInterval(()=>{
@@ -3052,14 +3057,20 @@ function showGlobalLoading(kind = 'review'){
     subEl.textContent = list[idx];
   }, 1900);
 
+  // ⭐ 핵심
   wrap.classList.remove('hidden');
+  wrap.classList.add('active');
 }
-
 function hideGlobalLoading(){
   const wrap = document.getElementById('globalLoading');
-  if(wrap){
-    wrap.classList.add('hidden');
-    wrap.style.display = 'none';
+  if(!wrap) return;
+
+  wrap.classList.remove('active');
+  wrap.classList.add('hidden');
+
+  if(loadingPhraseTimer){
+    clearInterval(loadingPhraseTimer);
+    loadingPhraseTimer = null;
   }
 }
 </script>
