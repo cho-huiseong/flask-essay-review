@@ -1767,10 +1767,15 @@ async function submitEssay() {
   const passageEls = [...document.querySelectorAll('#passages .passage')];
 
   for (const el of passageEls) {
-    const images = passageImageMap.get(el) || [];
+
+    // ❗ 핵심 수정: Map에 실제로 key가 있는지 먼저 본다
+    if (!passageImageMap.has(el)) continue;
+
+    const images = passageImageMap.get(el);
     const interp = passageImageInterpretationMap.get(el);
 
-    if (images.length > 0 && (!interp || !interp.confirmed)) {
+   // ✅ 사진이 있을 때만 해석 필수
+    if (Array.isArray(images) && images.length > 0 && (!interp || !interp.confirmed)) {
       alert(
         '사진이 첨부된 제시문이 있습니다.\n\n' +
         '해당 제시문의 자료 해석을 먼저 확정해 주세요.'
@@ -1780,7 +1785,6 @@ async function submitEssay() {
       return;
     }
   }
-
   showGlobalLoading('review');
 
   continueSubmitEssay();
@@ -1799,9 +1803,24 @@ async function continueSubmitEssay() {
     const passageEls = [...document.querySelectorAll('#passages .passage')];
 
     // ✅ 최종 제시문 구성: textarea에 있는 내용 그대로
-    const passages = passageEls.map(el =>
-      (el.value || '').trim()
-    );
+    const passages = passageEls.map(el => {
+      const baseText = (el.value || '').trim();
+
+      // ✅ 이 제시문에 이미지가 전혀 없었던 경우
+      if (!passageImageMap.has(el)) {
+        return baseText;
+      }
+
+      const images = passageImageMap.get(el);
+
+      // ✅ 이미지가 있었지만, 현재는 0장인 경우 (삭제된 상태)
+      if (!Array.isArray(images) || images.length === 0) {
+        return baseText;
+      }
+
+      // ✅ 이미지 + 자료 해석은 이미 textarea에 흡수됨
+      return baseText;
+    });
 
     // PDF / 이후 단계에서 그대로 사용
     window.savedPassages = passages;
@@ -2512,6 +2531,13 @@ function ensurePassagePreview(wrap) {
 
 /* ---------- 해석 블록 보장 ---------- */
 function ensureImageInterpretationBlock(wrap, textarea) {
+
+  // ✅ 이미지가 없는 제시문이면 생성 금지
+  if (!passageImageMap.has(textarea)) return;
+
+  const images = passageImageMap.get(textarea);
+  if (!Array.isArray(images) || images.length === 0) return;
+
   const interp = passageImageInterpretationMap.get(textarea);
   if (interp && interp.confirmed) return;
   if (wrap.querySelector('.image-interpretation-block')) return;
@@ -2535,7 +2561,6 @@ function ensureImageInterpretationBlock(wrap, textarea) {
       <textarea class="textarea interpretation-textarea" rows="4"></textarea>
 
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
-        <!-- 🔽 확정 버튼: 소형으로 -->
         <button
           type="button"
           class="btn btn-primary btn-confirm-interpretation btn-small">
@@ -2551,12 +2576,17 @@ function renderPassageImagePreview(wrap, textarea) {
   const preview = ensurePassagePreview(wrap);
   const arr = passageImageMap.get(textarea) || [];
 
-  if (!arr.length) {
+  if (!Array.isArray(arr) || arr.length === 0) {
     preview.innerHTML = '';
+
     wrap.querySelector('.image-interpretation-block')?.remove();
+
     passageImageInterpretationMap.delete(textarea);
+    passageImageMap.delete(textarea); // ✅ Map 자체 제거
+
     return;
   }
+
 
   preview.innerHTML = `
     <div class="passage-images" style="display:flex;gap:10px;flex-wrap:wrap">
@@ -2588,6 +2618,15 @@ document.addEventListener('click', async (e) => {
     const btn = e.target;
     const wrap = btn.closest('.passage-wrap');
     const textarea = wrap.querySelector('textarea.passage');
+
+    // ✅ 사진 없는 제시문이면 즉시 차단
+    if (!passageImageMap.has(textarea) ||
+        !Array.isArray(passageImageMap.get(textarea)) ||
+        passageImageMap.get(textarea).length === 0) {
+      alert('사진이 첨부된 제시문에서만 자료 해석을 생성할 수 있습니다.');
+      return;
+    }
+
     const editor = wrap.querySelector('.interpretation-editor');
     const input  = wrap.querySelector('.interpretation-textarea');
 
@@ -2605,6 +2644,7 @@ document.addEventListener('click', async (e) => {
       }
     }
   }
+
 
 
   /* 해석 확정 */
@@ -2695,14 +2735,22 @@ document.addEventListener('change', (e) => {
 
 /* ---------- 이미지 해석 생성 API ---------- */
 async function generateImageInterpretation(textarea) {
-  const images = passageImageMap.get(textarea) || [];
-  if (!images.length) return '';
+
+  // ✅ 반드시 Map에 존재 + 1장 이상일 때만 진행
+  if (!passageImageMap.has(textarea)) {
+    return '';
+  }
+
+  const images = passageImageMap.get(textarea);
+
+  if (!Array.isArray(images) || images.length === 0) {
+    return '';
+  }
 
   showGlobalLoading('ocr');
 
   try {
     // ✅ 백엔드가 단수 image를 기대하므로, 기본은 1장만 보냄
-    // (여러 장 지원 백엔드면 여기만 살짝 확장하면 됨)
     const first = images[0]?.src || '';
 
     // dataURL 유효성 체크
@@ -2715,7 +2763,7 @@ async function generateImageInterpretation(textarea) {
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({
-        image: first   // ✅ 핵심: images가 아니라 image
+        image: first
       })
     });
 
