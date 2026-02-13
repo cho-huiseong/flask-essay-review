@@ -2429,14 +2429,26 @@ async function downloadPDF_dashboard_land(){
     // 1️⃣ PDF 내용 동기화
     syncPdfContainer();
 
-    // 2️⃣ pdfContainer를 강제로 화면에 보이게 만든다
-    pdfEl.style.display = 'block';
-    pdfEl.style.visibility = 'visible';
-    pdfEl.style.position = 'absolute';
-    pdfEl.style.left = '-9999px';
-    pdfEl.style.top = '0';
+    // 2️⃣ 완전 강제 레이아웃 복구 (🔥 핵심)
+    pdfEl.style.display = "block";
+    pdfEl.style.visibility = "visible";
+    pdfEl.style.position = "static";
+    pdfEl.style.left = "";
+    pdfEl.style.top = "";
+    pdfEl.style.height = "auto";
+    pdfEl.style.minHeight = "auto";
+    pdfEl.style.overflow = "visible";
 
-    // 3️⃣ PDF 전용 모드 활성화
+    // .page 강제 초기화
+    document.querySelectorAll("#pdfContainer .page").forEach(p => {
+      p.style.position = "static";
+      p.style.height = "auto";
+      p.style.minHeight = "auto";
+      p.style.overflow = "visible";
+      p.style.display = "block";
+    });
+
+    // 3️⃣ PDF 모드 활성화
     document.body.classList.add('pdf-mode');
 
     // 4️⃣ 폰트 / 레이아웃 안정화 대기
@@ -2444,19 +2456,34 @@ async function downloadPDF_dashboard_land(){
       await document.fonts.ready;
     }
 
-    await new Promise(r => setTimeout(r, 100));
+    // 강제 reflow
+    pdfEl.offsetHeight;
+
+    await new Promise(r => setTimeout(r, 150));
+
+    // 🔍 디버깅용 (필요하면 확인)
+    console.log("PDF HEIGHT:", pdfEl.offsetHeight);
 
     // 5️⃣ 옵션 설정
     const opt = {
       margin: [10,12,10,12],
       filename: `report_${(document.getElementById('studentName')?.value||'student')}_${new Date().toISOString().slice(0,10)}.pdf`,
-      image: { type: 'jpeg', quality: 0.95 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 2,
+        useCORS: true,
+        scrollY: 0,
+        windowWidth: document.body.scrollWidth
+      },
+      jsPDF: { 
+        unit: 'mm',
+        format: 'a4',
+        orientation: 'portrait'
+      },
       pagebreak: { mode: ['css','legacy'] }
     };
 
-    // 6️⃣ 실제 PDF 생성
+    // 6️⃣ PDF 생성
     await html2pdf()
       .set(opt)
       .from(pdfEl)
@@ -2466,13 +2493,15 @@ async function downloadPDF_dashboard_land(){
     console.error(e);
     alert('PDF 생성 중 문제가 발생했습니다. 다시 시도해 주세요.');
   } finally {
-    // 7️⃣ 다시 숨김 처리
+    // 7️⃣ 원상 복구
     document.body.classList.remove('pdf-mode');
-    pdfEl.style.display = 'none';
-    pdfEl.style.visibility = 'hidden';
-    pdfEl.style.position = '';
-    pdfEl.style.left = '';
-    pdfEl.style.top = '';
+
+    pdfEl.style.display = "none";
+    pdfEl.style.visibility = "hidden";
+    pdfEl.style.position = "";
+    pdfEl.style.height = "";
+    pdfEl.style.minHeight = "";
+    pdfEl.style.overflow = "";
   }
 }
 </script> 
