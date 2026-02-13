@@ -952,6 +952,98 @@ body.pdf-mode #pdfContainer{
   page-break-after: auto;
   break-after: auto;
 }
+//* ======================================================
+   PDF 전용 디자인 – 고급 리포트 스타일
+   ====================================================== */
+
+#pdfContainer{
+  font-family: 'SUIT', sans-serif;
+  color:#111;
+  font-size:13px;
+  line-height:1.6;
+  padding:18mm 16mm;
+}
+
+/* 헤더 */
+#pdfContainer .header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-weight:700;
+  font-size:14px;
+  margin-bottom:12mm;
+  border-bottom:2px solid #2140B1;
+  padding-bottom:4mm;
+}
+
+/* 카드 */
+#pdfContainer .card{
+  background:#f8faff;
+  border:1px solid #e3e8ff;
+  border-radius:10px;
+  padding:10mm;
+  margin-bottom:8mm;
+}
+
+/* 2컬럼 */
+#pdfContainer .grid-2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8mm;
+  margin-bottom:8mm;
+}
+
+/* 섹션 타이틀 */
+#pdfContainer .section-title{
+  font-size:14px;
+  font-weight:800;
+  margin-bottom:4mm;
+  color:#2140B1;
+}
+
+/* 일반 텍스트 */
+#pdfContainer .pdf-text{
+  white-space:pre-wrap;
+}
+
+/* 총점 영역 */
+#pdfContainer .score-main-line{
+  font-size:18px;
+  font-weight:800;
+  margin-bottom:4mm;
+}
+
+#pdfContainer .score-main-line span{
+  color:#2140B1;
+}
+
+/* 상태 뱃지 */
+#pdfContainer .status-pill{
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:999px;
+  background:#2140B1;
+  color:#fff;
+  font-size:11px;
+  font-weight:700;
+}
+
+/* 점수 카드 영역 */
+#pdfContainer .score-cards{
+  margin-top:6mm;
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:6mm;
+}
+
+/* 푸터 */
+#pdfContainer .footer{
+  margin-top:12mm;
+  display:flex;
+  justify-content:space-between;
+  font-size:11px;
+  color:#777;
+}
 
 </style>
 </head>
