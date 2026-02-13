@@ -2419,20 +2419,34 @@ function syncPdfContainer() {
 
 async function downloadPDF_dashboard_land(){
   if(!window.html2pdf || !window.Chart){
-    alert('Chart.js 또는 html2pdf 로드 실패'); return;
+    alert('Chart.js 또는 html2pdf 로드 실패');
+    return;
   }
+
+  const pdfEl = document.getElementById('pdfContainer');
+
   try {
-    // 1) 현재 화면 상태를 PDF 컨테이너에 동기화
+    // 1️⃣ PDF 내용 동기화
     syncPdfContainer();
 
-    // 2) PDF 모드 활성화 (PDF 전용 CSS 스코프 작동)
+    // 2️⃣ pdfContainer를 강제로 화면에 보이게 만든다
+    pdfEl.style.display = 'block';
+    pdfEl.style.visibility = 'visible';
+    pdfEl.style.position = 'absolute';
+    pdfEl.style.left = '-9999px';
+    pdfEl.style.top = '0';
+
+    // 3️⃣ PDF 전용 모드 활성화
     document.body.classList.add('pdf-mode');
 
-    // 3) 폰트/레이아웃 안정화 대기
-    if (document.fonts && document.fonts.ready) await document.fonts.ready;
-    await new Promise(r => requestAnimationFrame(r));
+    // 4️⃣ 폰트 / 레이아웃 안정화 대기
+    if (document.fonts && document.fonts.ready) {
+      await document.fonts.ready;
+    }
 
-    // 4) A4 / 다페이지 / CSS 분할 존중
+    await new Promise(r => setTimeout(r, 100));
+
+    // 5️⃣ 옵션 설정
     const opt = {
       margin: [10,12,10,12],
       filename: `report_${(document.getElementById('studentName')?.value||'student')}_${new Date().toISOString().slice(0,10)}.pdf`,
@@ -2442,13 +2456,23 @@ async function downloadPDF_dashboard_land(){
       pagebreak: { mode: ['css','legacy'] }
     };
 
-    await html2pdf().set(opt).from(document.getElementById('pdfContainer')).save();
+    // 6️⃣ 실제 PDF 생성
+    await html2pdf()
+      .set(opt)
+      .from(pdfEl)
+      .save();
 
   } catch(e){
     console.error(e);
     alert('PDF 생성 중 문제가 발생했습니다. 다시 시도해 주세요.');
   } finally {
+    // 7️⃣ 다시 숨김 처리
     document.body.classList.remove('pdf-mode');
+    pdfEl.style.display = 'none';
+    pdfEl.style.visibility = 'hidden';
+    pdfEl.style.position = '';
+    pdfEl.style.left = '';
+    pdfEl.style.top = '';
   }
 }
 </script> 
