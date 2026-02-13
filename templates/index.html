@@ -926,18 +926,23 @@ header{
   to { transform: rotate(360deg); }
 }
 /* ======================================================
-   PDF A4 기본 프레임 정의 (필수)
+   PDF A4 기본 프레임 정의 (안정 버전)
    ====================================================== */
 
 #pdfContainer{
-  display:none;
+  visibility:hidden;
+  position:absolute;
+  left:-9999px;
+  top:0;
+
   width:210mm;
   margin:0 auto;
   background:#fff;
 }
 
 body.pdf-mode #pdfContainer{
-  display:block;
+  visibility:visible;
+  position:static;
 }
 
 #pdfContainer .page{
@@ -945,7 +950,6 @@ body.pdf-mode #pdfContainer{
   min-height:297mm;
   box-sizing:border-box;
 }
-
 </style>
 </head>
 
@@ -2452,28 +2456,24 @@ async function downloadPDF_dashboard_land(){
     // 2️⃣ PDF 모드 활성화 (CSS가 레이아웃 담당)
     document.body.classList.add('pdf-mode');
 
-    // 3️⃣ 화면 밖에 배치 (display:none 금지)
-    pdfEl.style.display = 'block';
-    pdfEl.style.position = 'absolute';
-    pdfEl.style.left = '-9999px';
-    pdfEl.style.top = '0';
+    // 3️⃣ 강제 reflow
+    pdfEl.offsetHeight;
 
     // 4️⃣ 폰트 / 레이아웃 안정화 대기
     if (document.fonts && document.fonts.ready) {
       await document.fonts.ready;
     }
 
-    await new Promise(r => setTimeout(r, 120));
+    await new Promise(r => setTimeout(r, 150));
 
-    // 5️⃣ PDF 옵션
+    // 5️⃣ 옵션
     const opt = {
       margin: 0,
       filename: `report_${(document.getElementById('studentName')?.value||'student')}_${new Date().toISOString().slice(0,10)}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { 
         scale: 2,
-        useCORS: true,
-        scrollY: 0
+        useCORS: true
       },
       jsPDF: { 
         unit: 'mm',
@@ -2483,20 +2483,14 @@ async function downloadPDF_dashboard_land(){
       pagebreak: { mode: ['css','legacy'] }
     };
 
-    // 6️⃣ 생성
     await html2pdf().set(opt).from(pdfEl).save();
 
   } catch(e){
     console.error(e);
     alert('PDF 생성 중 문제가 발생했습니다.');
   } finally {
-    // 7️⃣ 복구
+    // CSS가 자동으로 숨김 처리함
     document.body.classList.remove('pdf-mode');
-
-    pdfEl.style.display = 'none';
-    pdfEl.style.position = '';
-    pdfEl.style.left = '';
-    pdfEl.style.top = '';
   }
 }
 </script> 
