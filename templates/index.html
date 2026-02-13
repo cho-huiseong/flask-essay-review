@@ -2440,11 +2440,7 @@ function syncPdfContainer() {
 async function downloadPDF(){
 
   try{
-    // 1️⃣ PDF DOM 동기화
     syncPdfContainer();
-
-    // 2️⃣ PDF 영역 강제 표시
-    document.body.classList.add('pdf-mode');
 
     const element = document.getElementById("pdfContainer");
 
@@ -2461,8 +2457,7 @@ async function downloadPDF(){
           useCORS:true,
           scrollY:0
         },
-        jsPDF:{ unit:'mm', format:'a4', orientation:'portrait' },
-        pagebreak:{ mode:['css','legacy'] }
+        jsPDF:{ unit:'mm', format:'a4', orientation:'portrait' }
       })
       .from(element)
       .save();
@@ -2470,8 +2465,6 @@ async function downloadPDF(){
   }catch(e){
     console.error(e);
     alert("PDF 생성 중 오류가 발생했습니다.");
-  }finally{
-    document.body.classList.remove('pdf-mode');
   }
 }
 </script> 
