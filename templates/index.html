@@ -930,11 +930,10 @@ header{
    ====================================================== */
 
 #pdfContainer{
-  opacity:0;
-  pointer-events:none;
-
+  position:absolute;
+  left:-99999px;
+  top:0;
   width:210mm;
-  margin:0 auto;
   background:#fff;
 }
 
@@ -2444,6 +2443,10 @@ async function downloadPDF(){
 
     const element = document.getElementById("pdfContainer");
 
+    // ⭐ 렌더 타이밍 보장
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     const name = document.getElementById("studentName")?.value || "학생";
     const dateStr = new Date().toISOString().slice(0,10);
 
@@ -2467,6 +2470,7 @@ async function downloadPDF(){
     alert("PDF 생성 중 오류가 발생했습니다.");
   }
 }
+
 </script> 
 
 <script>
