@@ -3077,5 +3077,72 @@ function hideGlobalLoading(){
 <script>
 document.addEventListener('DOMContentLoaded', updatePdfBtnState);
 </script>
+<script>
+/* 1️⃣ 버튼 클릭 → 숨은 파일 input 실행 */
+document.addEventListener('DOMContentLoaded', () => {
+  const btnEssayOcr = document.getElementById('btnEssayOcr');
+  const essayImageInput = document.getElementById('essayImageInput');
+
+  if (!btnEssayOcr || !essayImageInput) return;
+
+  btnEssayOcr.addEventListener('click', () => {
+    essayImageInput.value = '';
+    essayImageInput.click();
+  });
+
+  /* 2️⃣ 파일 선택 시 OCR 요청 */
+  essayImageInput.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('이미지는 5MB 이하만 업로드 가능합니다.');
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = async () => {
+      const dataUrl = reader.result;
+
+      if (!/^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(dataUrl)) {
+        alert('유효한 이미지 파일이 아닙니다.');
+        return;
+      }
+
+      showGlobalLoading('ocr');
+
+      try {
+        const res = await fetch('/api/essay-ocr', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            image: dataUrl
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'OCR 실패');
+
+        const essayEl = document.getElementById('essay');
+
+        if (essayEl) {
+          essayEl.value = data.text || '';
+          updateCharCount();
+          autoResize(essayEl);
+        }
+
+      } catch (err) {
+        alert(err.message || '사진 글자 변환 중 오류가 발생했습니다.');
+      } finally {
+        hideGlobalLoading();
+      }
+    };
+
+    reader.readAsDataURL(file);
+  });
+});
+</script>
 </body>
 </html>
