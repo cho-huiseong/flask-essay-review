@@ -930,10 +930,8 @@ header{
    ====================================================== */
 
 #pdfContainer{
-  visibility:hidden;
-  position:absolute;
-  left:-9999px;
-  top:0;
+  opacity:0;
+  pointer-events:none;
 
   width:210mm;
   margin:0 auto;
@@ -941,8 +939,7 @@ header{
 }
 
 body.pdf-mode #pdfContainer{
-  visibility:visible;
-  position:static;
+  opacity:1;
 }
 
 #pdfContainer .page{
@@ -2592,7 +2589,7 @@ document.addEventListener('DOMContentLoaded', refreshMe);
 </script>
 
 <!-- >>> PDF CONTAINER START (리뉴얼) -->
-<section id="pdfContainer" class="pdf-scope" style="display:none">
+<section id="pdfContainer" class="pdf-scope">
 
   <!-- 1페이지: 표지 -->
   <div class="page">
