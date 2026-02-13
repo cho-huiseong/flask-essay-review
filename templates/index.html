@@ -930,10 +930,8 @@ header{
    ====================================================== */
 
 #pdfContainer{
-  position:absolute;
-  left:-99999px;
-  top:0;
   width:210mm;
+  margin:0 auto;
   background:#fff;
 }
 
@@ -945,7 +943,16 @@ body.pdf-mode #pdfContainer{
   width:210mm;
   min-height:297mm;
   box-sizing:border-box;
+
+  page-break-after: always;
+  break-after: page;
 }
+
+#pdfContainer .page:last-child{
+  page-break-after: auto;
+  break-after: auto;
+}
+
 </style>
 </head>
 
@@ -2457,8 +2464,10 @@ async function downloadPDF(){
         image:{ type:'jpeg', quality:0.98 },
         html2canvas:{
           scale:2,
-          useCORS:true,
-          scrollY:0
+          useCORS:true
+        },
+        pagebreak:{
+          mode:['css','legacy']
         },
         jsPDF:{ unit:'mm', format:'a4', orientation:'portrait' }
       })
@@ -2470,7 +2479,6 @@ async function downloadPDF(){
     alert("PDF 생성 중 오류가 발생했습니다.");
   }
 }
-
 </script> 
 
 <script>
