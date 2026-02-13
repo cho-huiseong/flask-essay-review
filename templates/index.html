@@ -925,6 +925,26 @@ header{
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+/* ======================================================
+   PDF A4 기본 프레임 정의 (필수)
+   ====================================================== */
+
+#pdfContainer{
+  display:none;
+  width:210mm;
+  margin:0 auto;
+  background:#fff;
+}
+
+body.pdf-mode #pdfContainer{
+  display:block;
+}
+
+#pdfContainer .page{
+  width:210mm;
+  min-height:297mm;
+  box-sizing:border-box;
+}
 
 </style>
 </head>
@@ -2429,51 +2449,31 @@ async function downloadPDF_dashboard_land(){
     // 1️⃣ PDF 내용 동기화
     syncPdfContainer();
 
-    // 2️⃣ 완전 강제 레이아웃 복구 (🔥 핵심)
-    pdfEl.style.display = "block";
-    pdfEl.style.visibility = "visible";
-    pdfEl.style.position = "static";
-    pdfEl.style.left = "";
-    pdfEl.style.top = "";
-    pdfEl.style.height = "auto";
-    pdfEl.style.minHeight = "auto";
-    pdfEl.style.overflow = "visible";
-
-    // .page 강제 초기화
-    document.querySelectorAll("#pdfContainer .page").forEach(p => {
-      p.style.position = "static";
-      p.style.height = "auto";
-      p.style.minHeight = "auto";
-      p.style.overflow = "visible";
-      p.style.display = "block";
-    });
-
-    // 3️⃣ PDF 모드 활성화
+    // 2️⃣ PDF 모드 활성화 (CSS가 레이아웃 담당)
     document.body.classList.add('pdf-mode');
+
+    // 3️⃣ 화면 밖에 배치 (display:none 금지)
+    pdfEl.style.display = 'block';
+    pdfEl.style.position = 'absolute';
+    pdfEl.style.left = '-9999px';
+    pdfEl.style.top = '0';
 
     // 4️⃣ 폰트 / 레이아웃 안정화 대기
     if (document.fonts && document.fonts.ready) {
       await document.fonts.ready;
     }
 
-    // 강제 reflow
-    pdfEl.offsetHeight;
+    await new Promise(r => setTimeout(r, 120));
 
-    await new Promise(r => setTimeout(r, 150));
-
-    // 🔍 디버깅용 (필요하면 확인)
-    console.log("PDF HEIGHT:", pdfEl.offsetHeight);
-
-    // 5️⃣ 옵션 설정
+    // 5️⃣ PDF 옵션
     const opt = {
-      margin: [10,12,10,12],
+      margin: 0,
       filename: `report_${(document.getElementById('studentName')?.value||'student')}_${new Date().toISOString().slice(0,10)}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { 
         scale: 2,
         useCORS: true,
-        scrollY: 0,
-        windowWidth: document.body.scrollWidth
+        scrollY: 0
       },
       jsPDF: { 
         unit: 'mm',
@@ -2483,25 +2483,20 @@ async function downloadPDF_dashboard_land(){
       pagebreak: { mode: ['css','legacy'] }
     };
 
-    // 6️⃣ PDF 생성
-    await html2pdf()
-      .set(opt)
-      .from(pdfEl)
-      .save();
+    // 6️⃣ 생성
+    await html2pdf().set(opt).from(pdfEl).save();
 
   } catch(e){
     console.error(e);
-    alert('PDF 생성 중 문제가 발생했습니다. 다시 시도해 주세요.');
+    alert('PDF 생성 중 문제가 발생했습니다.');
   } finally {
-    // 7️⃣ 원상 복구
+    // 7️⃣ 복구
     document.body.classList.remove('pdf-mode');
 
-    pdfEl.style.display = "none";
-    pdfEl.style.visibility = "hidden";
-    pdfEl.style.position = "";
-    pdfEl.style.height = "";
-    pdfEl.style.minHeight = "";
-    pdfEl.style.overflow = "";
+    pdfEl.style.display = 'none';
+    pdfEl.style.position = '';
+    pdfEl.style.left = '';
+    pdfEl.style.top = '';
   }
 }
 </script> 
