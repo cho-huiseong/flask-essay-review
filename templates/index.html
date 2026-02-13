@@ -1230,7 +1230,7 @@ body.pdf-mode #pdfContainer{
           id="btnSavePDF"
           class="btn btn-primary"
           style="margin-top:14px"
-          onclick="downloadPDF_dashboard_land()">
+          onclick="downloadPDF()">
           📥 PDF 저장
         </button>
 
@@ -2437,56 +2437,40 @@ function syncPdfContainer() {
   document.getElementById('pdfTotalPages2').textContent = '3';
   document.getElementById('pdfTotalPages3').textContent = '3';
 }
+async function downloadPDF(){
 
-async function downloadPDF_dashboard_land(){
-  if(!window.html2pdf || !window.Chart){
-    alert('Chart.js 또는 html2pdf 로드 실패');
-    return;
-  }
-
-  const pdfEl = document.getElementById('pdfContainer');
-
-  try {
-    // 1️⃣ PDF 내용 동기화
+  try{
+    // 1️⃣ PDF DOM 동기화
     syncPdfContainer();
 
-    // 2️⃣ PDF 모드 활성화 (CSS가 레이아웃 담당)
+    // 2️⃣ PDF 영역 강제 표시
     document.body.classList.add('pdf-mode');
 
-    // 3️⃣ 강제 reflow
-    pdfEl.offsetHeight;
+    const element = document.getElementById("pdfContainer");
 
-    // 4️⃣ 폰트 / 레이아웃 안정화 대기
-    if (document.fonts && document.fonts.ready) {
-      await document.fonts.ready;
-    }
+    const name = document.getElementById("studentName")?.value || "학생";
+    const dateStr = new Date().toISOString().slice(0,10);
 
-    await new Promise(r => setTimeout(r, 150));
+    await html2pdf()
+      .set({
+        margin:0,
+        filename:`다쓰리포트_${name}_${dateStr}.pdf`,
+        image:{ type:'jpeg', quality:0.98 },
+        html2canvas:{
+          scale:2,
+          useCORS:true,
+          scrollY:0
+        },
+        jsPDF:{ unit:'mm', format:'a4', orientation:'portrait' },
+        pagebreak:{ mode:['css','legacy'] }
+      })
+      .from(element)
+      .save();
 
-    // 5️⃣ 옵션
-    const opt = {
-      margin: 0,
-      filename: `report_${(document.getElementById('studentName')?.value||'student')}_${new Date().toISOString().slice(0,10)}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { 
-        scale: 2,
-        useCORS: true
-      },
-      jsPDF: { 
-        unit: 'mm',
-        format: 'a4',
-        orientation: 'portrait'
-      },
-      pagebreak: { mode: ['css','legacy'] }
-    };
-
-    await html2pdf().set(opt).from(pdfEl).save();
-
-  } catch(e){
+  }catch(e){
     console.error(e);
-    alert('PDF 생성 중 문제가 발생했습니다.');
-  } finally {
-    // CSS가 자동으로 숨김 처리함
+    alert("PDF 생성 중 오류가 발생했습니다.");
+  }finally{
     document.body.classList.remove('pdf-mode');
   }
 }
