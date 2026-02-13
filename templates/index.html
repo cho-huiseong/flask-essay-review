@@ -926,48 +926,29 @@ header{
   to { transform: rotate(360deg); }
 }
 /* ======================================================
-   PDF A4 기본 프레임 정의 (안정 버전)
+   PDF A4 기본 프레임 (mm 기반 유지)
    ====================================================== */
 
 #pdfContainer{
   width:210mm;
   margin:0 auto;
   background:#fff;
+  font-family:'SUIT',system-ui,sans-serif;
+  color:#111827;
+  font-size:15px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
 }
 
 body.pdf-mode #pdfContainer{
   opacity:1;
 }
 
+/* ======================================================
+   페이지 박스
+   ====================================================== */
+
 #pdfContainer .page{
-  width:210mm;
-  min-height:297mm;
-  box-sizing:border-box;
-
-  page-break-after: always;
-  break-after: page;
-}
-
-#pdfContainer .page:last-child{
-  page-break-after: auto;
-  break-after: auto;
-}
-/* ===============================
-   PDF SCOPE – A4 최적화 완성본
-   =============================== */
-
-.pdf-scope{
-  font-family:'SUIT',system-ui,sans-serif;
-  color:#111827;
-  font-size:15px;          /* ↑ 기존 12 → 15 */
-  line-height:1.75;
-  -webkit-font-smoothing:antialiased;
-}
-
-/* ===============================
-   A4 페이지 박스 고정
-   =============================== */
-.pdf-scope .page{
   width:210mm;
   min-height:297mm;
   margin:0 auto;
@@ -979,19 +960,24 @@ body.pdf-mode #pdfContainer{
   gap:10mm;
   page-break-after:always;
   break-after:page;
-  box-shadow:0 6px 24px rgba(0,0,0,0.05);
+}
+
+#pdfContainer .page:last-child{
+  page-break-after:auto;
+  break-after:auto;
 }
 
 /* 수동 브레이크 */
-.pdf-scope .page-break{
+#pdfContainer .page-break{
   break-before:page;
   page-break-before:always;
 }
 
-/* ===============================
+/* ======================================================
    헤더 / 푸터
-   =============================== */
-.pdf-scope .header{
+   ====================================================== */
+
+#pdfContainer .header{
   display:flex;
   justify-content:space-between;
   align-items:center;
@@ -1002,7 +988,7 @@ body.pdf-mode #pdfContainer{
   border-bottom:1px solid rgba(33,64,177,0.25);
 }
 
-.pdf-scope .footer{
+#pdfContainer .footer{
   margin-top:auto;
   display:flex;
   justify-content:space-between;
@@ -1012,86 +998,94 @@ body.pdf-mode #pdfContainer{
   border-top:1px solid rgba(33,64,177,0.2);
 }
 
-/* ===============================
-   카드 (blur 제거, 선명도 향상)
-   =============================== */
-.pdf-scope .card{
+/* ======================================================
+   카드
+   ====================================================== */
+
+#pdfContainer .card{
   background:#ffffff;
   border-radius:14px;
   border:1px solid rgba(17,24,39,0.08);
-  box-shadow:none;
   padding:18px;
   margin:6px 0;
 }
 
-/* ===============================
+/* ======================================================
    타이틀 / 텍스트
-   =============================== */
-.pdf-scope .section-title{
+   ====================================================== */
+
+#pdfContainer .section-title{
   font-weight:800;
   font-size:17px;
   color:#2140B1;
   margin-bottom:10px;
 }
 
-.pdf-scope .muted{
+#pdfContainer .muted{
   color:#4B5563;
   font-size:13px;
 }
 
-.pdf-scope .pdf-text{
+#pdfContainer .pdf-text{
   white-space:normal;
   word-break:break-word;
   line-height:1.85;
 }
 
-/* 페이지 내부 줄바꿈 방지 */
-.pdf-scope .avoid-break{
+/* 줄바꿈 방지 */
+#pdfContainer .avoid-break{
   break-inside:avoid;
   page-break-inside:avoid;
 }
 
-/* ===============================
+/* ======================================================
    그리드
-   =============================== */
-.pdf-scope .grid-2{
+   ====================================================== */
+
+#pdfContainer .grid-2{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:16px;
 }
 
-.pdf-scope .grid-2-vertical{
+#pdfContainer .grid-2-vertical{
   display:grid;
   grid-template-columns:1fr;
   gap:10px;
 }
 
-/* ===============================
+/* ======================================================
    커버
-   =============================== */
-.pdf-scope .cover-hero{
+   ====================================================== */
+
+#pdfContainer .cover-hero{
   padding:22px;
   border-radius:16px;
-  background:linear-gradient(135deg,rgba(33,64,177,0.08),rgba(33,64,177,0));
+  background:linear-gradient(
+    135deg,
+    rgba(33,64,177,0.08),
+    rgba(33,64,177,0)
+  );
   border:1px solid rgba(129,140,248,0.35);
 }
 
-.pdf-scope .cover-title-main{
+#pdfContainer .cover-title-main{
   font-size:22px;
   font-weight:900;
   color:#111827;
 }
 
-.pdf-scope .cover-sub{
+#pdfContainer .cover-sub{
   margin-top:6px;
   line-height:1.6;
 }
 
-/* ===============================
+/* ======================================================
    상태 배지
-   =============================== */
-.pdf-scope .status-badge,
-.pdf-scope .status-pill{
+   ====================================================== */
+
+#pdfContainer .status-badge,
+#pdfContainer .status-pill{
   padding:5px 12px;
   border-radius:999px;
   font-size:12px;
@@ -1100,95 +1094,98 @@ body.pdf-mode #pdfContainer{
   background:#f9fafb;
 }
 
-/* ===============================
+/* ======================================================
    평가 요약
-   =============================== */
-.pdf-scope .score-layout{
+   ====================================================== */
+
+#pdfContainer .score-layout{
   display:flex;
   gap:16px;
 }
 
-.pdf-scope .score-left{ flex:1.5; }
-.pdf-scope .score-right{ flex:1; text-align:center; }
+#pdfContainer .score-left{ flex:1.5; }
+#pdfContainer .score-right{ flex:1; text-align:center; }
 
-.pdf-scope .score-main-line{
+#pdfContainer .score-main-line{
   font-weight:900;
   font-size:20px;
   margin-bottom:6px;
 }
 
-.pdf-scope .score-cards{
+#pdfContainer .score-cards{
   display:grid;
   gap:12px;
 }
 
-.pdf-scope .score-item{
+#pdfContainer .score-item{
   padding:12px;
   border-radius:12px;
   border:1px solid rgba(226,232,240,1);
   background:#f8fafc;
 }
 
-.pdf-scope .score-item-header{
+#pdfContainer .score-item-header{
   display:flex;
   justify-content:space-between;
   font-weight:700;
   margin-bottom:6px;
 }
 
-.pdf-scope .score-item-value{
+#pdfContainer .score-item-value{
   color:#2140B1;
   font-weight:800;
 }
 
-/* ===============================
+/* ======================================================
    제시문 블록
-   =============================== */
-.pdf-scope .passage-block{
+   ====================================================== */
+
+#pdfContainer .passage-block{
   margin-bottom:12px;
 }
 
-.pdf-scope .passage-label{
+#pdfContainer .passage-label{
   font-weight:800;
   font-size:14px;
   color:#374151;
   margin-bottom:6px;
 }
 
-.pdf-scope .passage-body{
+#pdfContainer .passage-body{
   line-height:1.9;
 }
 
-/* ===============================
+/* ======================================================
    테이블
-   =============================== */
-.pdf-scope table{
+   ====================================================== */
+
+#pdfContainer table{
   width:100%;
   border-collapse:collapse;
   font-size:14px;
 }
 
-.pdf-scope th,
-.pdf-scope td{
+#pdfContainer th,
+#pdfContainer td{
   border:1px solid rgba(17,24,39,0.12);
   padding:10px;
   vertical-align:top;
 }
 
-.pdf-scope thead th{
+#pdfContainer thead th{
   background:rgba(33,64,177,0.06);
   color:#2140B1;
   font-weight:800;
 }
 
-.pdf-scope thead{
+#pdfContainer thead{
   display:table-header-group;
 }
 
+/* 기존 동작 유지 */
 #pdfContainer{
   display:none;
 }
-
 </style>
 </head>
 
@@ -2699,7 +2696,7 @@ async function downloadPDF(){
         filename:`다쓰리포트_${name}_${dateStr}.pdf`,
         image:{ type:'jpeg', quality:0.98 },
         html2canvas:{
-          scale:3.5,
+          scale:2,
           useCORS:true
         },
         pagebreak:{
