@@ -952,118 +952,243 @@ body.pdf-mode #pdfContainer{
   page-break-after: auto;
   break-after: auto;
 }
-/* ======================================================
-   PDF 전용 디자인 – A4 최적화 리포트 스타일
-   ====================================================== */
+/* ===============================
+   PDF SCOPE – A4 최적화 완성본
+   =============================== */
 
-#pdfContainer{
-  font-family: 'SUIT', sans-serif;
-  color:#111;
-  font-size:13.5px;
-  line-height:1.65;
+.pdf-scope{
+  font-family:'SUIT',system-ui,sans-serif;
+  color:#111827;
+  font-size:15px;          /* ↑ 기존 12 → 15 */
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
 }
 
-/* 페이지 기본 프레임 */
-#pdfContainer .page{
-  width:794px;               /* A4 width */
-  min-height:1123px;         /* A4 height */
-  padding:55px 65px;
+/* ===============================
+   A4 페이지 박스 고정
+   =============================== */
+.pdf-scope .page{
+  width:210mm;
+  min-height:297mm;
+  margin:0 auto;
+  background:#ffffff;
   box-sizing:border-box;
-  background:#fff;
-  position:relative;
+  padding:20mm 18mm 18mm;
+  display:flex;
+  flex-direction:column;
+  gap:10mm;
   page-break-after:always;
+  break-after:page;
+  box-shadow:0 6px 24px rgba(0,0,0,0.05);
 }
 
-/* 헤더 */
-#pdfContainer .header{
+/* 수동 브레이크 */
+.pdf-scope .page-break{
+  break-before:page;
+  page-break-before:always;
+}
+
+/* ===============================
+   헤더 / 푸터
+   =============================== */
+.pdf-scope .header{
   display:flex;
   justify-content:space-between;
-  align-items:flex-end;
+  align-items:center;
   font-weight:700;
-  font-size:15px;
-  margin-bottom:28px;
-  border-bottom:2px solid #2140B1;
-  padding-bottom:8px;
+  font-size:13px;
+  color:#2140B1;
+  padding-bottom:6px;
+  border-bottom:1px solid rgba(33,64,177,0.25);
 }
 
-/* 카드 */
-#pdfContainer .card{
-  background:#f9fbff;
-  border:1px solid #e6ebff;
-  border-radius:8px;
-  padding:20px 22px;
-  margin-bottom:22px;
+.pdf-scope .footer{
+  margin-top:auto;
+  display:flex;
+  justify-content:space-between;
+  font-size:12px;
+  color:#374151;
+  padding-top:6px;
+  border-top:1px solid rgba(33,64,177,0.2);
 }
 
-/* 2컬럼 */
-#pdfContainer .grid-2{
+/* ===============================
+   카드 (blur 제거, 선명도 향상)
+   =============================== */
+.pdf-scope .card{
+  background:#ffffff;
+  border-radius:14px;
+  border:1px solid rgba(17,24,39,0.08);
+  box-shadow:none;
+  padding:18px;
+  margin:6px 0;
+}
+
+/* ===============================
+   타이틀 / 텍스트
+   =============================== */
+.pdf-scope .section-title{
+  font-weight:800;
+  font-size:17px;
+  color:#2140B1;
+  margin-bottom:10px;
+}
+
+.pdf-scope .muted{
+  color:#4B5563;
+  font-size:13px;
+}
+
+.pdf-scope .pdf-text{
+  white-space:normal;
+  word-break:break-word;
+  line-height:1.85;
+}
+
+/* 페이지 내부 줄바꿈 방지 */
+.pdf-scope .avoid-break{
+  break-inside:avoid;
+  page-break-inside:avoid;
+}
+
+/* ===============================
+   그리드
+   =============================== */
+.pdf-scope .grid-2{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:22px;
-  margin-bottom:22px;
+  gap:16px;
 }
 
-/* 섹션 타이틀 */
-#pdfContainer .section-title{
-  font-size:15px;
-  font-weight:800;
-  margin-bottom:10px;
-  color:#2140B1;
-}
-
-/* 일반 텍스트 */
-#pdfContainer .pdf-text{
-  white-space:pre-wrap;
-  font-size:13.5px;
-}
-
-/* 총점 영역 */
-#pdfContainer .score-main-line{
-  font-size:20px;
-  font-weight:800;
-  margin-bottom:10px;
-}
-
-#pdfContainer .score-main-line span{
-  color:#2140B1;
-}
-
-/* 상태 뱃지 */
-#pdfContainer .status-pill{
-  display:inline-block;
-  padding:4px 10px;
-  border-radius:999px;
-  background:#2140B1;
-  color:#fff;
-  font-size:11px;
-  font-weight:700;
-}
-
-/* 점수 카드 영역 */
-#pdfContainer .score-cards{
-  margin-top:18px;
+.pdf-scope .grid-2-vertical{
   display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:18px;
+  grid-template-columns:1fr;
+  gap:10px;
 }
 
-/* 그래프 */
-#pdfContainer canvas{
-  width:100% !important;
-  height:240px !important;
+/* ===============================
+   커버
+   =============================== */
+.pdf-scope .cover-hero{
+  padding:22px;
+  border-radius:16px;
+  background:linear-gradient(135deg,rgba(33,64,177,0.08),rgba(33,64,177,0));
+  border:1px solid rgba(129,140,248,0.35);
 }
 
-/* 푸터 */
-#pdfContainer .footer{
-  position:absolute;
-  bottom:40px;
-  left:65px;
-  right:65px;
+.pdf-scope .cover-title-main{
+  font-size:22px;
+  font-weight:900;
+  color:#111827;
+}
+
+.pdf-scope .cover-sub{
+  margin-top:6px;
+  line-height:1.6;
+}
+
+/* ===============================
+   상태 배지
+   =============================== */
+.pdf-scope .status-badge,
+.pdf-scope .status-pill{
+  padding:5px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+  border:1px solid rgba(148,163,184,0.7);
+  background:#f9fafb;
+}
+
+/* ===============================
+   평가 요약
+   =============================== */
+.pdf-scope .score-layout{
+  display:flex;
+  gap:16px;
+}
+
+.pdf-scope .score-left{ flex:1.5; }
+.pdf-scope .score-right{ flex:1; text-align:center; }
+
+.pdf-scope .score-main-line{
+  font-weight:900;
+  font-size:20px;
+  margin-bottom:6px;
+}
+
+.pdf-scope .score-cards{
+  display:grid;
+  gap:12px;
+}
+
+.pdf-scope .score-item{
+  padding:12px;
+  border-radius:12px;
+  border:1px solid rgba(226,232,240,1);
+  background:#f8fafc;
+}
+
+.pdf-scope .score-item-header{
   display:flex;
   justify-content:space-between;
-  font-size:11px;
-  color:#777;
+  font-weight:700;
+  margin-bottom:6px;
 }
+
+.pdf-scope .score-item-value{
+  color:#2140B1;
+  font-weight:800;
+}
+
+/* ===============================
+   제시문 블록
+   =============================== */
+.pdf-scope .passage-block{
+  margin-bottom:12px;
+}
+
+.pdf-scope .passage-label{
+  font-weight:800;
+  font-size:14px;
+  color:#374151;
+  margin-bottom:6px;
+}
+
+.pdf-scope .passage-body{
+  line-height:1.9;
+}
+
+/* ===============================
+   테이블
+   =============================== */
+.pdf-scope table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:14px;
+}
+
+.pdf-scope th,
+.pdf-scope td{
+  border:1px solid rgba(17,24,39,0.12);
+  padding:10px;
+  vertical-align:top;
+}
+
+.pdf-scope thead th{
+  background:rgba(33,64,177,0.06);
+  color:#2140B1;
+  font-weight:800;
+}
+
+.pdf-scope thead{
+  display:table-header-group;
+}
+
+#pdfContainer{
+  display:none;
+}
+
 </style>
 </head>
 
@@ -2574,7 +2699,7 @@ async function downloadPDF(){
         filename:`다쓰리포트_${name}_${dateStr}.pdf`,
         image:{ type:'jpeg', quality:0.98 },
         html2canvas:{
-          scale:2,
+          scale:3.5,
           useCORS:true
         },
         pagebreak:{
