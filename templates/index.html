@@ -1182,10 +1182,14 @@ body.pdf-mode #pdfContainer{
   display:table-header-group;
 }
 
-/* 기존 동작 유지 */
 #pdfContainer{
-  display:none;
+  position:fixed;
+  left:-99999px;
+  top:0;
+  visibility:visible;
+  display:block;
 }
+
 </style>
 </head>
 
@@ -2679,33 +2683,46 @@ function syncPdfContainer() {
 async function downloadPDF(){
 
   try{
+
+    // 1️⃣ PDF 내용 동기화
     syncPdfContainer();
 
     const element = document.getElementById("pdfContainer");
 
-    // ⭐ 렌더 타이밍 보장
-    await new Promise(resolve => requestAnimationFrame(resolve));
-    await new Promise(resolve => setTimeout(resolve, 100));
-
     const name = document.getElementById("studentName")?.value || "학생";
     const dateStr = new Date().toISOString().slice(0,10);
 
+    // 2️⃣ html2pdf 옵션 정의
+    const opt = {
+      margin: 0,
+      filename: `다쓰리포트_${name}_${dateStr}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        scrollY: 0
+      },
+      pagebreak: {
+        mode: ['css','legacy']
+      },
+      jsPDF: {
+        unit: 'mm',
+        format: 'a4',
+        orientation: 'portrait'
+      }
+    };
+
+    // 3️⃣ 안정 방식: Promise 체인 사용
     await html2pdf()
-      .set({
-        margin:0,
-        filename:`다쓰리포트_${name}_${dateStr}.pdf`,
-        image:{ type:'jpeg', quality:0.98 },
-        html2canvas:{
-          scale:2,
-          useCORS:true
-        },
-        pagebreak:{
-          mode:['css','legacy']
-        },
-        jsPDF:{ unit:'mm', format:'a4', orientation:'portrait' }
-      })
+      .set(opt)
       .from(element)
-      .save();
+      .toPdf()
+      .get('pdf')
+      .then((pdf)=>{
+        pdf.save(opt.filename);
+      });
 
   }catch(e){
     console.error(e);
