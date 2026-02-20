@@ -949,18 +949,13 @@ body.pdf-mode #pdfContainer{
    ====================================================== */
 
 #pdfContainer .page{
-  width:210mm;
-  min-height:297mm;
-  margin:0 auto;
-  background:#ffffff;
+  width:100%;
   box-sizing:border-box;
-  padding:20mm 18mm 18mm;
-  display:flex;
-  flex-direction:column;
-  gap:10mm;
-  page-break-after:always;
-  break-after:page;
+  padding:0;
+  margin:0;
+  display:block;
 }
+
 
 #pdfContainer .page:last-child{
   page-break-after:auto;
@@ -989,14 +984,10 @@ body.pdf-mode #pdfContainer{
 }
 
 #pdfContainer .footer{
-  margin-top:auto;
+  margin-top:20mm;
   display:flex;
-  justify-content:space-between;
-  font-size:12px;
-  color:#374151;
-  padding-top:6px;
-  border-top:1px solid rgba(33,64,177,0.2);
 }
+
 
 /* ======================================================
    카드
@@ -1185,8 +1176,27 @@ body.pdf-mode #pdfContainer{
 #pdfContainer{
   display:none;
 }
+#pdfContainer{
+  display:block;
+}
 
+#pdfContainer .card,
+#pdfContainer .score-item,
+#pdfContainer .passage-block,
+#pdfContainer table{
+  break-inside:avoid;
+  page-break-inside:avoid;
+}
 
+#pdfContainer h1,
+#pdfContainer h2,
+#pdfContainer h3{
+  break-after:avoid;
+}
+
+#pdfContainer table thead{
+  display:table-header-group;
+}
 </style>
 </head>
 
@@ -2693,20 +2703,23 @@ async function downloadPDF(){
     await new Promise(r => requestAnimationFrame(r));
 
     await html2pdf().set({
-      margin: 0,
+      margin: 15,
       filename: `다쓰리포트_${name}_${dateStr}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
+      image: { type: 'jpeg', quality: 0.95 },
       html2canvas: {
         scale: 2,
-        useCORS: true,
-        allowTaint: true
+        useCORS: true
       },
       jsPDF: {
         unit: 'mm',
         format: 'a4',
         orientation: 'portrait'
+      },
+      pagebreak: {
+        mode: ['css']
       }
     }).from(element).save();
+
 
     // 3️⃣ 다시 숨김
     element.style.display = "none";
