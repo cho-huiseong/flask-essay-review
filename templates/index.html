@@ -2683,17 +2683,13 @@ function syncPdfContainer() {
 async function downloadPDF(){
 
   try{
-
-    // 1️⃣ PDF 내용 동기화
     syncPdfContainer();
 
     const element = document.getElementById("pdfContainer");
-
     const name = document.getElementById("studentName")?.value || "학생";
     const dateStr = new Date().toISOString().slice(0,10);
 
-    // 2️⃣ html2pdf 옵션 정의
-    const opt = {
+    await html2pdf(element, {
       margin: 0,
       filename: `다쓰리포트_${name}_${dateStr}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
@@ -2701,28 +2697,17 @@ async function downloadPDF(){
         scale: 2,
         useCORS: true,
         allowTaint: true,
-        logging: false,
-        scrollY: 0
-      },
-      pagebreak: {
-        mode: ['css','legacy']
+        scrollY: 0,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight
       },
       jsPDF: {
         unit: 'mm',
         format: 'a4',
         orientation: 'portrait'
-      }
-    };
-
-    // 3️⃣ 안정 방식: Promise 체인 사용
-    await html2pdf()
-      .set(opt)
-      .from(element)
-      .toPdf()
-      .get('pdf')
-      .then((pdf)=>{
-        pdf.save(opt.filename);
-      });
+      },
+      pagebreak: { mode: ['css','legacy'] }
+    });
 
   }catch(e){
     console.error(e);
