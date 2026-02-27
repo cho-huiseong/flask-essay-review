@@ -864,7 +864,87 @@ def get_report(rid):
         return jsonify({"ok": True, "id": r.id, "created_at": r.created_at.isoformat(), "payload": json.loads(r.payload_json)})
     finally:
         db.close()
+@app.route("/reports/<int:report_id>/pdf-view")
+def report_pdf_view(report_id):
 
+    db = SessionLocal()
+    try:
+        report = db.query(Report).filter_by(id=report_id).first()
+
+        if not report:
+            return "존재하지 않는 리포트입니다.", 404
+
+        payload = json.loads(report.payload_json)
+
+        return render_template(
+            "report_pdf.html",
+            report=report,
+            payload=payload
+        )
+
+    finally:
+        db.close()
+from playwright.sync_api import sync_playwright
+from flask import send_file
+import tempfile
+
+@app.route("/reports/<int:report_id>/pdf")
+def generate_pdf(report_id):
+
+    db = SessionLocal()
+    try:
+        report = db.query(Report).filter_by(id=report_id).first()
+
+        if not report:
+            return "존재하지 않는 리포트입니다.", 404
+
+    finally:
+        db.close()
+
+    # 🔴 반드시 실제 배포 도메인 사용
+    base_url = "https://flask-essay-review.onrender.com"
+    target_url = f"{base_url}/reports/{report_id}/pdf-view"
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(
+            headless=True,
+            args=[
+                "--no-sandbox",
+                "--disable-dev-shm-usage"
+            ]
+        )
+
+        context = browser.new_context()
+        page = context.new_page()
+
+        page.goto(target_url, wait_until="networkidle")
+
+        # PDF 렌더 완료 신호 대기
+        page.wait_for_function("window.__PDF_READY__ === true")
+
+        tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+        pdf_path = tmp_file.name
+
+        page.pdf(
+            path=pdf_path,
+            format="A4",
+            print_background=True,
+            margin={
+                "top": "20mm",
+                "bottom": "20mm",
+                "left": "20mm",
+                "right": "20mm"
+            }
+        )
+
+        browser.close()
+
+    return send_file(
+        pdf_path,
+        as_attachment=True,
+        download_name=f"report_{report_id}.pdf",
+        mimetype="application/pdf"
+    )
 # ---------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------
