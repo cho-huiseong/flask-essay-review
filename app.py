@@ -3,6 +3,9 @@ from flask_cors import CORS
 from openai import OpenAI
 import os, json, re, base64
 from datetime import datetime
+from playwright.sync_api import sync_playwright
+from flask import send_file
+import tempfile
 
 # ==== Auth/DB ====
 from flask_login import (
@@ -897,10 +900,6 @@ def report_pdf_view(report_id):
 
     finally:
         db.close()
-from playwright.sync_api import sync_playwright
-from flask import send_file
-import tempfile
-
 @app.route("/reports/<int:report_id>/pdf")
 def generate_pdf(report_id):
 
@@ -956,6 +955,62 @@ def generate_pdf(report_id):
         pdf_path,
         as_attachment=True,
         download_name=f"report_{report_id}.pdf",
+        mimetype="application/pdf"
+    )
+# 🔹 DB 없이 즉석 PDF 생성 (현재 사용하는 방식)
+@app.post("/generate-pdf")
+def generate_pdf_instant():
+
+    data = request.get_json(force=True)
+
+    # 프론트에서 보낸 payload 그대로 사용
+    payload = data
+
+    # HTML 렌더
+    html = render_template(
+        "report_pdf.html",
+        report=None,
+        payload=payload
+    )
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(
+            headless=True,
+            args=[
+                "--no-sandbox",
+                "--disable-dev-shm-usage"
+            ]
+        )
+
+        page = browser.new_page()
+
+        # HTML 직접 주입 (DB 조회 안 함)
+        page.set_content(html, wait_until="networkidle")
+
+        # PDF 준비 완료 신호 대기
+        page.wait_for_function("window.__PDF_READY__ === true")
+
+        tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+        pdf_path = tmp_file.name
+
+        page.pdf(
+            path=pdf_path,
+            format="A4",
+            print_background=True,
+            margin={
+                "top": "20mm",
+                "bottom": "20mm",
+                "left": "20mm",
+                "right": "20mm"
+            }
+        )
+
+        browser.close()
+
+    return send_file(
+        pdf_path,
+        as_attachment=True,
+        download_name="report.pdf",
         mimetype="application/pdf"
     )
 # ---------------------------------------------------------------------
