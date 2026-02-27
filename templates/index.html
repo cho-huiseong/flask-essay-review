@@ -2685,20 +2685,26 @@ async function downloadPDF(){
     syncPdfContainer();
 
     const original = document.getElementById("pdfContainer");
-
-    // ⭐ 복제본 생성 (중요)
     const clone = original.cloneNode(true);
+
+    // ⭐ mm → px 강제 변환
+    clone.style.width = "794px";
+    clone.querySelectorAll(".page").forEach(p=>{
+      p.style.width = "794px";
+      p.style.minHeight = "1123px";
+    });
+
     clone.style.position = "absolute";
     clone.style.left = "0";
     clone.style.top = "0";
     clone.style.opacity = "1";
     clone.style.zIndex = "99999";
-    clone.style.pointerEvents = "none";
+    clone.style.background = "#ffffff";
 
     document.body.appendChild(clone);
 
     await new Promise(r => requestAnimationFrame(r));
-    await new Promise(r => setTimeout(r, 200));
+    await new Promise(r => setTimeout(r, 300));
 
     const name = document.getElementById("studentName")?.value || "학생";
     const dateStr = new Date().toISOString().slice(0,10);
@@ -2721,8 +2727,8 @@ async function downloadPDF(){
     document.body.removeChild(clone);
 
   }catch(e){
-    console.error(e);
-    alert("PDF 생성 중 오류가 발생했습니다.");
+    console.error("PDF ERROR:", e);
+    alert("PDF 생성 실패");
   }
 }
 </script> 
