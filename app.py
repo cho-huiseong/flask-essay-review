@@ -6,6 +6,47 @@ from datetime import datetime
 from playwright.sync_api import sync_playwright
 from flask import send_file
 import tempfile
+import os
+import uuid
+import math
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import numpy as np
+
+def generate_radar_chart(scores):
+    labels = ["논리력", "독해력", "구성력", "표현력"]
+
+    angles = np.linspace(0, 2 * math.pi, len(labels), endpoint=False).tolist()
+    scores_cycle = scores + scores[:1]
+    angles_cycle = angles + angles[:1]
+
+    fig = plt.figure(figsize=(6, 6), dpi=300)
+    ax = plt.subplot(111, polar=True)
+
+    ax.set_theta_offset(math.pi / 2)
+    ax.set_theta_direction(-1)
+
+    ax.set_xticks(angles)
+    ax.set_xticklabels(labels, fontsize=10)
+
+    ax.set_ylim(0, 10)
+    ax.set_yticks([2,4,6,8,10])
+    ax.set_yticklabels(["2","4","6","8","10"], fontsize=8)
+
+    ax.plot(angles_cycle, scores_cycle, linewidth=2, color="#2140B1")
+    ax.fill(angles_cycle, scores_cycle, color="#2140B1", alpha=0.15)
+
+    ax.grid(color="gray", alpha=0.2)
+
+    filename = f"radar_{uuid.uuid4().hex}.png"
+    filepath = os.path.join("static", filename)
+
+    plt.tight_layout()
+    plt.savefig(filepath, bbox_inches="tight", transparent=True)
+    plt.close(fig)
+
+    return f"/static/{filename}"
 
 # ==== Auth/DB ====
 from flask_login import (
@@ -965,7 +1006,17 @@ def generate_pdf_instant():
 
     # 프론트에서 보낸 payload 그대로 사용
     payload = data
+    # ----------------------------
+    # 📊 Radar Chart 생성
+    # ----------------------------
+    scores = payload.get("scores")
 
+    if scores and isinstance(scores, list) and len(scores) == 4:
+        try:
+            chart_url = generate_radar_chart(scores)
+            payload["chart_image_url"] = chart_url
+        except Exception as e:
+            print("❗ radar chart 생성 실패:", e, flush=True)
     # HTML 렌더
     html = render_template(
         "report_pdf.html",
