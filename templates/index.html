@@ -8,8 +8,6 @@
 <!-- 폰트/라이브러리 -->
 <link href="https://cdn.jsdelivr.net/gh/sunn-us/SUIT/fonts/static/woff2/SUIT.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<style>
 :root{
   --brand:#2140B1; --brand-700:#1a2f91;
   --ink:#111827; --muted:#6B7280; --line:rgba(17,24,39,.10);
@@ -2680,55 +2678,52 @@ function syncPdfContainer() {
   document.getElementById('pdfTotalPages2').textContent = '3';
   document.getElementById('pdfTotalPages3').textContent = '3';
 }
-async function downloadPDF(){
-  try{
-    syncPdfContainer();
+async function downloadPDF() {
+  try {
 
-    const original = document.getElementById("pdfContainer");
-    const clone = original.cloneNode(true);
+    // 1️⃣ 서버에 보낼 데이터 구성
+    const payload = {
+      student: document.getElementById('studentName')?.value || '',
+      question: document.getElementById('question')?.value || '',
+      essay: document.getElementById('essay')?.value || '',
+      passages: window.savedPassages || [],
+      scores: savedScores || [],
+      reasons: savedReasons || {},
+      summary: savedSummary || '',
+      example: savedExample || '',
+      comparison: savedComparison || '',
+      created_at: new Date().toISOString().slice(0,10)
+    };
 
-    // ⭐ mm → px 강제 변환
-    clone.style.width = "794px";
-    clone.querySelectorAll(".page").forEach(p=>{
-      p.style.width = "794px";
-      p.style.minHeight = "1123px";
+    // 2️⃣ 서버 PDF 요청
+    const response = await fetch('/generate-pdf', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
     });
 
-    clone.style.position = "absolute";
-    clone.style.left = "0";
-    clone.style.top = "0";
-    clone.style.opacity = "1";
-    clone.style.zIndex = "99999";
-    clone.style.background = "#ffffff";
+    if (!response.ok) {
+      throw new Error('PDF 생성 실패');
+    }
 
-    document.body.appendChild(clone);
+    // 3️⃣ 파일 다운로드 처리
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
 
-    await new Promise(r => requestAnimationFrame(r));
-    await new Promise(r => setTimeout(r, 300));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `다쓰리포트_${payload.student}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
 
-    const name = document.getElementById("studentName")?.value || "학생";
-    const dateStr = new Date().toISOString().slice(0,10);
+    window.URL.revokeObjectURL(url);
 
-    await html2pdf()
-      .set({
-        margin:0,
-        filename:`다쓰리포트_${name}_${dateStr}.pdf`,
-        image:{ type:'jpeg', quality:1 },
-        html2canvas:{
-          scale:2,
-          useCORS:true,
-          backgroundColor:"#ffffff"
-        },
-        jsPDF:{ unit:'mm', format:'a4', orientation:'portrait' }
-      })
-      .from(clone)
-      .save();
-
-    document.body.removeChild(clone);
-
-  }catch(e){
-    console.error("PDF ERROR:", e);
-    alert("PDF 생성 실패");
+  } catch (err) {
+    console.error(err);
+    alert('PDF 생성 중 오류가 발생했습니다.');
   }
 }
 </script> 
