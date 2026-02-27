@@ -872,8 +872,21 @@ def report_pdf_view(report_id):
         report = db.query(Report).filter_by(id=report_id).first()
 
         if not report:
-            return "존재하지 않는 리포트입니다.", 404
+           payload = {
+               "student": "홍길동",
+               "question": "제시문을 바탕으로 바람직한 선택에 대해 논하시오.",
+               "essay": "이것은 테스트 논술문입니다.",
+               "scores": [8, 7, 8, 9],
+               "summary": "전체적으로 안정적인 글입니다.",
+               "example": "이것은 예시답안입니다.",
+               "comparison": "학생 글은 근거 제시가 부족했으나 예시답안은 이를 보완하였다."
+           }
 
+           return render_template(
+               "report_pdf.html",
+               report=None,
+               payload=payload
+           )
         payload = json.loads(report.payload_json)
 
         return render_template(
