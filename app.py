@@ -46,7 +46,7 @@ def generate_radar_chart(scores):
     plt.savefig(filepath, bbox_inches="tight", transparent=True)
     plt.close(fig)
 
-    return f"/static/{filename}"
+    return os.path.abspath(filepath)
 
 # ==== Auth/DB ====
 from flask_login import (
@@ -1003,9 +1003,8 @@ def generate_pdf(report_id):
 def generate_pdf_instant():
 
     data = request.get_json(force=True)
-
-    # 프론트에서 보낸 payload 그대로 사용
     payload = data
+
     # ----------------------------
     # 📊 Radar Chart 생성
     # ----------------------------
@@ -1013,16 +1012,40 @@ def generate_pdf_instant():
 
     if scores and isinstance(scores, list) and len(scores) == 4:
         try:
-            chart_url = generate_radar_chart(scores)
-            payload["chart_image_url"] = chart_url
+            chart_path = generate_radar_chart(scores)
+            # 절대경로로 강제
+            payload["chart_image_url"] = os.path.abspath(chart_path)
         except Exception as e:
             print("❗ radar chart 생성 실패:", e, flush=True)
+
+    # ----------------------------
+    # 🔤 폰트 절대경로 생성
+    # ----------------------------
+    font_path = os.path.abspath("static/fonts").replace("\\", "/")
+
+    # ----------------------------
     # HTML 렌더
+    # ----------------------------
     html = render_template(
         "report_pdf.html",
         report=None,
-        payload=payload
+        payload=payload,
+        font_path=font_path
     )
+
+    # ----------------------------
+    # 🧾 임시 HTML 파일 생성
+    # ----------------------------
+    tmp_html = tempfile.NamedTemporaryFile(
+        delete=False,
+        suffix=".html",
+        mode="w",
+        encoding="utf-8"
+    )
+    tmp_html.write(html)
+    tmp_html.close()
+
+    html_path = os.path.abspath(tmp_html.name).replace("\\", "/")
 
     with sync_playwright() as p:
         browser = p.chromium.launch(
@@ -1035,19 +1058,17 @@ def generate_pdf_instant():
 
         page = browser.new_page()
 
-        # HTML 직접 주입 (DB 조회 안 함)
-        page.set_content(html, wait_until="domcontentloaded")
+        # 🔥 핵심: file:// 방식
+        page.goto(f"file://{html_path}", wait_until="networkidle")
 
-        # JS 시그널 기다리지 말고 안정적으로 1.2초 대기
-        page.wait_for_timeout(1200)
-
-        tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-        pdf_path = tmp_file.name
+        tmp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+        pdf_path = tmp_pdf.name
 
         page.pdf(
             path=pdf_path,
             format="A4",
             print_background=True,
+            prefer_css_page_size=True,
             margin={
                 "top": "20mm",
                 "bottom": "20mm",
@@ -1057,6 +1078,12 @@ def generate_pdf_instant():
         )
 
         browser.close()
+
+    # 임시 HTML 삭제
+    try:
+        os.remove(tmp_html.name)
+    except:
+        pass
 
     return send_file(
         pdf_path,
