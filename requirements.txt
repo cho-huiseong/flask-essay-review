@@ -8,3 +8,5 @@ passlib==1.7.4
 bcrypt==3.2.2
 psycopg2-binary
 playwright==1.41.2
+matplotlib==3.8.4
+numpy==1.26.4
