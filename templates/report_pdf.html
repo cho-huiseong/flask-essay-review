@@ -6,6 +6,24 @@
 
 <style>
 /* ======================================================
+   Noto Sans KR (PDF 전용 로컬 폰트)
+   ====================================================== */
+@font-face {
+  font-family: 'Noto Sans KR';
+  src: url('/static/fonts/NotoSansKR-Regular.ttf') format('truetype');
+  font-weight: 400;
+}
+@font-face {
+  font-family: 'Noto Sans KR';
+  src: url('/static/fonts/NotoSansKR-Medium.ttf') format('truetype');
+  font-weight: 500;
+}
+@font-face {
+  font-family: 'Noto Sans KR';
+  src: url('/static/fonts/NotoSansKR-Bold.ttf') format('truetype');
+  font-weight: 700;
+}
+/* ======================================================
    A4 기본 설정
    ====================================================== */
 @page{
@@ -30,8 +48,7 @@ html, body{
   padding:0;
   background:var(--paper);
   color:var(--ink);
-  font-family:'SUIT','Pretendard','Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;
-  font-size:13.7px;
+  font-family:'Noto Sans KR', sans-serif;
   line-height:1.78;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
@@ -118,10 +135,9 @@ html, body{
 
 /* 제목 계층 */
 .h1{
-  font-size:24px;
-  font-weight:950;
-  letter-spacing:-.4px;
-  margin:0 0 4px 0;
+  font-size:23px;
+  font-weight:700;
+  letter-spacing:-0.02em;
 }
 
 .h2{
