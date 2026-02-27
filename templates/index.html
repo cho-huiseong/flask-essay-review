@@ -1184,10 +1184,11 @@ body.pdf-mode #pdfContainer{
 
 #pdfContainer{
   position:fixed;
-  left:-99999px;
   top:0;
-  visibility:visible;
-  display:block;
+  left:0;
+  opacity:0;
+  pointer-events:none;
+  z-index:-1;
 }
 
 </style>
@@ -2681,15 +2682,18 @@ function syncPdfContainer() {
   document.getElementById('pdfTotalPages3').textContent = '3';
 }
 async function downloadPDF(){
-
   try{
     syncPdfContainer();
 
     const element = document.getElementById("pdfContainer");
 
-    // ⭐ 렌더 타이밍 보장
-    await new Promise(resolve => requestAnimationFrame(resolve));
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // ⭐ 화면 안으로 가져오기
+    element.style.opacity = "0";
+    element.style.zIndex = "9999";
+    element.style.pointerEvents = "none";
+
+    await new Promise(r => requestAnimationFrame(r));
+    await new Promise(r => setTimeout(r, 100));
 
     const name = document.getElementById("studentName")?.value || "학생";
     const dateStr = new Date().toISOString().slice(0,10);
@@ -2701,15 +2705,17 @@ async function downloadPDF(){
         image:{ type:'jpeg', quality:0.98 },
         html2canvas:{
           scale:2,
-          useCORS:true
+          useCORS:true,
+          backgroundColor:"#ffffff"
         },
-        pagebreak:{
-          mode:['css','legacy']
-        },
+        pagebreak:{ mode:['css','legacy'] },
         jsPDF:{ unit:'mm', format:'a4', orientation:'portrait' }
       })
       .from(element)
       .save();
+
+    // ⭐ 다시 숨기기
+    element.style.zIndex = "-1";
 
   }catch(e){
     console.error(e);
