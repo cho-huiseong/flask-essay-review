@@ -3,8 +3,7 @@ from flask_cors import CORS
 from openai import OpenAI
 import os, json, re, base64
 from datetime import datetime
-from weasyprint import HTML
-from flask import make_response
+
 # ==== Auth/DB ====
 from flask_login import (
     LoginManager, login_user, logout_user, login_required,
@@ -806,33 +805,6 @@ def example():
 
 
 # ---------- Reports ----------
-@app.post("/generate-pdf")
-@login_required
-def generate_pdf():
-
-    data = request.get_json(force=True)
-
-    rendered = render_template(
-        "pdf_template.html",
-        name=data.get("name"),
-        question=data.get("question"),
-        essay=data.get("essay"),
-        passages=data.get("passages"),
-        scores=data.get("scores"),
-        reasons=data.get("reasons"),
-        summary=data.get("summary"),
-        example=data.get("example"),
-        comparison=data.get("comparison"),
-        chart_image=data.get("chart_image")
-    )
-
-    pdf = HTML(string=rendered).write_pdf()
-
-    response = make_response(pdf)
-    response.headers["Content-Type"] = "application/pdf"
-    response.headers["Content-Disposition"] = "attachment; filename=다쓰리포트.pdf"
-
-    return response
 @app.post("/reports")
 @login_required
 def create_report():
