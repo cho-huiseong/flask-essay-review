@@ -1036,10 +1036,10 @@ def generate_pdf_instant():
         page = browser.new_page()
 
         # HTML 직접 주입 (DB 조회 안 함)
-        page.set_content(html, wait_until="networkidle")
+        page.set_content(html, wait_until="domcontentloaded")
 
-        # PDF 준비 완료 신호 대기
-        page.wait_for_function("window.__PDF_READY__ === true")
+        # JS 시그널 기다리지 말고 안정적으로 1.2초 대기
+        page.wait_for_timeout(1200)
 
         tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
         pdf_path = tmp_file.name
